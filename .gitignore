@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+__pycache__/
+.env
+kaggle.json
+data/
+*.parquet
+outputs/
