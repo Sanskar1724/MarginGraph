@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `main` | Everything, integrated and tested | all |
 | `feat/core-pipeline` | Data, baselines, LightGBM rerank, MILP, simulation | `src/margingraph/`, `configs/`, `results/`, `tests/` |
-| `feat/api-service` | Production recommendation API | `src/margingraph/api.py`, service code |
+| `feat/api-service` | Production service: multi-store API, A/B logging, nightly training, Docker | `src/margingraph/service/`, `api.py`, `docker-compose*.yml` |
 | `feat/ranker-accuracy` | Ranker accuracy experiments | `src/margingraph/rerank.py`, `features.py` |
 | `feat/llm-reranker` | LLM reranker and LoRA fine-tune (Kaggle) | `src/margingraph/llm.py`, `notebooks/llm_*.ipynb` |
 | `feat/store-connectors` | CSV/Excel, Shopify, WooCommerce sync | `src/margingraph/connectors/` |
@@ -18,6 +18,7 @@
 | `docs/research-paper` | arXiv-style paper | `paper/` |
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` |
+| `docs/industry-roadmap` | Plan to an industry-ready product, A/B sizing, public datasets | `docs/industry-plan/`, `scripts/ab_sample_size.py`, `scripts/public_datasets.py` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` |
 
 New short-lived work uses the same prefixes: `feat/…`, `fix/…`, `docs/…`, `ci/…`, `chore/…`, lowercase with hyphens.
