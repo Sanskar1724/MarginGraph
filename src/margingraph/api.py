@@ -1,7 +1,8 @@
 """FastAPI demo: POST a basket, get up to 2 margin-safe add-ons.
 
 Online path = candidate pool -> LightGBM -> calibrated p -> PuLP MILP.
-Cost and stock come from the SIMULATED ERP saved with the bundle.
+Cost and stock come from the ERP saved with the bundle: the connected store's
+own data when it was synced with `margingraph sync`, simulated otherwise.
 """
 from __future__ import annotations
 
@@ -35,6 +36,14 @@ def bundle() -> dict:
 app = FastAPI(title="MarginGraph", version="0.1.0")
 
 
+def _note(erp) -> str:
+    if "cost_source" not in erp:
+        return "cost and stock are simulated; Online Retail II has neither"
+    c = float((erp["cost_source"] == "store").mean())
+    s = float((erp["stock_source"] == "store").mean())
+    return f"store data: unit cost known for {c:.0%} of items (rest assumed), stock for {s:.0%} (rest simulated)"
+
+
 @app.get("/health")
 def health() -> dict:
     return {"ok": True}
@@ -66,6 +75,8 @@ def recommend(req: Request) -> dict:
     )
     price, cost = erp["price"].to_numpy(), erp["unit_cost"].to_numpy()
     over, stock = erp["overstock"].to_numpy(), erp["stock"].to_numpy()
+    cost_src = erp["cost_source"].to_numpy() if "cost_source" in erp else None
+    stock_src = erp["stock_source"].to_numpy() if "stock_source" in erp else None
     chosen = solve_milp(p[top], price[items], cost[items], over[items], stock[items], pol, b["p_bar"])
 
     def card(i: int, pa: float, d: float = 0.0) -> dict:
@@ -79,6 +90,7 @@ def recommend(req: Request) -> dict:
             "margin_pct": round(float((rev - cost[i]) / rev), 3),
             "overstock": bool(over[i]),
             "stock": int(stock[i]),
+            **({"cost_source": cost_src[i], "stock_source": stock_src[i]} if cost_src is not None else {}),
         }
 
     return {
@@ -87,5 +99,5 @@ def recommend(req: Request) -> dict:
         "addons": [card(items[j], p[top][j], d) for j, d in chosen],
         "ranked_candidates": [card(items[j], p[top][j]) for j in range(min(10, len(top)))],
         "latency_ms": round(1000 * (time.perf_counter() - t0), 1),
-        "note": "cost and stock are simulated; Online Retail II has neither",
+        "note": _note(erp),
     }
