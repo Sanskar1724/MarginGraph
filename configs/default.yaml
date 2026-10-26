@@ -1,0 +1,58 @@
+seed: 42
+
+data:
+  raw_path: data/raw/online_retail_II.xlsx   # UCI dataset 502, both sheets
+  clean_path: data/processed/lines.parquet
+  # Product StockCodes are 5 digits plus an optional letter suffix; everything
+  # else (POST, DOT, M, BANK CHARGES, AMAZONFEE, ...) is a fee or adjustment.
+  product_code_regex: '^\d{5}[A-Za-z]{0,2}$'
+
+split:
+  # One global cutoff per boundary (E2). Dataset covers 2009-12-01 .. 2011-12-09.
+  val_start: "2011-07-01"
+  test_start: "2011-10-01"
+  min_basket_items: 2       # distinct products needed to hide one
+  max_basket_items: 50      # very large wholesale invoices are dropped from eval
+  max_events_val: 20000
+  max_events_test: 20000
+
+baselines:
+  recent_days: 90
+  als:
+    factors: 64
+    regularization: 0.05
+    iterations: 20
+    alpha: 1.0
+
+retrieval:
+  pool_size: 50
+  per_source: {popularity: 5, copurchase: 25, itemknn: 15, als: 15, repeat: 10, recent_pop: 10}
+
+rerank:
+  num_leaves: 31
+  learning_rate: 0.05
+  n_estimators: 500
+  early_stopping_rounds: 50
+
+# Online Retail II has prices but no unit cost or stock. These are SIMULATED
+# ERP fields; every Stage 2 number depends on them (see E11 sensitivity).
+erp:
+  margin_beta: [4.0, 6.0]       # gross margin ~ Beta(4,6), mean 40%
+  weeks_of_cover: 6             # base stock = weekly train demand * cover
+  overstock_share: 0.15         # share of items given 3-6x extra stock
+  overstock_multiplier: [3.0, 6.0]
+
+optimize:
+  margin_floor: 0.15
+  max_addons: 2
+  candidates: 20                # top-N from the reranker go to the MILP
+  discounts: [0.0, 0.10, 0.20]
+  discount_elasticity: 1.5      # p(accept | d) = p * (1 + elasticity * d), ASSUMPTION
+  overstock_weights: [1.0, 1.25, 1.5, 2.0]
+  tradeoff_lambdas: [0.0, 0.25, 0.5, 0.75, 1.0]
+
+simulate:
+  seeds: 20
+
+stats:
+  n_boot: 2000
