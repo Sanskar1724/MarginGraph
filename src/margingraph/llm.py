@@ -42,8 +42,19 @@ def load_model(model_name: str):
 
     assert torch.cuda.is_available(), "no GPU attached"
     tok = AutoTokenizer.from_pretrained(model_name, padding_side="left")
-    # one GPU; splitting a 1.5-3B model across T4 x2 only slows it down
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": 0}).eval()
+    # One GPU (splitting a 1.5-3B model across T4 x2 only slows it down): pick the
+    # one with the most free memory, so leftovers from a failed cell on GPU 0
+    # don't block a retry when Kaggle gives two T4s.
+    free = [torch.cuda.mem_get_info(i)[0] for i in range(torch.cuda.device_count())]
+    print("free GPU memory:", [f"cuda:{i} {f / 1e9:.1f} GB" for i, f in enumerate(free)])
+    dev = int(np.argmax(free))
+    if free[dev] < 6e9:
+        raise RuntimeError(
+            f"Only {free[dev] / 1e9:.1f} GB free on the best GPU; earlier models are still loaded. "
+            "Click the power button (top right) to stop the session, start it again, then Run All."
+        )
+    print(f"loading {model_name} on cuda:{dev} ({free[dev] / 1e9:.1f} GB free)")
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": dev}).eval()
     return model, tok
 
 
@@ -176,7 +187,8 @@ def finetune_lora(
             step += 1
             run = 0.98 * run + 0.02 * loss.item() if step > 1 else loss.item()
             if step % log_every == 0 or step == n_steps:
-                print(f"epoch {ep + 1} step {step}/{n_steps} loss {run:.4f}", flush=True)
+                mem = torch.cuda.max_memory_allocated(model.device) / 1e9 if use_amp else 0.0
+                print(f"epoch {ep + 1} step {step}/{n_steps} loss {run:.4f} peak_gpu {mem:.1f} GB", flush=True)
     model.eval()
     return model
 
