@@ -38,7 +38,7 @@ Use only these. Copy the wording of the caveat with every profit number.
 | Optimizer correctness and speed | Matches brute force on 600 of 600 problems, 2.7 ms mean solve time | Solver time only |
 | API latency, measured in a container | Research API p50 22 ms, p95 28 ms; multi-store service p95 88 ms end to end | Container measurement, not a store's production traffic |
 | Shortlist coverage | Hidden item is in the 150-item shortlist 65.3% of the time (58.0% at 100 before the accuracy work) | This caps every ranker |
-| LLM as ranker (Qwen2.5 1.5B and 3B, zero-shot, and as an extra feature) | **NO-GO.** Hit@5 16.8% (1.5B) vs 27.6% for LightGBM on the same 1,000 baskets | A LoRA fine-tune is still being tested |
+| LLM as ranker (Qwen2.5 1.5B and 3B, zero-shot, and as an extra feature) | **NO-GO.** Hit@5 16.8% (1.5B) vs 27.6% for LightGBM on the same 1,000 baskets | A LoRA fine-tune of 1.5B also lost: Hit@5 7.8%, below random order (11.6%). LLM track closed |
 
 **Status words to use:** "open-source research prototype", "tested offline on real sales data", "looking for pilot stores".
 
@@ -55,7 +55,7 @@ Use only these. Copy the wording of the caveat with every profit number.
 - [ ] **Deploy the demo** (Hugging Face Space, see `space/DEPLOY.md` in PR #4) and replace `DEMO_URL` in every file of this kit. Search for it: `grep -rn DEMO_URL docs/launch`.
 - [ ] **Publish the landing page** (below) and replace `SITE_URL`.
 - [ ] Replace `YOUR_EMAIL` with the contact address you want public. Consider a separate address for the project.
-- [ ] Re-read the [fact sheet](#approved-facts-and-numbers) against `docs/RESULTS.md`. If the LoRA fine-tune (E6) finishes, update the LLM row in every file.
+- [ ] Re-read the [fact sheet](#approved-facts-and-numbers) against `docs/RESULTS.md`. The LoRA fine-tune (E6) result is in every file.
 - [ ] Take 2 screenshots of the demo (a basket with its 2 add-ons, and the profit vs hits chart) for Product Hunt, LinkedIn and the blog.
 
 ## Suggested launch order

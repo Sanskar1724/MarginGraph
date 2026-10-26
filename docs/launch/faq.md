@@ -21,7 +21,7 @@ The rules are checked in plain code on every suggestion, not by a model. In test
 No. Nothing in MarginGraph changes prices. AI models are used only to rank products.
 
 **Is it "AI-powered" with ChatGPT-style models?**
-We tested open language models (Qwen2.5, 1.5B and 3B) as the ranker. They lost clearly to a simpler model (LightGBM), so we do not use them for ranking. We are testing a fine-tuned version, and a language model may still help with brand-new products and short explanations. We would rather tell you that than sell you a buzzword.
+We tested open language models (Qwen2.5, 1.5B and 3B) as the ranker. They lost clearly to a simpler model (LightGBM), so we do not use them for ranking. A fine-tuned version lost too. A language model may still help with brand-new products and short explanations. We would rather tell you that than sell you a buzzword.
 
 **What do I need to give you?**
 Order history (order ID, date, product, quantity, price), product names, unit costs, and stock if you have it. No customer names or emails. See the [privacy and data note](privacy-and-data.md).
@@ -59,7 +59,7 @@ The 150-item shortlist contains the hidden item 65.3% of the time (58.0% at 100 
 The dataset has no cost or stock. Experiment E11 reruns the comparison under 3 margin distributions × 3 seeds; the profit gain stayed positive in all 9 (every CI above zero). Real costs from a pilot store are the next test.
 
 **Why did the LLM lose?**
-Zero-shot yes/no scoring of the top 20 LightGBM items with Qwen2.5-1.5B gave Hit@5 16.8% vs 27.6% for LightGBM on the same 1,000 baskets; 3B was no better. Used as an extra feature in a stacker, its fitted weight was near zero. Product titles in this dataset are short and the co-purchase signal is strong, so behaviour data beats text understanding here. A LoRA fine-tune is in progress; the gate is the same paired test.
+Zero-shot yes/no scoring of the top 20 LightGBM items with Qwen2.5-1.5B gave Hit@5 16.8% vs 27.6% for LightGBM on the same 1,000 baskets; 3B was no better. Used as an extra feature in a stacker, its fitted weight was near zero. Product titles in this dataset are short and the co-purchase signal is strong, so behaviour data beats text understanding here. A LoRA fine-tune of the 1.5B model (hard negatives from LightGBM slates) did worse: Hit@5 7.8%, below random order of the slate (11.6%). The LLM track is closed for ranking.
 
 **Is it fast enough?**
 The optimizer solves in 2.7 ms on average and matches exact enumeration on 600 of 600 problems. Measured in a container, the research API answers in 22 ms at the median (p95 28 ms) and the multi-store service in 88 ms at p95 end to end; a store's own hosting will differ.

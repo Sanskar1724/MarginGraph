@@ -113,7 +113,7 @@ Setup: Qwen2.5-Instruct, zero-shot yes/no scoring of LightGBM's top 20, on 1,000
 
 The 1.5B model lost by 10.8 points at Hit@5. The 3B model was no better (16.6%). Then I tried the LLM score as an extra feature in a stacker with LightGBM: the fitted weights were 0.015 and 0.055 for the LLM features against 0.736 for LightGBM, and Hit@5 moved by −0.1 points. **NO-GO, three times.**
 
-My reading: these product titles are short ("PINK REGENCY TEACUP AND SAUCER"), and the co-purchase signal is strong. Behaviour data already knows that the pink teacup goes with the green one. Text understanding adds little on top. A LoRA fine-tune on LightGBM slates with hard negatives is running now; it faces the same gate. If it loses too, the LLM's job shrinks to what it might be good at: cold-start products with no sales, and one-line explanations.
+My reading: these product titles are short ("PINK REGENCY TEACUP AND SAUCER"), and the co-purchase signal is strong. Behaviour data already knows that the pink teacup goes with the green one. Text understanding adds little on top. A LoRA fine-tune on LightGBM slates with hard negatives did worse still: Hit@5 7.8%, below random order of the slate (11.6%). Its loss settled at ln 2, so it learned to answer 50/50. So the LLM's job shrinks to what it might be good at: cold-start products with no sales, and one-line explanations.
 
 ## What I would tell someone building this
 

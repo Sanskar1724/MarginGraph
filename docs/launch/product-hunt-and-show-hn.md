@@ -28,7 +28,7 @@ Alternative:
 > - Optimizer vs plain top-2: about +14% realized profit per basket, −1.1 pts Hit@2, 0 margin-floor breaks
 > - The dataset has no unit cost or stock, so those are simulated. The gain stayed positive across 9 cost scenarios, but I'd treat it as a sign, not a result, until a real store tests it
 >
-> The original plan put an LLM at the centre. Qwen2.5 1.5B and 3B zero-shot lost to LightGBM by ~11 pts Hit@5 on the same slates, and as a stacker feature they got ~0 weight. My guess: short product titles and a strong co-purchase signal. A LoRA fine-tune is running; same gate.
+> The original plan put an LLM at the centre. Qwen2.5 1.5B and 3B zero-shot lost to LightGBM by ~11 pts Hit@5 on the same slates, and as a stacker feature they got ~0 weight. My guess: short product titles and a strong co-purchase signal. A LoRA fine-tune of the 1.5B did worse (Hit@5 7.8%, below random order), so the LLM is out of the ranking.
 >
 > Biggest practical lesson: shortlist recall (58% at 100 items, now 65% at 150) mattered more than the reranker.
 >
@@ -41,7 +41,7 @@ Alternative:
 | "14% on simulated costs means nothing" | Agreed that it isn't proof. It shows the optimizer does what it should under a range of assumptions (E11: 9 scenarios, all CIs above zero). The relevance numbers use no simulation. A real store's costs are the next step. |
 | "Leave-one-out on a basket isn't a real add-on task" | Fair. It is the closest offline proxy with this data. The pilot plan is an A/B test on profit per visitor. |
 | "Why not just sort by margin × popularity?" | That ignores the basket. Popularity top-2 has Hit@2 1.2% vs 15.6% for the optimizer at λ=0.5. |
-| "Your LLM prompt was bad" | Possible. It was yes/no scoring of the top 20 slate; prompts and code are in `notebooks/` and `src/margingraph/llm.py`. A fine-tune is the stronger test and is running now. |
+| "Your LLM prompt was bad" | Possible. It was yes/no scoring of the top 20 slate; prompts and code are in `notebooks/` and `src/margingraph/llm.py`. A LoRA fine-tune is the stronger test; it scored Hit@5 7.8% vs 27.6%, below random order. |
 | "Why a MILP for picking 2 items?" | You could enumerate, and the repo does for bulk sweeps (they agree on 600/600). The MILP generalizes to bundle floors and discount choice without rewriting. |
 | "What's the latency?" | Solver is 2.7 ms mean. In a container the research API is p50 22 ms / p95 28 ms, and the multi-store service p95 88 ms end to end. Your hosting will differ. |
 
