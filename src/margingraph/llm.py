@@ -41,7 +41,8 @@ def score_slates(slates: pd.DataFrame, catalog: pd.DataFrame, model_name: str, b
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tok = AutoTokenizer.from_pretrained(model_name, padding_side="left")
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto").eval()
+    assert torch.cuda.is_available(), "no GPU attached"
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": 0}).eval()  # one GPU; T4 x2 splitting only slows a 1.5-3B model
     yes = tok.encode("Yes", add_special_tokens=False)[0]
     no = tok.encode("No", add_special_tokens=False)[0]
     texts = [
