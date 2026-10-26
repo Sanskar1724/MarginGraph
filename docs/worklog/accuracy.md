@@ -119,6 +119,14 @@ The extra events re-hide a different product from the same val invoice, and only
 - `pipeline.py`: streams per split, E3/E4 on original events only. The LLM fine-tune slates (train-period events) run with the stream off, because val sales would be in their future.
 - `tests/test_accuracy_sources.py`: fresh uses only sales from earlier days, text finds colour variants, customer EASE, decay weights. The full suite passes: 63 passed, 1 skipped.
 
+### Merge with `main` (13:05)
+
+`main` had gained the production service (`service/train.py`, `engine.py`), CI (ruff 0.17.2, quality gate) and connectors. Two conflicts came up, in `pyproject.toml` (optional dependencies) and `docs/WORKLOG.md` (thread table). I kept both sides in each.
+
+The service trains a generator on all of a store's history and does not stream orders that arrived after training. Without a stream, the fresh scores are all zero, so their 52 pool slots would be filled at random. **Fix:** when no stream is set, `trend` and `fresh_co` are left out of the pool. They stay in the features, as zeros in both training and serving, so the two stay consistent. The service still benefits from the other three sources and the bigger pool. To get the fresh source too, it would need to stream orders that arrive after the nightly training.
+
+After the merge, `ruff check .` is clean, `pytest` gives 90 passed and 1 skipped, and `margingraph-gate results --strict` passes (LightGBM Hit@10 38.1%, CI low 36.7%, vs popularity 3.1%).
+
 ## 6. Full `margingraph run` with the new config (12:47–12:58)
 
 - **Runtime 10.2 min and peak RAM 3.9 GB** on 4 CPU cores. That fits an 8 GB laptop.

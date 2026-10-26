@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import pickle
 import time
+from contextlib import asynccontextmanager
 from functools import lru_cache
 
 import numpy as np
@@ -33,7 +34,16 @@ def bundle() -> dict:
         return pickle.load(fh)
 
 
-app = FastAPI(title="MarginGraph", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Load the bundle before accepting traffic: on the full Online Retail II
+    # bundle (~250 MB) a lazy load made the first request take ~30 s.
+    if os.environ.get("MARGINGRAPH_PRELOAD", "1") == "1":
+        bundle()
+    yield
+
+
+app = FastAPI(title="MarginGraph", version="0.1.0", lifespan=lifespan)
 
 
 def _note(erp) -> str:
@@ -46,7 +56,7 @@ def _note(erp) -> str:
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True}
+    return {"ok": True, "model_loaded": bundle.cache_info().currsize > 0}
 
 
 @app.post("/recommend")

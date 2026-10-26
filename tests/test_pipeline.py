@@ -24,7 +24,7 @@ def test_split_is_temporal(tiny_cfg):
     info = split.check_no_leakage(s)
     assert info["invoice_overlap"] == 0
     ev = split.make_events(s["test"], 2, 50, None, 0)
-    assert all(t not in c for t, c in zip(ev["target"], ev["context"]))
+    assert all(t not in c for t, c in zip(ev["target"], ev["context"], strict=True))
 
 
 def _random_case(rng, n=12):
@@ -46,7 +46,7 @@ def test_milp_matches_enumeration_and_respects_rules():
                 a = solve_milp(*args, pol, 2.0)
                 b = solve_enum(*args, pol, 2.0)
                 o = option_table(*args, pol, 2.0)
-                val = lambda ch: sum(o["value"][j * len(disc) + disc.index(d)] for j, d in ch)
+                val = lambda ch, o=o, disc=disc: sum(o["value"][j * len(disc) + disc.index(d)] for j, d in ch)
                 assert abs(val(a) - val(b)) < 1e-6
                 for ch in (a, b):
                     assert check_constraints(ch, args[1], args[2], pol) == 0
@@ -63,6 +63,10 @@ def test_end_to_end(tiny_cfg, tmp_path):
     assert (e8.loc[e8.strategy.str.startswith("milp"), "violations"] == 0).all()
     e9 = json.loads((tmp_path / "results" / "e9_solver_check.json").read_text())
     assert e9["objective_agree"] == e9["checked"]
+    # release gate: the reranker must beat popularity on the fixture too
+    from margingraph import gate
+
+    assert gate.check(tmp_path / "results")["passed"]
 
     import os
 

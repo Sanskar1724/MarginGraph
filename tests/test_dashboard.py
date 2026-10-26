@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from margingraph.dashboard import adapter, app as appmod, db, kpis, sample
+from margingraph.dashboard import adapter, db, kpis, sample
+from margingraph.dashboard import app as appmod
 
 
 @pytest.fixture

@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> None:
     s = sub.add_parser("serve", help="start the FastAPI demo")
     s.add_argument("--artifacts", default="artifacts")
     s.add_argument("--port", type=int, default=8000)
+    s.add_argument("--workers", type=int, default=1, help="processes; each holds its own copy of the model (~0.5 GB)")
     y = sub.add_parser("sync", help="pull a store's products and orders into a folder `run` can train on")
     y.add_argument("source", choices=["csv", "shopify", "woocommerce"])
     y.add_argument("--out", default="data/store", help="output folder (default data/store)")
@@ -46,6 +47,9 @@ def main(argv: list[str] | None = None) -> None:
     d.add_argument("--sample", action="store_true", help="(re)seed the 'demo' store with sample data first")
     d.add_argument("--catalog", help="CSV (item,price,unit_cost,stock,overstock,description) to load for --store")
     d.add_argument("--store", default="demo")
+    from .service.cli import add_parsers
+
+    add_parsers(sub)
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
 
@@ -64,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
         import uvicorn
 
         os.environ["MARGINGRAPH_ARTIFACTS"] = args.artifacts
-        uvicorn.run("margingraph.api:app", host="0.0.0.0", port=args.port)
+        uvicorn.run("margingraph.api:app", host="0.0.0.0", port=args.port, workers=args.workers)
     elif args.cmd == "dashboard":
         import uvicorn
 
@@ -79,6 +83,10 @@ def main(argv: list[str] | None = None) -> None:
             n = db.import_catalog(db.connect(args.db), args.store, pd.read_csv(args.catalog, dtype={"item": str}))
             print(f"loaded {n} catalog items into store {args.store!r}")
         uvicorn.run("margingraph.dashboard.app:app", host=args.host, port=args.port)
+    else:
+        from .service.cli import run as run_service
+
+        run_service(args, cfg)
 
 
 def _sync(args, cfg: dict) -> None:

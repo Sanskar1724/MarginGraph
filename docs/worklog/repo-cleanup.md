@@ -146,3 +146,66 @@ Kept as is, flagged: `space/artifacts/ease.npz` (7.4 MB binary). The Space needs
 2. OK to close #1 and delete the `claude/*` branches after merge.
 3. OK to add an MIT LICENSE.
 4. Turn on "Automatically delete head branches" in repo settings (only San can).
+
+## 2026-10-26 12:10 UTC: authorship (San: "all pushes should be mine only")
+
+- Found on `main`: 40 commits authored and committed as `Claude <noreply@anthropic.com>` (GitHub shows the "claude" account), 4 as `Sanskar Chandawar <152592524+Sanskar1724@users.noreply.github.com>` (committer GitHub, from the web UI).
+- Prepared a rewrite with `git filter-repo --mailmap` (Claude → Sanskar Chandawar, same noreply email San already uses) and a message callback that removes `Co-Authored-By: Claude…` and `Claude-Session:` lines and renames the `Merge remote-tracking branch 'origin/claude/project-thread-…' into trial` messages to `Merge <module branch> (#PR) into main`.
+- Check: rewritten tree `7f9d0ae` is identical to the current `main` tree, and 0 trailer lines are left. Every commit hash changes.
+- The force-push was blocked by the session's safety check pending San's explicit confirmation. Asked San on a decision card.
+- From now on, this thread commits as Sanskar Chandawar with no trailers. The coordinator was asked to tell the other threads to do the same.
+
+## 2026-10-26 12:15 UTC: module branches trimmed to their own module (San: "only main should have full code")
+
+Script (`build.py` in the thread scratchpad): for each module branch, starting from `main` at `d7dfa77`, `git rm` every file outside the module's paths, keep `LICENSE` and `.gitignore`, write a module README (centered title, shields.io badges, links back to `main`, "what this module does", file table, run steps; core and report branches embed `docs/assets/architecture.svg`, ranker-accuracy embeds `results-hit10.svg` from `main` via raw.githubusercontent.com). One commit per branch authored by San, pushed as a fast-forward.
+
+| Branch | Files kept |
+| --- | --- |
+| `feat/core-pipeline` | 48: package minus connectors/dashboard, configs, results, pipeline tests, run_all notebook, RESULTS/RUNNING, core worklog |
+| `feat/api-service` | 5: `api.py`, RUNNING.md |
+| `feat/ranker-accuracy` | 14: models, features, rerank, stats, E3–E7 results |
+| `feat/llm-reranker` | 7: `llm.py`, two Kaggle notebooks, fine-tune tests |
+| `feat/store-connectors` | 15: `connectors/`, tests, CONNECTORS.md, worklog |
+| `feat/merchant-dashboard` | 15: `dashboard/`, tests, DASHBOARD.md, item descriptions, worklog |
+| `feat/hf-space-demo` | 14: `space/`, tests, worklog |
+| `docs/project-report` | 22: report, roadmap, results, worklogs, archive, assets |
+| `docs/research-paper` | 21: `paper/`, worklog |
+| `docs/pitch-deck` | 7: `docs/deck/`, worklog |
+| `docs/launch-kit` | 15: `docs/launch/`, Pages workflow, worklog |
+| `ci/github-actions` | 6: `.github/`, CONTRIBUTING.md |
+
+Checks: `feat/core-pipeline` alone passes its tests (6 passed; first try failed because `api.py` and `llm.py` were left out, both added back). `feat/hf-space-demo` alone: 32 passed. `feat/merchant-dashboard` (with core on the path): 11 passed. `feat/store-connectors` needs `configs/` from core, so its CLI tests run on `main` only (stated in its README).
+
+`main` README now has a branch table linking each module branch, and CONTRIBUTING says new work branches from `main` and module branches are refreshed after merge.
+
+Note for the fine-tune thread: `notebooks/llm_*.ipynb` still `git clone -b claude/project-thread-mkbaip`; switch to `main` before that branch is deleted.
+
+## 2026-10-26 12:30 UTC: PRs #10 and #11 merged, branches refreshed
+
+- PR #10 (work log, `claude/project-thread-j64y7y`) and PR #11 (CI, `claude/project-thread-hadeju`, all 7 checks green) merged into `main`. Conflict in `docs/WORKLOG.md` (both edited the thread table): kept #10's table and branch map, took #11's row 9 and marked it merged. Local run: 61 passed, 1 skipped; `ruff check .` clean.
+- Module branches refreshed with a merge commit (parents: old branch tip + `main`) whose tree is the trimmed module, so pushes stay fast-forward. `ci/github-actions` now holds the workflows, pre-commit, gitleaks, Dockerfile, scripts, quality gate and load-test results; `feat/api-service` gained the Dockerfile, load tester and load-test results. `feat/core-pipeline` needed `gate.py` (imported by the pipeline test): added; 6 passed on that branch alone.
+- PR #12 (service) not merged yet: add/add conflicts with #11 in `.dockerignore`, `.github/workflows/ci.yml`, `Dockerfile`, plus `pyproject.toml` and `docs/WORKLOG.md`. Asked the service thread (via the coordinator) to merge `main` and reconcile.
+
+## Branch deletion (San: "repo has 23 branches please remove unwanted")
+
+Fully contained in `main` (checked with `git merge-base --is-ancestor`): `claude/add-notebooks-and-plan`, `claude/project-thread-{42h21l,80g63p,dxygit,hadeju,j64y7y,l6b8ga,oyvjte,r1a0d1}`.
+`git push --delete` was refused by this session's network proxy (HTTP 403), and the GitHub tools have no branch-delete call, so these must be deleted in the GitHub UI (Branches page).
+Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clone it), `claude/project-thread-psfiei` (PR #12 open), `claude/project-thread-t654yh` (this thread).
+
+## 2026-10-26 12:42 UTC: PR #12 (service) merged
+
+- `claude/project-thread-psfiei` (CI green, `main` already merged in by the service thread) merged into `main`. Local run: 80 passed, 1 skipped; `ruff check .` clean.
+- README roadmap: production service ticked, linked to `docs/SERVICE.md`.
+- `feat/api-service` is now the service module: `src/margingraph/service/`, `api.py`, tests, SERVICE/API docs, Docker Compose files, Dockerfile, `.env.example`, replay / A/B / load-test scripts and their measured results (39 files). All module branches refreshed from `main`.
+- `claude/project-thread-psfiei` is now fully in `main` and can be deleted.
+
+## 2026-10-26 12:58 UTC: logo (San: "add a best svg ... it should be like logo")
+
+- `docs/assets/logo-light.svg` and `logo-dark.svg`: app-icon mark (rounded square, blue to green) with graph nodes on a rising line above a dashed margin-floor line, plus the "MarginGraph" wordmark and tagline. Generated by a small Python script; rendered in headless Chromium on white and on GitHub's dark background to check.
+- README header now uses `<picture>` so GitHub serves the dark version in dark mode. The architecture diagram stays further down.
+- A first draft (a full pipeline banner) was dropped before commit after San said it should be a logo.
+
+## 2026-10-26 13:00 UTC: PR #13 (industry plan) merged
+
+- `docs/industry-roadmap` merged into `main` (no conflicts; 86 passed, 1 skipped; ruff clean). Added to the README branch table, CONTRIBUTING and the WORKLOG branch map.
+- `docs/industry-roadmap` trimmed like the other module branches: `docs/industry-plan/`, the A/B sample-size and public-dataset scripts with their tests, the work log, and its own README. That makes 13 module branches.
