@@ -1,6 +1,6 @@
 # MarginGraph work log
 
-*A record of every piece of work on this project: who asked, what was done, where it lives, and what came out. Last updated 2026-10-26 11:50 UTC.*
+*A record of every piece of work on this project: who asked, what was done, where it lives, and what came out. Last updated 2026-10-26 11:56 UTC.*
 
 Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This page is the index. Results quoted anywhere in the log come from [`RESULTS.md`](RESULTS.md); nothing is a target number.
 
@@ -12,10 +12,10 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 2 | Build MarginGraph end to end | 2026-10-26 09:00 | [#2](https://github.com/Sanskar1724/MarginGraph/pull/2) Pipeline: audit, baselines, LightGBM, MILP, simulation, API | `claude/project-thread-mkbaip` | PR open; E6 fine-tune running on Kaggle | [history](worklog/history-2026-10-26.md#2-end-to-end-build-2026-10-26) |
 | 3 | Write project report and roadmap | 2026-10-26 11:38 | [#3](https://github.com/Sanskar1724/MarginGraph/pull/3) Project report, roadmap, work log | `claude/project-thread-j64y7y` (into #2) | PR open | [history](worklog/history-2026-10-26.md#4-project-report-roadmap-and-work-log-2026-10-26) |
 | 4 | Build production recommendation service | 2026-10-26 11:37 | in progress | | In progress | added when its PR lands |
-| 5 | Deploy free live demo | 2026-10-26 11:37 | in progress | | In progress | added when its PR lands |
-| 6 | Connect real store data sources | 2026-10-26 11:38 | in progress | | In progress | added when its PR lands |
+| 5 | Deploy free live demo | 2026-10-26 11:37 | [#4](https://github.com/Sanskar1724/MarginGraph/pull/4) Free Hugging Face Space demo for retail stores | `claude/project-thread-r1a0d1` (into #2) | PR open | [demo.md](worklog/demo.md) |
+| 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Store data connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` (into #2) | PR open | [connectors.md](worklog/connectors.md) |
 | 7 | Improve recommendation accuracy | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
-| 8 | Build merchant dashboard | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
+| 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Merchant dashboard: policy settings, KPIs and A/B results with CIs | `claude/project-thread-oyvjte` (into #2) | PR open | [dashboard.md](worklog/dashboard.md) |
 | 9 | Add CI and release checks | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
 
 ## Experiment runs
