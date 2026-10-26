@@ -64,7 +64,8 @@ def _yes_no_ids(tok) -> tuple[int, int]:
 
 def _yes_no_logits(model, tok, texts: list[str]):
     enc = tok(texts, return_tensors="pt", padding=True).to(model.device)
-    logits = model(**enc).logits[:, -1, :]
+    # only the last position: full-sequence logits over a 151k vocab do not fit a T4
+    logits = model(**enc, logits_to_keep=1).logits[:, -1, :]
     yes, no = _yes_no_ids(tok)
     return logits[:, [no, yes]].float()
 
@@ -123,7 +124,7 @@ def finetune_lora(
     examples: pd.DataFrame,
     epochs: int = 2,
     lr: float = 2e-4,
-    batch_size: int = 16,
+    batch_size: int = 8,
     r: int = 16,
     log_every: int = 50,
 ):
@@ -137,6 +138,10 @@ def finetune_lora(
     from peft import LoraConfig, get_peft_model
 
     _skip_torchao_check()
+    if model.device.type == "cuda":  # trade compute for memory so 1.5B trains on a 15 GB T4
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        model.enable_input_require_grads()
+        model.config.use_cache = False
     model = get_peft_model(
         model,
         LoraConfig(r=r, lora_alpha=2 * r, lora_dropout=0.05, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]),
