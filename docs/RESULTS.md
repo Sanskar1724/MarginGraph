@@ -64,3 +64,5 @@ Qwen2.5-1.5B-Instruct, zero-shot yes/no scoring of the top-20 LightGBM slate, 1,
 **Gate: NO-GO** for 1.5B zero-shot. LightGBM stays the reranker. Next: Qwen2.5-3B zero-shot, then E6 (fine-tune on LightGBM slates with hard negatives, or use the LLM score as a LightGBM feature).
 
 Qwen2.5-3B-Instruct, same setup and baskets: LLM Hit@5 16.6% vs LightGBM 27.6% (−11.0 [−13.7, −8.4]); blend Hit@5 22.3% (−5.3 [−7.2, −3.4]); blend Hit@10 33.9% vs 36.1% (−2.2 [−4.0, −0.4]). **NO-GO**; 3B is no better than 1.5B zero-shot.
+
+Option 1, LLM as an extra signal (Qwen2.5-3B scores; logistic regression on LightGBM + LLM features fit on 1,147 held-out val baskets, tested on the same 1,000 test baskets): Hit@5 27.5% vs LightGBM 27.6% (−0.1 [−0.6, +0.3]); Hit@10 −0.1 [−0.6, +0.4]. The fitted LLM weights are near zero (llm 0.015, llm_z 0.055 vs lgbm 0.736). **NO-GO**: zero-shot Qwen adds no signal beyond LightGBM. Next: E6 LoRA fine-tune (`notebooks/llm_finetune_gpu.ipynb`).
