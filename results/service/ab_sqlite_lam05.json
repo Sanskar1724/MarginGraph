@@ -1,0 +1,40 @@
+{
+  "control": {
+    "requests": 497,
+    "converted": 0.1569,
+    "profit": 2.8064,
+    "unit_profit": 0.1865
+  },
+  "treatment": {
+    "requests": 534,
+    "converted": 0.1292,
+    "profit": 5.9779,
+    "unit_profit": 0.1377
+  },
+  "treatment_minus_control": {
+    "converted": {
+      "diff": -0.0277,
+      "ci95": [
+        -0.0706,
+        0.014
+      ],
+      "relative": -0.177
+    },
+    "profit": {
+      "diff": 3.1715,
+      "ci95": [
+        -1.7127,
+        11.8078
+      ],
+      "relative": 1.13
+    },
+    "unit_profit": {
+      "diff": -0.0488,
+      "ci95": [
+        -0.1193,
+        0.0198
+      ],
+      "relative": -0.262
+    }
+  }
+}
