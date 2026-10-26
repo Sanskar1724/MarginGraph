@@ -147,3 +147,30 @@ def simulate_erp(lines_train: pd.DataFrame, catalog: pd.DataFrame, cfg: dict, se
     erp["overstock"] = over & (erp["stock"] > 0)
     erp.loc[erp["overstock"], "stock"] = np.ceil(erp.loc[erp["overstock"], "stock"] * mult[erp["overstock"]]).astype(int)
     return erp
+
+
+def store_erp(lines_train: pd.DataFrame, catalog: pd.DataFrame, store: pd.DataFrame, cfg: dict, seed: int) -> pd.DataFrame:
+    """ERP fields from a connected store's own cost and stock.
+
+    Where the store has no unit cost, cost = price * erp.cost_ratio and the
+    item is flagged cost_source="assumed". Where it has no stock count, stock
+    comes from the same weeks-of-cover rule as simulate_erp, flagged
+    stock_source="simulated". An item is overstock when its stock covers more
+    than erp.overstock_weeks of train demand.
+    """
+    e = cfg["erp"]
+    sim = simulate_erp(lines_train, catalog, cfg, seed)
+    s = store.drop_duplicates("item", keep="last").set_index("item").reindex(sim["item"])
+    cost = s["unit_cost"].to_numpy(dtype=float)
+    stock = s["stock"].to_numpy(dtype=float)
+    has_cost, has_stock = ~np.isnan(cost), ~np.isnan(stock)
+    erp = sim[["item", "price", "weekly_demand"]].copy()
+    erp["unit_cost"] = np.where(has_cost, cost, erp["price"] * e.get("cost_ratio", 0.6))
+    erp["cost_source"] = np.where(has_cost, "store", "assumed")
+    erp["stock"] = np.where(has_stock, stock, sim["stock"].to_numpy()).astype(int)
+    erp["stock_source"] = np.where(has_stock, "store", "simulated")
+    cover = erp["weekly_demand"] * e.get("overstock_weeks", 12)
+    erp["overstock"] = (erp["stock"] > 0) & (erp["stock"] > cover)
+    # Items without a store stock count keep the simulated overstock draw.
+    erp.loc[~has_stock, "overstock"] = sim.loc[~has_stock, "overstock"].to_numpy()
+    return erp[["item", "price", "unit_cost", "weekly_demand", "stock", "overstock", "cost_source", "stock_source"]]
