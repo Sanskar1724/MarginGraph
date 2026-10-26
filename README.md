@@ -1,6 +1,9 @@
 <div align="center">
 
-# MarginGraph
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+  <img src="docs/assets/logo-light.svg" alt="MarginGraph" width="620">
+</picture>
 
 **Margin-aware e-commerce recommendations: a ranker for relevance, an optimizer for profit.**
 
