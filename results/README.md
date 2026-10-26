@@ -18,3 +18,4 @@ Raw outputs of `margingraph run` (UCI Online Retail II, seed 42). The tables in 
 | `erp_simulated.csv` | Simulated cost and stock (labelled as simulated) |
 | `item_descriptions.csv` | Product titles, used by the dashboard |
 | `summary.json` | Headline numbers |
+| `loadtest/real_w{workers}_c{concurrency}.json` | `/recommend` load test on the full model (`scripts/loadtest.py`, 1,000 requests each); see [`docs/worklog/ci.md`](../docs/worklog/ci.md) |

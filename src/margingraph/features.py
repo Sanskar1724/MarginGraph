@@ -128,7 +128,7 @@ class CandidateGenerator:
             f["basket_size"] = bsize[rows]
             f["price_vs_basket"] = self.log_price[cols] - ctx_lp[rows]
             same_cat = np.array(
-                [np.mean(self.category[ctx[r]] == self.category[c]) if ctx[r] else 0.0 for r, c in zip(rows, cols)],
+                [np.mean(self.category[ctx[r]] == self.category[c]) if ctx[r] else 0.0 for r, c in zip(rows, cols, strict=True)],
                 dtype=np.float32,
             )
             f["same_category_share"] = same_cat

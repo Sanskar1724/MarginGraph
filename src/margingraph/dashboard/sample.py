@@ -41,7 +41,7 @@ def load_catalog_csv(con, store_id: str, path: str = DEFAULT_ERP) -> int:
     erp["item"] = erp["item"].str.upper()
     if os.path.exists(DESCRIPTIONS):
         d = pd.read_csv(DESCRIPTIONS, dtype=str).dropna()
-        erp["description"] = erp["item"].map(dict(zip(d["item"], d["description"])))
+        erp["description"] = erp["item"].map(dict(zip(d["item"], d["description"], strict=True)))
     return db.import_catalog(con, store_id, erp)
 
 
