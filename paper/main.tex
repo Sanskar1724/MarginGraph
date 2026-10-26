@@ -33,7 +33,7 @@ Stage~1 retrieves 150 candidates from eleven sources (classical recommenders, te
 Stage~2 solves a small mixed-integer program per basket that trades expected relevance against expected gross profit, under a hard 15\% per-item margin floor, a two-item limit, stock availability, and an optional overstock weight.
 On a strict temporal split of UCI Online Retail II (4,480 test baskets), the reranker reaches Hit@10 of 38.1\%, 7.0 points above the best baseline (EASE, 31.1\%; paired 95\% CI [6.0, 8.0]).
 With \emph{simulated} unit cost and stock, the optimizer at $\lambda{=}0.5$ raises realized gross profit per basket by 14\% over the ranker's top-2 (paired CI of the gain \pounds0.014--0.044) for a 1.1-point drop in Hit@2, with zero margin-floor violations; the gain stays positive over nine cost and stock scenarios.
-We also report a negative result: zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, and a stacker that feeds the LLM score to a logistic model all fail to beat LightGBM on the same slates.
+We also report a negative result: zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, a stacker that feeds the LLM score to a logistic model, and a LoRA fine-tune of the 1.5B model all fail to beat LightGBM on the same slates.
 All numbers in this paper are read from files the pipeline writes; none are targets.
 \end{abstract}
 
@@ -290,6 +290,9 @@ Qwen2.5-1.5B zero-shot & 16.8 & 29.5 & $-10.8$ [$-13.7$, $-7.9$] \\
 Qwen2.5-3B zero-shot & 16.6 & --- & $-11.0$ [$-13.7$, $-8.4$] \\
 \quad rank blend with LightGBM & 22.3 & 33.9 & $-5.3$ [$-7.2$, $-3.4$] \\
 Stacker (LightGBM + 3B features) & 27.5 & --- & $-0.1$ [$-0.6$, $+0.3$] \\
+Qwen2.5-1.5B LoRA fine-tuned & 7.8 & 17.4 & $-19.8$ [$-22.8$, $-16.7$] \\
+\quad rank blend with LightGBM & 16.2 & 30.4 & $-11.4$ [$-13.9$, $-8.8$] \\
+Random order of the slate & 11.6 & 23.2 & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -308,8 +311,11 @@ A logistic stacker fit on 1,147 held-out validation baskets, with LightGBM and 3
 In short, zero-shot Qwen adds no measurable signal beyond the trained reranker on this task.
 
 This agrees with \citet{hou2024zeroshot}, who find zero-shot LLM rankers trail trained models, and suggests the gap is larger for wholesale baskets described only by terse product names.
-A LoRA fine-tune~\citep{hu2022lora,bao2023tallrec} of the 1.5B model on 10,772 training-period pairs (one hidden item to three LightGBM hard negatives, two epochs) is running at the time of writing; we will report it whatever the outcome.
-Until an LLM wins on a paired test, LightGBM remains MarginGraph's ranker, and the LLM's role is limited to explanations and to products with no purchase history.
+We then fine-tuned the 1.5B model with LoRA~\citep{hu2022lora,bao2023tallrec} on 10,772 training-period pairs (each hidden item with three LightGBM hard negatives from the same slate; two epochs, class-weighted yes/no loss).
+The weighted loss fell to about $\ln 2$ within 300 steps and stayed there, and the fine-tuned model is worse than zero-shot: Hit@5 7.8\%, below the 11.6\% of a random order of the same slate (the target is in the slate for 46.3\% of baskets).
+Its blend with LightGBM also loses at Hit@10 ($-5.7$ [$-7.7$, $-3.6$]).
+A likely cause, which we did not test, is that LightGBM's near-misses are often the same product in another colour or size, which terse product names cannot separate.
+We therefore keep LightGBM as MarginGraph's ranker and limit the LLM to explanations and to products with no purchase history (7.1\% of test targets); neither use is evaluated here.
 
 % ---------------------------------------------------------------------------
 \section{Limitations}
@@ -318,15 +324,15 @@ Until an LLM wins on a paired test, LightGBM remains MarginGraph's ranker, and t
 \item \textbf{Offline replay.} Replay credits an offer only if the shopper bought it without being shown it. It cannot see purchases an offer would have caused, so it likely understates any recommender, and it cannot measure how shoppers react to being shown higher-margin items. Only an online A/B test can.
 \item \textbf{One store, one task.} One UK wholesaler, mostly business buyers, 2009--2011. Hiding one item per invoice is a proxy for a real checkout widget.
 \item \textbf{Retrieval ceiling.} 35\% of test targets are outside the candidate pool, which bounds every Stage~1 and Stage~2 result.
-\item \textbf{LLM scope.} We tested two small instruction-tuned models zero-shot, one prompt and one scoring method, on the slates of the first ranker (Hit@10 35.6\%). Larger models, other prompts, or fine-tuning may behave differently; the fine-tune is pending.
+\item \textbf{LLM scope.} We tested two small instruction-tuned models zero-shot, one prompt and one scoring method, on the slates of the first ranker (Hit@10 35.6\%). One LoRA fine-tune of the 1.5B model with hard negatives also failed. Larger models, other prompts, richer product text, or easier negatives may behave differently.
 \item \textbf{Latency.} Solver time is 2.7\,ms. The serving latency in the repository (p50 22\,ms for the research API, p95 88\,ms end to end for the multi-store service) was measured in a container, not in a store's production setting.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
 \section{Conclusion}
 On a public retail dataset and a CPU, a calibrated gradient-boosted reranker beats a strong classical ladder for checkout add-ons, and a tiny per-basket MILP converts its probabilities into choices that respect hard margin and stock rules while raising (simulated) profit at a small, tunable cost in hit rate.
-Small open LLMs, used zero-shot, did not help.
-The next steps are to replace simulated costs with a real store's data, to run an online test, and to finish the fine-tuned LLM experiment.
+Small open LLMs did not help, either zero-shot or after a LoRA fine-tune.
+The next steps are to replace simulated costs with a real store's data, to run an online test, and to measure the LLM where it is still used: cold-start products and explanations.
 
 \section*{Reproducibility}
 \sloppy

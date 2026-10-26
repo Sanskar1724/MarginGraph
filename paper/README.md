@@ -23,5 +23,5 @@ On Overleaf: upload `main.tex`, `references.bib` and `figures/`, then compile wi
 ## Before submitting to arXiv
 
 - Put your full name and affiliation in `\author{}`.
-- Add the LoRA fine-tune result (E6) to Section 5.4 when the Kaggle run finishes, whatever it shows.
+- Rebuild `main.pdf` with LaTeX: the E6 fine-tune result (NO-GO) is in `main.tex`, `PAPER.md` and the figures, but the PDF predates it.
 - arXiv's cs.IR category needs an endorsement for first-time submitters.

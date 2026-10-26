@@ -96,9 +96,11 @@ Runs 4–5 (10:40, 11:17) only added exports (`val_slates.parquet`, `train_slate
 | 1 | 10:17 | Qwen2.5-1.5B zero-shot, yes/no score on the top-20 LightGBM slate, 1,000 test baskets | LLM Hit@5 16.8% vs LightGBM 27.6%; blend 23.2%; blend Hit@10 34.8% vs 36.1% (CI crosses 0) | NO-GO |
 | 2 | 10:39 | Qwen2.5-3B zero-shot, same baskets | LLM Hit@5 16.6%; blend 22.3%; blend Hit@10 −2.2 pts [−4.0, −0.4] | NO-GO |
 | 3 | 11:19 | Option 1: logistic-regression stacker (LightGBM + 3B LLM features), fit on 1,147 held-out val baskets | Hit@5 27.5% vs 27.6% (−0.1 [−0.6, +0.3]); LLM weights ≈ 0 (0.015 / 0.055 vs LightGBM 0.736) | NO-GO |
-| 4 | in progress | Option 2: LoRA fine-tune of 1.5B on 10,772 train-period pairs (1 hidden item : 3 LightGBM hard negatives), 2 epochs | pending | |
+| 4 | 12:05–finish | Option 2: LoRA fine-tune of 1.5B on 10,772 train-period pairs (1 hidden item : 3 LightGBM hard negatives), 2 epochs, batch 8. Ran at 3.6 GB peak GPU. Weighted loss fell from 1.80 to ~0.70 by step 300, then stayed flat at ln 2 ≈ 0.693 to the end | LLM Hit@1/5/10 1.4 / 7.8 / 17.4% vs LightGBM 11.1 / 27.6 / 36.1%; blend 4.0 / 16.2 / 30.4%; blend Hit@5 −11.4 [−13.9, −8.8], Hit@10 −5.7 [−7.7, −3.6]. Random order of the slate gives 2.3 / 11.6 / 23.2%, so the LLM is below random | NO-GO |
 
-**Conclusion so far:** zero-shot Qwen adds no signal beyond LightGBM. If the fine-tune (#4) is also NO-GO, the plan is option 3: LightGBM stays the ranker, and the LLM is used only for new products with no purchase history (7% of test targets) and for "why this add-on" explanations.
+**Conclusion:** neither zero-shot nor fine-tuned Qwen adds signal beyond LightGBM. The flat loss at ln 2 says the fine-tune never learned to separate the hidden item from LightGBM's hard negatives, which are often the same product in another colour or size (our reading, not tested).
+
+**Closeout (option 3, agreed with San):** the LLM track is closed. LightGBM stays the ranker. The LLM is kept only for new products with no purchase history (7.1% of test targets) and for "why this add-on" explanations; neither use is measured yet. The result was recorded in RESULTS, this log, the paper and `docs/WORKLOG.md` in a PR on top of the rewritten `main`; after it merges, `claude/project-thread-mkbaip` can be deleted.
 
 ## 6. Kaggle and notebook bugs, and their fixes
 
