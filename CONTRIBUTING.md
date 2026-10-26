@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `main` | Everything, integrated and tested | all |
 | `feat/core-pipeline` | Data, baselines, LightGBM rerank, MILP, simulation | `src/margingraph/`, `configs/`, `results/`, `tests/` |
-| `feat/api-service` | Production recommendation API | `src/margingraph/api.py`, service code |
+| `feat/api-service` | Production service: multi-store API, A/B logging, nightly training, Docker | `src/margingraph/service/`, `api.py`, `docker-compose*.yml` |
 | `feat/ranker-accuracy` | Ranker accuracy experiments | `src/margingraph/rerank.py`, `features.py` |
 | `feat/llm-reranker` | LLM reranker and LoRA fine-tune (Kaggle) | `src/margingraph/llm.py`, `notebooks/llm_*.ipynb` |
 | `feat/store-connectors` | CSV/Excel, Shopify, WooCommerce sync | `src/margingraph/connectors/` |
