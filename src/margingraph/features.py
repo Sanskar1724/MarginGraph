@@ -139,12 +139,14 @@ class CandidateGenerator:
                     rk[name] = np.where(t >= 0, R[name][np.arange(b), np.maximum(t, 0)], np.inf).astype(float)
                 rank_parts.append(pd.DataFrame(rk))
 
-            # candidate pool: per-source top lists, then popularity fill
+            # candidate pool: per-source top lists, then popularity fill. Without a
+            # stream the fresh scores are all zero, so their slots would be random.
+            idle = {"trend", "fresh_co"} if self.fresh is not None and self.fresh.stream is None else set()
             pools = []
             for r in range(b):
                 cand = []
                 for src, k in per_source.items():
-                    if src not in R:
+                    if src not in R or src in idle:
                         continue
                     cand.extend(np.argpartition(R[src][r], k)[:k].tolist())
                 cand = list(dict.fromkeys(cand))
@@ -170,7 +172,7 @@ class CandidateGenerator:
             f["basket_size"] = bsize[rows]
             f["price_vs_basket"] = self.log_price[cols] - ctx_lp[rows]
             same_cat = np.array(
-                [np.mean(self.category[ctx[r]] == self.category[c]) if ctx[r] else 0.0 for r, c in zip(rows, cols)],
+                [np.mean(self.category[ctx[r]] == self.category[c]) if ctx[r] else 0.0 for r, c in zip(rows, cols, strict=True)],
                 dtype=np.float32,
             )
             f["same_category_share"] = same_cat

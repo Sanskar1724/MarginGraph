@@ -27,9 +27,9 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(HERE))
 
-from margingraph.data import build_catalog, clean, read_raw, simulate_erp  # noqa: E402
-
 import core  # noqa: E402
+
+from margingraph.data import build_catalog, clean, read_raw, simulate_erp  # noqa: E402
 
 VAL, TEST = pd.Timestamp("2011-07-01"), pd.Timestamp("2011-10-01")
 

@@ -199,7 +199,7 @@ def main() -> None:
     te = S["splits"]["test"]
     first_sale = te.groupby("item")["ts"].min()
     unseen = ev["test"][~ev["test"]["target"].isin(tv_items)]
-    sold_before = [first_sale.get(t, pd.Timestamp.max).normalize() < ts.normalize() for t, ts in zip(unseen["target"], unseen["ts"])]
+    sold_before = [first_sale.get(t, pd.Timestamp.max).normalize() < ts.normalize() for t, ts in zip(unseen["target"], unseen["ts"], strict=True)]
     facts["test_targets_unseen_before_test"] = float(len(unseen) / len(ev["test"]))
     facts["of_those_sold_in_test_before_event_day"] = float(np.mean(sold_before)) if len(unseen) else 0.0
     log(f"facts: {facts}")
@@ -274,14 +274,14 @@ def main() -> None:
             v = Fa["val"].copy()
             base_id = v["event_id"] % 1_000_000
             v = v[(base_id < cut) | (v["event_id"] < 1_000_000)]
-            fit = v["event_id"].map(lambda e: e % 1_000_000 < cut)
+            fit = (v["event_id"] % 1_000_000) < cut
             codes, _ = pd.factorize(v.loc[fit, "event_id"])
             v.loc[fit, "event_id"] = -(codes + 1)
             Faug = {"val": v, "test": Fa["test"]}
             r = rank_eval_aug(c, Faug, ev, cut)
             if keep:
                 # the final configuration against the pre-thread baseline
-                record(summarize(f"F_final_vs_baseline", r, base, Faug, ev, nb, f"{tag} + {aug} events per invoice; ref = A0_baseline"))
+                record(summarize("F_final_vs_baseline", r, base, Faug, ev, nb, f"{tag} + {aug} events per invoice; ref = A0_baseline"))
             record(summarize(f"D_{tag}_aug{aug}", r, refb, Faug, ev, nb, f"{aug} hidden-item events per val invoice for training; ref = {tag}"))
         grid = [
             {"num_leaves": 63, "learning_rate": 0.03, "n_estimators": 1500, "min_child_samples": 50},

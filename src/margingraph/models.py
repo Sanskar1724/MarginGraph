@@ -311,7 +311,7 @@ class Fresh:
         n = len(self.index)
         trend = np.zeros((len(ctx), n), np.float32)
         co = np.zeros((len(ctx), n), np.float32)
-        for r, (c, t) in enumerate(zip(ctx, ts)):
+        for r, (c, t) in enumerate(zip(ctx, ts, strict=True)):
             tr, C = self._day(pd.Timestamp(t).normalize())
             trend[r] = tr
             if c:

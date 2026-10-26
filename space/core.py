@@ -20,7 +20,6 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-
 # --------------------------------------------------------------------------
 # Stage 1: EASE
 # --------------------------------------------------------------------------
@@ -79,7 +78,7 @@ def loo_events(baskets: list[list[int]], rng: np.random.Generator, max_events: i
 
 
 def calibrate(B: np.ndarray, events, top_n: int = 20) -> dict:
-    X, y, hits, p_tops = [], [], {2: 0, 5: 0, 10: 0}, []
+    X, y, hits = [], [], {2: 0, 5: 0, 10: 0}
     for ctx, hid in events:
         s = scores_for(B, ctx)
         top = np.argsort(-s)[:top_n]

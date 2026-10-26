@@ -1,19 +1,22 @@
 <div align="center">
 
-# MarginGraph
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+  <img src="docs/assets/logo-light.svg" alt="MarginGraph" width="620">
+</picture>
 
 **Margin-aware e-commerce recommendations: a ranker for relevance, an optimizer for profit.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![CI](https://github.com/Sanskar1724/MarginGraph/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sanskar1724/MarginGraph/actions/workflows/ci.yml)
 [![LightGBM](https://img.shields.io/badge/ranker-LightGBM-9cf)](src/margingraph/rerank.py)
 [![PuLP MILP](https://img.shields.io/badge/optimizer-PuLP%20%2F%20HiGHS-orange)](src/margingraph/optimize.py)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](src/margingraph/api.py)
 [![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](space/)
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
 
-[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
+[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [Industry plan](docs/industry-plan/README.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
 
 </div>
 
@@ -122,13 +125,13 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 **Production and pilot**
 
 - [x] FastAPI demo service
-- [ ] Production API with fallback, logging and auth
+- [x] Production service: multi-store API, fallbacks, auth, A/B logging, nightly retraining, Docker ([`docs/SERVICE.md`](docs/SERVICE.md))
 - [x] Gradio demo for Hugging Face Spaces (built; deploy steps in [`space/DEPLOY.md`](space/DEPLOY.md))
 - [x] CSV / Shopify / WooCommerce connector (tested on UCI via CSV; no live store yet)
 - [x] Merchant dashboard (policy settings, KPIs, A/B results with CIs)
 - [ ] Pilot store with real cost and stock, then an A/B test
 
-Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md). Step-by-step plan to an industry-ready product (more datasets, real store data, A/B test, hardening, free hosting): [`docs/industry-plan/`](docs/industry-plan/README.md)
 
 ## Repository layout
 
@@ -151,7 +154,25 @@ MarginGraph/
 
 ## Branches
 
-`main` holds the full, integrated project. Each module also has its own branch for focused development (`feat/core-pipeline`, `feat/store-connectors`, `feat/merchant-dashboard`, `feat/hf-space-demo`, `docs/research-paper`, …). The full list and the workflow are in [CONTRIBUTING.md](CONTRIBUTING.md).
+`main` holds the full, integrated project. Each module also has its own branch with only that module's files and its own README:
+
+| Code | Docs and tooling |
+| --- | --- |
+| [`feat/core-pipeline`](../../tree/feat/core-pipeline) · [`feat/ranker-accuracy`](../../tree/feat/ranker-accuracy) · [`feat/llm-reranker`](../../tree/feat/llm-reranker) · [`feat/api-service`](../../tree/feat/api-service) · [`feat/store-connectors`](../../tree/feat/store-connectors) · [`feat/merchant-dashboard`](../../tree/feat/merchant-dashboard) · [`feat/hf-space-demo`](../../tree/feat/hf-space-demo) | [`docs/project-report`](../../tree/docs/project-report) · [`docs/research-paper`](../../tree/docs/research-paper) · [`docs/pitch-deck`](../../tree/docs/pitch-deck) · [`docs/launch-kit`](../../tree/docs/launch-kit) · [`docs/industry-roadmap`](../../tree/docs/industry-roadmap) · [`ci/github-actions`](../../tree/ci/github-actions) |
+
+Workflow and what each branch contains: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Production service
+
+A multi-store API a shop can call at checkout: per-store margin floor and overstock weights, live stock from order webhooks, a nightly retrain with a quality gate and rollback, margin-safe fallback, built-in A/B logging, API keys, metrics, Docker. SQLite and an in-memory cache by default; Postgres and Redis when you need several copies.
+
+```bash
+pip install -e ".[service]"
+margingraph bootstrap-demo --store demo   # Online Retail II as a store: import + train, ~2 min, < 2 GB RAM
+margingraph api                           # http://localhost:8000/docs
+```
+
+On 1,031 real held-back orders replayed through the API: p50 about 65 ms, p95 about 90 ms, 0 errors. The margin-aware policy cut add-on conversion (significant at λ = 1) and its profit gain was not significant at that sample size, so stores should run the built-in A/B test. Design and results: [`docs/SERVICE.md`](docs/SERVICE.md). Contract: [`docs/API.md`](docs/API.md).
 
 ## Merchant dashboard
 
@@ -184,7 +205,7 @@ HF_TOKEN = userdata.get("HF_TOKEN")
 
 ## Tech stack
 
-`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
+`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `SQLAlchemy (SQLite / Postgres)` · `Redis (optional)` · `Docker` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
 
 ## License
 
