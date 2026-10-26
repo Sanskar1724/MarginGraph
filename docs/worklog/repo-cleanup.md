@@ -217,3 +217,11 @@ Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clo
 - Pushed with `--force-with-lease` on each branch's previous SHA. All commit hashes changed; closed PRs keep pointing at the old commits.
 - Branch deletion was tried again and is still refused by this session's proxy (HTTP 403). San deletes the merged `claude/*` branches by hand.
 - Threads still working on old-history branches (`claude/project-thread-mkbaip` for the fine-tune) must move their new commits onto the new `main` (cherry-pick or `git rebase --onto origin/main <old-main-sha>`), or their PR will show the old commits again.
+
+## 2026-10-26 13:20 UTC: numbers updated to the accuracy run, branches refreshed
+
+- PR #14 (accuracy) was already merged. The paper (tex, figures, PDF, PAPER.md) was rebuilt in `ea2e62c`.
+- `453c0a9` changes the quoted numbers in README, architecture SVG, SERVICE.md, Space text, industry plan, launch kit and deck (`build.js` and the rebuilt `.pptx`, validated). New figures: Hit@10 38.1%, recall@150 65.3%, MILP λ=0.5 +14% profit for −1.1 Hit@2. The first run (35.6%, 58.0%, +17%) stays quoted only as history. Tests: 90 passed, 1 skipped; ruff clean.
+- The deck was rebuilt with `NODE_PATH=<scratch>/node_modules SKILL=<pptx skill> node docs/deck/build.js docs/deck/MarginGraph_pitch_deck.pptx`.
+- 11 module branches were refreshed from main as fast-forward trimmed commits. `feat/llm-reranker` and `feat/store-connectors` were unchanged.
+- San deleted the old `claude/*` branches. Left on GitHub: `main`, the 13 module branches, `claude/project-thread-mkbaip` (fine-tune, still running) and `claude/readme`. `claude/readme` is a stale pre-rewrite copy of main from 12:42 UTC, and its tip is already in main, so San can delete it too.
