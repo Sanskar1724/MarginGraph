@@ -21,6 +21,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 11 | Write MarginGraph research paper | 2026-10-26 11:50 | [#9](https://github.com/Sanskar1724/MarginGraph/pull/9) arXiv-style paper (LaTeX, PDF, Markdown, figures) | `claude/project-thread-l6b8ga` → `docs/research-paper` | Merged into `main` 2026-10-26 | [paper.md](worklog/paper.md) |
 | 12 | Create MarginGraph pitch deck | 2026-10-26 11:50 | [#7](https://github.com/Sanskar1724/MarginGraph/pull/7) 15-slide pitch deck | `claude/project-thread-42h21l` → `docs/pitch-deck` | Merged into `main` 2026-10-26 | [deck.md](worklog/deck.md) |
 | 13 | Prepare launch and promotion kit | 2026-10-26 11:50 | [#8](https://github.com/Sanskar1724/MarginGraph/pull/8) Launch kit for stores, press and developers | `claude/project-thread-80g63p` → `docs/launch-kit` | Merged into `main` 2026-10-26 | [launch.md](worklog/launch.md) |
+| 14 | Plan path to industry-ready product | 2026-10-26 12:38 | this PR | `docs/industry-roadmap` | Open | [industry-plan.md](worklog/industry-plan.md) |
 
 PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed directly, so GitHub shows them as closed). The cleanup itself is logged in [repo-cleanup.md](worklog/repo-cleanup.md): merge order, the two conflicts and how they were resolved, the test run (59 passed, 1 skipped), the restructure, and the new branches.
 
@@ -42,6 +43,7 @@ PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed d
 | `docs/research-paper` | arXiv-style paper | `paper/` | #9 `claude/project-thread-l6b8ga` |
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` | #7 `claude/project-thread-42h21l` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` | #8 `claude/project-thread-80g63p` |
+| `docs/industry-roadmap` | Industry plan, A/B sizing, public dataset converters | `docs/industry-plan/` | #13 `docs/industry-roadmap` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` | #11 `claude/project-thread-hadeju` |
 
 Old `claude/*` branches are deleted once their work is in `main` (see [repo-cleanup.md](worklog/repo-cleanup.md)).

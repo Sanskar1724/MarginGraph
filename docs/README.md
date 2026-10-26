@@ -5,6 +5,7 @@
 | [PROJECT_REPORT.md](PROJECT_REPORT.md) | Problem, idea, approach, results, limits, glossary |
 | [RESULTS.md](RESULTS.md) | Every measured number, E1–E11 and the LLM runs |
 | [ROADMAP.md](ROADMAP.md) | Path to production, pilot, A/B test, free stack, business model |
+| [industry-plan/](industry-plan/) | Step-by-step plan to an industry-ready product: multi-dataset validation, real store data, A/B test, LLM options, hardening, free deployment, outreach, open items |
 | [RUNNING.md](RUNNING.md) | Install and run the pipeline, API and notebooks |
 | [SERVICE.md](SERVICE.md) | Production service: idea, design, measured results, free hosting, limits |
 | [API.md](API.md) | Production API contract (v1) for shops, connectors and the dashboard |
