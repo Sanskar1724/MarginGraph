@@ -8,15 +8,16 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 
 | # | Thread (goal) | Started | Pull request | Branch | Status | Detailed log |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Rate MarginGraph and plan experiments | 2026-10-25 | [#1](https://github.com/Sanskar1724/MarginGraph/pull/1) Add notebooks, project report, and experiment plan | `claude/add-notebooks-and-plan` | PR open, waiting on San | [history](worklog/history-2026-10-26.md#1-review-and-experiment-plan-2026-10-25) |
-| 2 | Build MarginGraph end to end | 2026-10-26 09:00 | [#2](https://github.com/Sanskar1724/MarginGraph/pull/2) Pipeline: audit, baselines, LightGBM, MILP, simulation, API | `claude/project-thread-mkbaip` | PR open; E6 fine-tune running on Kaggle | [history](worklog/history-2026-10-26.md#2-end-to-end-build-2026-10-26) |
-| 3 | Write project report and roadmap | 2026-10-26 11:38 | [#3](https://github.com/Sanskar1724/MarginGraph/pull/3) Project report, roadmap, work log | `claude/project-thread-j64y7y` (into #2) | PR open | [history](worklog/history-2026-10-26.md#4-project-report-roadmap-and-work-log-2026-10-26) |
+| 1 | Rate MarginGraph and plan experiments | 2026-10-25 | [#1](https://github.com/Sanskar1724/MarginGraph/pull/1) Add notebooks, project report, and experiment plan | `claude/add-notebooks-and-plan` | Merged into `main` 2026-10-26 | [history](worklog/history-2026-10-26.md#1-review-and-experiment-plan-2026-10-25) |
+| 2 | Build MarginGraph end to end | 2026-10-26 09:00 | [#2](https://github.com/Sanskar1724/MarginGraph/pull/2) Pipeline: audit, baselines, LightGBM, MILP, simulation, API | `claude/project-thread-mkbaip` | Merged into `main` 2026-10-26; E6 fine-tune running on Kaggle | [history](worklog/history-2026-10-26.md#2-end-to-end-build-2026-10-26) |
+| 3 | Write project report and roadmap | 2026-10-26 11:38 | [#3](https://github.com/Sanskar1724/MarginGraph/pull/3) Project report, roadmap, work log | `claude/project-thread-j64y7y` (into #2) | Merged into `main` 2026-10-26 | [history](worklog/history-2026-10-26.md#4-project-report-roadmap-and-work-log-2026-10-26) |
 | 4 | Build production recommendation service | 2026-10-26 11:37 | in progress | | In progress | added when its PR lands |
-| 5 | Deploy free live demo | 2026-10-26 11:37 | [#4](https://github.com/Sanskar1724/MarginGraph/pull/4) Free Hugging Face Space demo for retail stores | `claude/project-thread-r1a0d1` (into #2) | PR open | [demo.md](worklog/demo.md) |
-| 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Store data connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` (into #2) | PR open | [connectors.md](worklog/connectors.md) |
+| 5 | Deploy free live demo | 2026-10-26 11:37 | [#4](https://github.com/Sanskar1724/MarginGraph/pull/4) Free Hugging Face Space demo for retail stores | `claude/project-thread-r1a0d1` (into #2) | Merged into `main` 2026-10-26 | [demo.md](worklog/demo.md) |
+| 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Store data connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` (into #2) | Merged into `main` 2026-10-26 | [connectors.md](worklog/connectors.md) |
 | 7 | Improve recommendation accuracy | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
-| 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Merchant dashboard: policy settings, KPIs and A/B results with CIs | `claude/project-thread-oyvjte` (into #2) | PR open | [dashboard.md](worklog/dashboard.md) |
+| 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Merchant dashboard: policy settings, KPIs and A/B results with CIs | `claude/project-thread-oyvjte` (into #2) | Merged into `main` 2026-10-26 | [dashboard.md](worklog/dashboard.md) |
 | 9 | Add CI and release checks | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
+| 10 | Clean up GitHub repo structure | 2026-10-26 11:53 | pushed to `main` (no PR; San said go ahead) | `claude/project-thread-t654yh` | Done; old `claude/*` branches retire as their threads finish | [repo-cleanup.md](worklog/repo-cleanup.md) |
 
 ## Experiment runs
 
