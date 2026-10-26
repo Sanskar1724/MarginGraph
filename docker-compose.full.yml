@@ -1,0 +1,26 @@
+# Adds Postgres and Redis. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
+# With both shared, the api is stateless: more copies can run behind any load balancer.
+services:
+  api:
+    environment:
+      DATABASE_URL: postgresql+psycopg://mg:mg@postgres:5432/margingraph
+      REDIS_URL: redis://redis:6379/0
+    depends_on: [postgres, redis]
+  scheduler:
+    environment:
+      DATABASE_URL: postgresql+psycopg://mg:mg@postgres:5432/margingraph
+      REDIS_URL: redis://redis:6379/0
+    depends_on: [postgres, redis]
+  postgres:
+    image: postgres:16-alpine
+    environment: {POSTGRES_USER: mg, POSTGRES_PASSWORD: mg, POSTGRES_DB: margingraph}
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    mem_limit: 512m
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    mem_limit: 192m
+
+volumes:
+  pgdata:

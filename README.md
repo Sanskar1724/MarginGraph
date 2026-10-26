@@ -158,6 +158,18 @@ MarginGraph/
 
 Workflow and what each branch contains: [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Production service
+
+A multi-store API a shop can call at checkout: per-store margin floor and overstock weights, live stock from order webhooks, a nightly retrain with a quality gate and rollback, margin-safe fallback, built-in A/B logging, API keys, metrics, Docker. SQLite and an in-memory cache by default; Postgres and Redis when you need several copies.
+
+```bash
+pip install -e ".[service]"
+margingraph bootstrap-demo --store demo   # Online Retail II as a store: import + train, ~2 min, < 2 GB RAM
+margingraph api                           # http://localhost:8000/docs
+```
+
+On 1,031 real held-back orders replayed through the API: p50 about 65 ms, p95 about 90 ms, 0 errors. The margin-aware policy cut add-on conversion (significant at λ = 1) and its profit gain was not significant at that sample size, so stores should run the built-in A/B test. Design and results: [`docs/SERVICE.md`](docs/SERVICE.md). Contract: [`docs/API.md`](docs/API.md).
+
 ## Merchant dashboard
 
 A store owner sets the margin floor, overstock weights and excluded products, and sees profit uplift, margin, overstock cleared, clicks, buys and A/B results with 95% CIs. It is FastAPI with plain HTML and SQLite, and uses about 190 MB of RAM.
@@ -189,7 +201,7 @@ HF_TOKEN = userdata.get("HF_TOKEN")
 
 ## Tech stack
 
-`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
+`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `SQLAlchemy (SQLite / Postgres)` · `Redis (optional)` · `Docker` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
 
 ## License
 
