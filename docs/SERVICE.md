@@ -108,7 +108,7 @@ python scripts/replay.py --key mg_... --csv data/replay_demo.csv   # optional li
 
 Real store: `margingraph create-store shop1`, then load products and orders (API, `import-catalog` / `import-orders`, or `margingraph sync ...` followed by `margingraph import-sync shop1`), then `margingraph batch --store shop1`.
 
-Docker: `cp .env.example .env`, edit the admin key, then `docker compose up -d` (API + nightly scheduler, SQLite). Add Postgres, Redis and a load balancer with `docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --scale api=2`.
+Docker: `cp .env.example .env`, edit the admin key, then `docker compose up -d` (API + nightly scheduler, SQLite). Add Postgres and Redis with `docker compose -f docker-compose.yml -f docker-compose.full.yml up -d`; with those shared, more API copies can run behind any load balancer.
 
 ## Free hosting
 

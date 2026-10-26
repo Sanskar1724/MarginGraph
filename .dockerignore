@@ -1,10 +1,13 @@
+.git
 data/
 artifacts*/
 results/
 notebooks/
-.git/
-
-**/__pycache__/
-*.egg-info/
+docs/
+tests/
+**/__pycache__
+*.egg-info
 .pytest_cache/
+.venv
 .env
+kaggle.json

@@ -1,7 +1,6 @@
 """Service commands: ``margingraph {api,init-db,create-store,import-catalog,import-orders,import-sync,bootstrap-demo,batch,scheduler}``."""
 from __future__ import annotations
 
-import argparse
 import json
 import logging
 import secrets

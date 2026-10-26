@@ -23,10 +23,8 @@ import pickle
 import resource
 import secrets
 import time
-from datetime import timedelta
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from sqlalchemy.engine import Engine
 
@@ -67,7 +65,7 @@ def refresh_overstock(engine: Engine, store_id: str, lines: pd.DataFrame, weeks:
     w = prods["item"].map(weekly).fillna(0.0)
     flag = (prods["stock"] > 0) & (prods["stock"] > weeks * w)
     changed = prods[flag != prods["overstock"].astype(bool)]
-    rows = [{"item": it, "overstock": bool(f)} for it, f in zip(changed["item"], flag[changed.index])]
+    rows = [{"item": it, "overstock": bool(f)} for it, f in zip(changed["item"], flag[changed.index], strict=True)]
     if rows:
         db.upsert_products(engine, store_id, rows)
         db.bump_catalog_version(engine, store_id)
