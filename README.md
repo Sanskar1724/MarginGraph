@@ -120,6 +120,16 @@ tests/             tests on a small synthetic fixture
 
 `MarginGraph.md` describes the earlier V1/V2 prototype. Its numbers came from mock or random data and are not results.
 
+## Merchant dashboard
+
+A store owner sets the margin floor, overstock weights and excluded products, and sees profit uplift, margin, overstock cleared, clicks, buys and A/B results with 95% CIs. It is FastAPI with plain HTML and SQLite, and uses about 190 MB of RAM.
+
+```bash
+margingraph dashboard --sample   # demo store on http://127.0.0.1:8501 (sample data is simulated and labelled)
+```
+
+Guide and integration contract: [`docs/DASHBOARD.md`](docs/DASHBOARD.md).
+
 ## Setup (free)
 
 Everything runs on free tools: a laptop or Colab CPU for data prep, baselines and the optimizer; Kaggle Notebooks or a free Colab T4 GPU for the LLM steps; Parquet + DuckDB instead of a database.
