@@ -86,3 +86,5 @@ Replace `YOUR-HF-USERNAME` in `app.py` (How it works tab) with your username so 
   and open http://127.0.0.1:7860 (uses about 250 to 350 MB of RAM, fine on 8 GB).
 * Rebuild the artifacts after changing the model: `python space/build_artifacts.py --xlsx online_retail_II.xlsx`
   (needs the full repo installed, about 20 seconds plus 2 minutes to read the xlsx).
+
+* If the Space was created on **ZeroGPU** (free accounts cannot switch it to CPU basic later), the placeholder `@spaces.GPU` function at the top of `app.py` lets it start. Live example: https://huggingface.co/spaces/EquilStable/MarginGraph
