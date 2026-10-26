@@ -46,6 +46,7 @@ def load_model(model_name: str):
     # one with the most free memory, so leftovers from a failed cell on GPU 0
     # don't block a retry when Kaggle gives two T4s.
     free = [torch.cuda.mem_get_info(i)[0] for i in range(torch.cuda.device_count())]
+    print("free GPU memory:", [f"cuda:{i} {f / 1e9:.1f} GB" for i, f in enumerate(free)])
     dev = int(np.argmax(free))
     if free[dev] < 6e9:
         raise RuntimeError(
@@ -186,7 +187,8 @@ def finetune_lora(
             step += 1
             run = 0.98 * run + 0.02 * loss.item() if step > 1 else loss.item()
             if step % log_every == 0 or step == n_steps:
-                print(f"epoch {ep + 1} step {step}/{n_steps} loss {run:.4f}", flush=True)
+                mem = torch.cuda.max_memory_allocated(model.device) / 1e9 if use_amp else 0.0
+                print(f"epoch {ep + 1} step {step}/{n_steps} loss {run:.4f} peak_gpu {mem:.1f} GB", flush=True)
     model.eval()
     return model
 
