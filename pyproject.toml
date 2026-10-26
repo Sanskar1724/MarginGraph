@@ -30,6 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx"]
+item2vec = ["gensim"]  # optional source, off by default (lost on val)
 
 [project.urls]
 Repository = "https://github.com/Sanskar1724/MarginGraph"

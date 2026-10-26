@@ -12,9 +12,9 @@ We tested it on real sales from a UK online gift store (UCI Online Retail II, De
 
 | What we measured | Result |
 | --- | --- |
-| Hidden item in the ranker's top 10 | **35.6%**, against 31.1% for the best simple method (EASE). Gain +4.5 points, 95% CI [3.6, 5.5] |
-| Profit per basket from the optimizer (λ=0.5) vs showing the ranker's top 2 | **+17%**, CI [+0.017, +0.044] £ per basket, for 1.1 points fewer hits |
-| Margin-floor breaks | **0** with the optimizer, against 0.038 per basket for the ranker's top 2 |
+| Hidden item in the ranker's top 10 | **38.1%**, against 31.1% for the best simple method (EASE). Gain +7.0 points, 95% CI [6.0, 8.0]. The previous run had 35.6%; see the [accuracy worklog](worklog/accuracy.md) |
+| Profit per basket from the optimizer (λ=0.5) vs showing the ranker's top 2 | **+14%**, CI [+0.014, +0.044] £ per basket, for 1.1 points fewer hits |
+| Margin-floor breaks | **0** with the optimizer, against 0.037 per basket for the ranker's top 2 |
 | Optimizer correctness | Same answer as brute force on 600 of 600 problems, about 3 ms each |
 | LLM (Qwen2.5 1.5B and 3B) as the ranker | **NO-GO** in every test so far. LightGBM stays the ranker |
 
@@ -80,10 +80,10 @@ For each basket with 2 to 50 products, one product is hidden at random. The mode
 We built a ladder of standard methods, from simplest to strongest: popularity, repeat purchase, co-purchase, ALS, ItemKNN and EASE.
 
 ### 4.5 The shortlist (E4)
-We merge the top items from several methods into one pool of up to 100 products. The hidden item is in the pool **58.0%** of the time [56.7, 59.5]. This is the ceiling for any ranker, LLM included. It rose from 43.5% after we added EASE to the pool and refit the models on train plus validation data.
+We merge the top items from several methods into one pool of up to 150 products. The hidden item is in the pool **65.3%** of the time [63.9, 66.7]. This is the ceiling for any ranker, LLM included. It rose from 43.5% to 58.0% after we added EASE to the pool and refit the models on train plus validation data. It then rose to 65.3% after four more sources were added: product-text similarity, sales since the last model fit (refreshed nightly), customer-history EASE and time-decayed EASE. The pool also grew to 150.
 
 ### 4.6 The ranker (E5, E7)
-LightGBM (LambdaRank) learns to sort the pool using about 20 features: each method's score and rank, how recently the customer bought the item, the item's price against the basket, and so on. The most useful feature is EASE's rank. We then calibrate its scores into a purchase probability with isotonic regression.
+LightGBM (LambdaRank) learns to sort the pool using about 20 features: each method's score and rank, how recently the customer bought the item, the item's price against the basket, and so on. The most useful features are the ranks from time-decayed EASE and plain EASE, then the customer's repeat count and text similarity. We then calibrate its scores into a purchase probability with isotonic regression.
 
 ### 4.7 The optimizer (E8, E9)
 For each basket, PuLP solves a small integer program over the ranker's top 20:
@@ -119,9 +119,10 @@ The original idea was an LLM that reads product names and judges relevance. We t
 | ALS | 12.9% | 17.3% | 0.106 |
 | ItemKNN | 17.4% | 22.7% | 0.144 |
 | EASE (best simple method) | 23.2% | 31.1% | 0.188 |
-| **LightGBM ranker** | **26.1%** | **35.6%** | **0.217** |
+| LightGBM ranker, previous run (pool 100) | 26.1% | 35.6% | 0.217 |
+| **LightGBM ranker** | **28.8%** | **38.1%** | **0.237** |
 
-LightGBM beats EASE by +4.5 Hit@10 points [3.6, 5.5] and +0.029 NDCG@10 [0.023, 0.035]. The calibrated probabilities are calibrated but not very sharp: Brier score 0.00560 against 0.00568 for a constant guess.
+LightGBM beats EASE by +7.0 Hit@10 points [6.0, 8.0] and +0.049 NDCG@10 [0.043, 0.055], and the previous LightGBM run by +2.5 points [1.6, 3.4]. The probabilities are calibrated and sharper than before: Brier score 0.00417 against 0.00435 for a constant guess (previously 0.00560 against 0.00568).
 
 ### 5.2 Profit (simulated cost and stock)
 
@@ -129,31 +130,31 @@ Profit is £ gross profit per basket. *Realized* profit counts a suggestion as s
 
 | Strategy | Hit@2 | Realized profit | Expected profit | 15% floor breaks per basket |
 | --- | --- | --- | --- | --- |
-| Popularity top 2 | 1.2% | 0.013 | 0.017 | 0.002 |
-| Co-purchase top 2 | 6.3% | 0.070 | 0.049 | 0.010 |
-| Ranker top 2 | 16.7% | 0.184 | 0.167 | 0.038 |
-| **Optimizer λ=0.5** | 15.6% | **0.215** | 0.201 | **0** |
-| Optimizer λ=1.0 | 13.0% | 0.224 | 0.213 | 0 |
-| Optimizer λ=1, overstock w=2.0 | 12.5% | 0.216 | 0.207 | 0 |
+| Popularity top 2 | 1.1% | 0.013 | 0.014 | 0 |
+| Co-purchase top 2 | 6.1% | 0.072 | 0.057 | 0.004 |
+| Ranker top 2 | 17.8% | 0.205 | 0.185 | 0.037 |
+| **Optimizer λ=0.5** | 16.7% | **0.234** | 0.212 | **0** |
+| Optimizer λ=1.0 | 14.9% | 0.255 | 0.223 | 0 |
+| Optimizer λ=1, overstock w=2.0 | 14.6% | 0.245 | 0.219 | 0 |
 
-- λ=0.5 against the ranker's top 2: realized profit **+17%** (+0.031 £ [0.017, 0.044]) for **−1.1** Hit@2 points [−1.8, −0.5].
-- λ=1.0 against the ranker's top 2: realized profit **+22%** (+0.040 £ [0.023, 0.058]) for **−3.7** points [−4.7, −2.8].
+- λ=0.5 against the ranker's top 2: realized profit **+14%** (+0.028 £ [0.014, 0.044]) for **−1.1** Hit@2 points [−1.7, −0.6].
+- λ=1.0 against the ranker's top 2: realized profit **+24%** (+0.049 £ [0.031, 0.069]) for **−2.9** points [−3.7, −2.0].
 - **The trade:** slightly fewer hits, clearly more profit, and no margin-floor breaks.
 
 ### 5.3 Does the profit gain survive other cost assumptions? (E11)
 
-Across 3 margin distributions (mean margin 20%, 40% and 60%) and 3 seeds, the realized-profit gain of the λ=1 optimizer over the ranker's top 2 stayed positive in all 9 runs, from +0.015 to +0.062 £ per basket, with every 95% CI above zero. The gain is largest when margins vary widely, which is when choosing carefully matters most.
+Across 3 margin distributions (mean margin 20%, 40% and 60%) and 3 seeds, the realized-profit gain of the λ=1 optimizer over the ranker's top 2 stayed positive in all 9 runs, from +0.024 to +0.071 £ per basket, with every 95% CI above zero. The gain is largest when margins vary widely, which is when choosing carefully matters most.
 
 ### 5.4 Overstock (E10, replay of the test period)
 
 | Strategy | Profit (£) | Overstock units cleared |
 | --- | --- | --- |
-| Ranker top 2 | 825.7 | 99 |
-| Optimizer λ=1, w=1.0 | 1,005.2 | 74 |
-| Optimizer λ=1, w=1.5 | 996.5 | 99 |
-| Optimizer λ=1, w=2.0 | 968.5 | 114 |
+| Ranker top 2 | 919.9 | 114 |
+| Optimizer λ=1, w=1.0 | 1,141.1 | 78 |
+| Optimizer λ=1, w=1.5 | 1,117.3 | 105 |
+| Optimizer λ=1, w=2.0 | 1,099.0 | 116 |
 
-Raising the overstock weight to 2.0 clears 114 overstock units instead of 74, for 3.7% less profit. The store chooses that trade with one setting.
+Raising the overstock weight to 2.0 clears 116 overstock units instead of 78, for 3.7% less profit. The store chooses that trade with one setting.
 
 ### 5.5 Optimizer reliability (E9)
 PuLP (with the HiGHS solver) and brute-force enumeration agreed on all 600 test problems, with a mean solve time of about 3 ms.
@@ -179,7 +180,7 @@ All runs: 1,000 test baskets, LightGBM's top-20 shortlist, paired against LightG
 | Data cleaning and audit (E1) | `data.py`, `audit.py` | Done |
 | Date-based split (E2) | `split.py` | Done |
 | Six baselines (E3) | `models.py`, `features.py` | Done |
-| Candidate pool (E4) | `features.py` | Done, 58.0% recall |
+| Candidate pool (E4) | `features.py` | Done, 65.3% recall (pool 150) |
 | LightGBM ranker and calibration (E5, E7) | `rerank.py` | Done |
 | PuLP optimizer and strategy comparison (E8, E9) | `optimize.py`, `stage2.py` | Done |
 | Stock simulation and cost sensitivity (E10, E11) | `stage2.py`, `pipeline.py` | Done |
@@ -198,7 +199,7 @@ The earlier V1 and V2 notebooks are kept as history only. Their numbers came fro
 1. **Cost and stock are simulated.** Unit cost is drawn from a Beta(4, 6) distribution (mean margin 40%) and stock is set from past demand. E11 shows the gain holds across several assumptions, but only real store data can confirm the profit numbers.
 2. **The discount response is an assumption.** The effect of a discount on purchase chance (elasticity 1.5) is made up. The main results above use no discounts.
 3. **Offline replay is not a live test.** We check whether we would have suggested the item the customer really bought. A real shopper might also buy a suggested item they would not have found alone. Only an A/B test measures that.
-4. **The shortlist caps everything.** The right item reaches the pool 58.0% of the time, so no ranker can score above that.
+4. **The shortlist caps everything.** The right item reaches the pool 65.3% of the time, so no ranker can score above that.
 5. **One store, one period.** A UK gift wholesaler with many trade buyers. Other stores will differ.
 6. **API latency is not benchmarked yet.** The optimizer step is about 3 ms (E9). End-to-end latency under load is part of the production work.
 

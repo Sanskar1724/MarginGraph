@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from . import audit, data, split, stage2
-from .features import SOURCES, CandidateGenerator
+from .features import CandidateGenerator
 from .models import Repeat
 from .optimize import Policy, option_table, solve_enum, solve_milp
 from .rerank import Reranker, pool_ranks, reliability_table, split_events
@@ -94,14 +94,24 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
         _log(f"E3/E4 candidates for {k}")
         g = gens[k]
         g.scorers["repeat"] = Repeat(hist[k], g.index)
+        # fresh-sales source: sales of this split's period from days before each event
+        g.set_stream(splits[k])
+        e = ev[k]
+        n_hide = sc.get("train_events_per_invoice", 1)
+        if k == "val" and n_hide > 1:
+            # extra hidden-item events per val invoice, for fitting the reranker only
+            e = split.add_extra_hides(splits[k], e, n_hide, sc["min_basket_items"], sc["max_basket_items"], seed)
         f, r = g.generate(
-            ev[k]["context"].tolist(), ev[k]["customer"].tolist(), ev[k]["target"].tolist(), ev[k]["event_id"].to_numpy()
+            e["context"].tolist(), e["customer"].tolist(), e["target"].tolist(), e["event_id"].to_numpy(),
+            times=e["ts"].tolist(),
         )
+        # E3/E4 report original events only
+        r = r[r["event_id"] < split.AUG_ID].set_index("event_id").loc[ev[k]["event_id"]].reset_index()
         feats[k], base_ranks[k] = f, r
 
     e3 = pd.concat(
         [
-            _metric_table({s: base_ranks[k][s].to_numpy() for s in SOURCES}, n_boot, seed).assign(split=k)
+            _metric_table({s: base_ranks[k][s].to_numpy() for s in gens[k].sources}, n_boot, seed).assign(split=k)
             for k in ("val", "test")
         ]
     )
@@ -109,11 +119,11 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
 
     e4_rows = []
     for k in ("val", "test"):
-        f = feats[k]
+        f = feats[k][feats[k]["event_id"] < split.AUG_ID]
         in_pool = f.groupby("event_id")["label"].max()
         m, lo, hi = bootstrap_ci(in_pool.to_numpy(), n_boot, seed)
         e4_rows.append({"split": k, "metric": f"recall@{cfg['retrieval']['pool_size']}", "mean": m, "ci_low": lo, "ci_high": hi})
-        for src in SOURCES:
+        for src in gens[k].sources:
             for K in (20, 50, 100):
                 arr = (base_ranks[k][src].to_numpy() <= K).astype(float)
                 e4_rows.append({"split": k, "metric": f"{src}_recall@{K}", "mean": arr.mean(), "ci_low": np.nan, "ci_high": np.nan})
@@ -133,7 +143,7 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     best_base = (
         e3.query("split=='val' and metric=='ndcg@10'").sort_values("mean", ascending=False).iloc[0]["model"]
     )
-    ranks_test = {s: base_ranks["test"][s].to_numpy() for s in SOURCES}
+    ranks_test = {s: base_ranks["test"][s].to_numpy() for s in gens["test"].sources}
     ranks_test["lightgbm"] = lgb_rank
     e5 = _metric_table({"lightgbm": lgb_rank, best_base: ranks_test[best_base]}, n_boot, seed)
     pairs = []
@@ -309,6 +319,7 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     tail = splits["train"][splits["train"]["ts"] >= splits["train"]["ts"].max() - pd.Timedelta(days=90)]
     ev_tr = split.make_events(tail, sc["min_basket_items"], sc["max_basket_items"], 6000, seed + 7)
     gv.scorers["repeat"] = Repeat(splits["train"], gv.index)
+    gv.set_stream(None)  # these events precede val; val sales would be the future
     ftr, _ = gv.generate(ev_tr["context"].tolist(), ev_tr["customer"].tolist(), ev_tr["target"].tolist(), ev_tr["event_id"].to_numpy())
     ts = stage2.build_slates(ftr, rr.proba(ftr), rr.score(ftr), oc["candidates"])
     ts["item"] = [gv.index.items[i] for i in ts["item_idx"]]

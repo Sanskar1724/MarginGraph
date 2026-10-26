@@ -279,6 +279,9 @@ def main() -> None:
             v.loc[fit, "event_id"] = -(codes + 1)
             Faug = {"val": v, "test": Fa["test"]}
             r = rank_eval_aug(c, Faug, ev, cut)
+            if keep:
+                # the final configuration against the pre-thread baseline
+                record(summarize(f"F_final_vs_baseline", r, base, Faug, ev, nb, f"{tag} + {aug} events per invoice; ref = A0_baseline"))
             record(summarize(f"D_{tag}_aug{aug}", r, refb, Faug, ev, nb, f"{aug} hidden-item events per val invoice for training; ref = {tag}"))
         grid = [
             {"num_leaves": 63, "learning_rate": 0.03, "n_estimators": 1500, "min_child_samples": 50},
