@@ -42,8 +42,18 @@ def load_model(model_name: str):
 
     assert torch.cuda.is_available(), "no GPU attached"
     tok = AutoTokenizer.from_pretrained(model_name, padding_side="left")
-    # one GPU; splitting a 1.5-3B model across T4 x2 only slows it down
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": 0}).eval()
+    # One GPU (splitting a 1.5-3B model across T4 x2 only slows it down): pick the
+    # one with the most free memory, so leftovers from a failed cell on GPU 0
+    # don't block a retry when Kaggle gives two T4s.
+    free = [torch.cuda.mem_get_info(i)[0] for i in range(torch.cuda.device_count())]
+    dev = int(np.argmax(free))
+    if free[dev] < 6e9:
+        raise RuntimeError(
+            f"Only {free[dev] / 1e9:.1f} GB free on the best GPU; earlier models are still loaded. "
+            "Click the power button (top right) to stop the session, start it again, then Run All."
+        )
+    print(f"loading {model_name} on cuda:{dev} ({free[dev] / 1e9:.1f} GB free)")
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": dev}).eval()
     return model, tok
 
 
