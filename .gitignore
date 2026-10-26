@@ -26,6 +26,9 @@ outputs/
 *.sqlite
 *.log
 
+# Model bundles from any artifacts dir (artifacts_pg/, ...)
+artifacts*/
+
 # Secrets
 kaggle.json
 
