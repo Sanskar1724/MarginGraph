@@ -21,6 +21,7 @@ import json
 import logging
 import pickle
 import resource
+import secrets
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -139,7 +140,8 @@ def train_store(
     serve_gen = CandidateGenerator(lines, lines, catalog, cfg)
     serve_gen.scorers["repeat"] = Repeat(lines, serve_gen.index)
 
-    version = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    # timestamp plus a random suffix: two runs in the same second must not collide
+    version = time.strftime("%Y%m%d-%H%M%S", time.gmtime()) + "-" + secrets.token_hex(2)
     out = Path(artifacts_dir) / store_id / version
     out.mkdir(parents=True, exist_ok=True)
     meta = {
