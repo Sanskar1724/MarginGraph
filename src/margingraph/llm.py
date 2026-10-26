@@ -82,3 +82,14 @@ def compare(slates: pd.DataFrame, llm_col: str = "llm", ks=(1, 5, 10), n_boot: i
             b = (rk["lightgbm"] <= k).astype(float).to_numpy()
             rows.append({"metric": f"hit@{k}", "a": name, "b": "lightgbm", "a_mean": a.mean(), "b_mean": b.mean(), **paired_bootstrap(a, b, n_boot)})
     return pd.DataFrame(rows)
+
+
+def verdict(table: pd.DataFrame, k: int = 5) -> str:
+    """E6 gate: GO only if the LLM or the blend beats LightGBM with a paired CI above zero."""
+    rows = table[table["metric"] == f"hit@{k}"]
+    wins = rows[rows["ci_low"] > 0]
+    if len(wins):
+        best = wins.sort_values("diff", ascending=False).iloc[0]
+        return f"GO: {best['a']} beats LightGBM on hit@{k} by {best['diff']:+.4f} (95% CI {best['ci_low']:+.4f} to {best['ci_high']:+.4f})"
+    best = rows.sort_values("diff", ascending=False).iloc[0]
+    return f"NO-GO: best is {best['a']} at {best['diff']:+.4f} on hit@{k} (95% CI {best['ci_low']:+.4f} to {best['ci_high']:+.4f}); keep LightGBM"

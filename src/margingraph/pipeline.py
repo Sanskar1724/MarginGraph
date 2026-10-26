@@ -59,6 +59,8 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     train_items = set(splits["train"]["item"])
     for k in ("val", "test"):
         split_info[f"{k}_target_seen_in_train"] = float(ev[k]["target"].isin(train_items).mean())
+    tv_items = train_items | set(splits["val"]["item"])
+    split_info["test_target_seen_in_train_or_val"] = float(ev["test"]["target"].isin(tv_items).mean())
     _write_json(out / "e2_split.json", split_info)
     _log(f"split: {split_info}")
 
@@ -78,11 +80,21 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     # ---- E3/E4 candidates + baselines ---------------------------------
     # History for the repeat scorer = everything before the split's start.
     hist = {"val": splits["train"], "test": pd.concat([splits["train"], splits["val"]])}
+    # Val events are scored by models fit on train (the reranker learns from them).
+    # Test events by default use models refit on train+val: val ends before test
+    # starts, so this adds fresher data without any leakage.
+    gens = {"val": gen}
+    if cfg["retrieval"].get("refit_for_test", False):
+        _log("refitting candidate models on train+val for test")
+        gens["test"] = CandidateGenerator(hist["test"], hist["test"], catalog, cfg)
+    else:
+        gens["test"] = gen
     feats, base_ranks = {}, {}
     for k in ("val", "test"):
         _log(f"E3/E4 candidates for {k}")
-        gen.scorers["repeat"] = Repeat(hist[k], gen.index)
-        f, r = gen.generate(
+        g = gens[k]
+        g.scorers["repeat"] = Repeat(hist[k], g.index)
+        f, r = g.generate(
             ev[k]["context"].tolist(), ev[k]["customer"].tolist(), ev[k]["target"].tolist(), ev[k]["event_id"].to_numpy()
         )
         feats[k], base_ranks[k] = f, r
@@ -102,7 +114,7 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
         m, lo, hi = bootstrap_ci(in_pool.to_numpy(), n_boot, seed)
         e4_rows.append({"split": k, "metric": f"recall@{cfg['retrieval']['pool_size']}", "mean": m, "ci_low": lo, "ci_high": hi})
         for src in SOURCES:
-            for K in (20, 50):
+            for K in (20, 50, 100):
                 arr = (base_ranks[k][src].to_numpy() <= K).astype(float)
                 e4_rows.append({"split": k, "metric": f"{src}_recall@{K}", "mean": arr.mean(), "ci_low": np.nan, "ci_high": np.nan})
     e4 = pd.DataFrame(e4_rows)
@@ -142,9 +154,10 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     # ---- Stage 2 ------------------------------------------------------
     _log("Stage 2")
     oc = cfg["optimize"]
+    gen = gens["test"]  # Stage 2, the API and the LLM slates all live in the test model's item index
     cat_idx = catalog.set_index("item").reindex(gen.index.items).reset_index()
     cat_idx["price"] = cat_idx["price"].fillna(cat_idx["price"].median())
-    erp = data.simulate_erp(splits["train"], cat_idx, cfg, seed)
+    erp = data.simulate_erp(hist["test"], cat_idx, cfg, seed)
     p_bar = float((erp["price"] - erp["unit_cost"]).clip(lower=0).mean())
     erp.to_csv(out / "erp_simulated.csv", index=False)
 
@@ -239,7 +252,7 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     for mb in ([2.0, 8.0], [4.0, 6.0], [6.0, 4.0]):
         for es in range(3):
             c2 = {**cfg, "erp": {**cfg["erp"], "margin_beta": mb}}
-            erp2 = data.simulate_erp(splits["train"], cat_idx, c2, seed + 100 + es)
+            erp2 = data.simulate_erp(hist["test"], cat_idx, c2, seed + 100 + es)
             pb2 = float((erp2["price"] - erp2["unit_cost"]).clip(lower=0).mean())
             ref_r = stage2.evaluate(slates["ranker"], "topk", strategies["ranker_top2"][2], erp2, pb2)
             milp_r = stage2.evaluate(slates["ranker"], "milp", strategies["milp_lam1.0"][2], erp2, pb2)
