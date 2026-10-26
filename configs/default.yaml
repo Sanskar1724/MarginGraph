@@ -26,7 +26,7 @@ baselines:
 
 retrieval:
   pool_size: 50
-  per_source: {popularity: 5, copurchase: 25, itemknn: 15, als: 15, repeat: 10, recent_pop: 10}
+  per_source: {ease: 30, itemknn: 15, als: 15, repeat: 15, copurchase: 10, recent_pop: 5, popularity: 5}
 
 rerank:
   num_leaves: 31

@@ -73,7 +73,7 @@ def clean(df: pd.DataFrame, product_code_regex: str) -> tuple[pd.DataFrame, dict
         country=("country", "first"),
     ).reset_index()
     lines["price"] = lines["revenue"] / lines["quantity"]
-    lines["customer"] = lines["customer"].astype("Int64").astype(str).replace("<NA>", "")
+    lines["customer"] = lines["customer"].astype("Int64").astype(str).replace("<NA>", "").fillna("")
     log["clean_lines"] = len(lines)
     log["invoices"] = int(lines["invoice"].nunique())
     log["items"] = int(lines["item"].nunique())
