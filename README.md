@@ -1,12 +1,27 @@
+<div align="center">
+
 # MarginGraph
 
-### Margin-aware e-commerce recommendations: a ranker for relevance, an optimizer for profit
+**Margin-aware e-commerce recommendations: a ranker for relevance, an optimizer for profit.**
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![LightGBM](https://img.shields.io/badge/ranker-LightGBM-9cf)](src/margingraph/rerank.py)
+[![PuLP MILP](https://img.shields.io/badge/optimizer-PuLP%20%2F%20HiGHS-orange)](src/margingraph/optimize.py)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](src/margingraph/api.py)
+[![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](space/)
+[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
+
+[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
+
+</div>
 
 MarginGraph recommends add-on products that customers are likely to buy **and** that keep the retailer profitable. Stage 1 finds relevant products. Stage 2 uses mathematical optimization to choose which ones to show, under hard business rules (a 15% margin floor, at most 2 add-ons, discount limits, overstock priority).
 
 > **Status: working research prototype, tested offline on real data.** Every number below comes from an experiment in this repo. Cost and stock are simulated, so profit numbers are estimates until a real store's data is used.
 
-**Read next:** [Project report](docs/PROJECT_REPORT.md) (problem, idea, approach, results, glossary) · [Roadmap](docs/ROADMAP.md) (path to production, A/B test, free stack, business model) · [Results tables](docs/RESULTS.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md) (every thread, PR, run and bug fix)
+<p align="center"><img src="docs/assets/architecture.svg" alt="MarginGraph architecture: cart and history, retrieval, LightGBM rerank, MILP optimizer, up to 2 add-ons" width="100%"></p>
 
 ## Results so far (test: Oct–Dec 2011, 4,480 real baskets)
 
@@ -17,6 +32,8 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 | 15% margin-floor breaks | **0** with the optimizer |
 | LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune is next |
 
+<p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 35.6%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
+
 ---
 
 ## Why
@@ -24,6 +41,8 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 Most recommenders optimize for clicks or conversion and ignore economics. A relevant item can still be a bad recommendation for the retailer if it has a thin margin, needs a deep discount, or adds to stock that is already low. MarginGraph adds explicit profit, margin and inventory logic on top of relevance, without letting a language model make financial decisions.
 
 ## Architecture
+
+<details><summary>Text version of the diagram</summary>
 
 ```text
 Customer history / cart
@@ -40,6 +59,8 @@ Stage 2: PuLP optimizer         (maximize expected profit under business constra
         ▼
 Up to 2 margin-safe add-ons
 ```
+
+</details>
 
 **Stage 2 objective**
 
@@ -97,12 +118,13 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Sequential inventory simulation
 - [x] Sensitivity to simulated ERP assumptions
 
-**Production and pilot** (production API, demo and connectors are in progress)
+**Production and pilot**
 
 - [x] FastAPI demo service
 - [ ] Production API with fallback, logging and auth
-- [ ] Gradio demo
-- [ ] Shopify / WooCommerce connector
+- [x] Gradio demo for Hugging Face Spaces (built; deploy steps in [`space/DEPLOY.md`](space/DEPLOY.md))
+- [x] CSV / Shopify / WooCommerce connector (tested on UCI via CSV; no live store yet)
+- [x] Merchant dashboard (policy settings, KPIs, A/B results with CIs)
 - [ ] Pilot store with real cost and stock, then an A/B test
 
 Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md)
@@ -110,15 +132,25 @@ Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 ## Repository layout
 
 ```text
-src/margingraph/   pipeline: data, audit, split, baselines, rerank, optimizer, simulation, API
-configs/           default.yaml (split dates, pool sizes, margin floor, simulated ERP)
-results/           raw experiment outputs (E1–E11)
-notebooks/         run_all, LLM rerank and fine-tune notebooks for free Kaggle / Colab GPUs
-docs/              project report, roadmap, results, running guide, work log
-tests/             tests on a small synthetic fixture
+MarginGraph/
+├── src/margingraph/        Python package and `margingraph` CLI (module map in its README)
+│   ├── connectors/         store sync: CSV/Excel, Shopify, WooCommerce
+│   └── dashboard/          merchant dashboard (FastAPI + SQLite)
+├── tests/                  pytest suite on a small synthetic fixture
+├── configs/                default.yaml: split dates, pool sizes, margin floor, simulated ERP
+├── results/                raw experiment outputs, E1–E11
+├── notebooks/              full run and LLM notebooks for free Kaggle / Colab GPUs
+│   └── exploration/        early V1/V2 prototypes (history only, not results)
+├── space/                  Hugging Face Space demo (Gradio)
+├── paper/                  arXiv-style paper: LaTeX, PDF, figures
+├── docs/                   report, results, roadmap, guides, work log, deck, launch kit
+│   └── assets/             SVG diagrams
+└── .github/                PR template, workflows
 ```
 
-`MarginGraph.md` describes the earlier V1/V2 prototype. Its numbers came from mock or random data and are not results.
+## Branches
+
+`main` holds the full, integrated project. Each module also has its own branch for focused development (`feat/core-pipeline`, `feat/store-connectors`, `feat/merchant-dashboard`, `feat/hf-space-demo`, `docs/research-paper`, …). The full list and the workflow are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Merchant dashboard
 
@@ -152,6 +184,10 @@ HF_TOKEN = userdata.get("HF_TOKEN")
 ## Tech stack
 
 `Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
+
+## License
+
+[MIT](LICENSE)
 
 ---
 

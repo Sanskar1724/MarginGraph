@@ -100,9 +100,9 @@ Core LLM and optimization components are implemented. Remaining work focuses mai
 
 ## 📁 Repository contents
 
-* `notebooks/MarginGraph_V1.ipynb` — first prototype (note: its session data is generated mock data)
-* `notebooks/MarginGraph_V2.ipynb` — 2.0 prototype (simulated candidates and carts)
-* `docs/MarginGraph_Detailed_Project_Report.docx` — project report
+* `notebooks/exploration/MarginGraph_V1.ipynb` — first prototype (note: its session data is generated mock data)
+* `notebooks/exploration/MarginGraph_V2.ipynb` — 2.0 prototype (simulated candidates and carts)
+* `docs/archive/MarginGraph_Detailed_Project_Report.docx` — project report
 * `docs/experiment_plan.md` — review of prior results and the prioritized experiment plan
 
 Credentials are read from Colab Secrets (`HF_TOKEN`, `KAGGLE_USERNAME`, `KAGGLE_KEY`); never commit them.
