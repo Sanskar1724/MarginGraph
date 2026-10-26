@@ -22,7 +22,7 @@ Loads UCI Online Retail II (991,910 clean invoice lines), checks there is real b
 
 | Path | What it is |
 | --- | --- |
-| `src/margingraph/` | Package: data, audit, split, models, features, rerank, llm, optimize, stage2, stats, pipeline, api, cli |
+| `src/margingraph/` | Package: data, audit, split, models, features, rerank, llm, optimize, stage2, stats, gate, pipeline, api, cli |
 | `configs/default.yaml` | Split dates, pool sizes, margin floor, simulated ERP |
 | `results/` | Raw outputs of E1–E11 |
 | `tests/` | Pipeline and optimizer tests on a synthetic fixture |
