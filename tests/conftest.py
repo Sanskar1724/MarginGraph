@@ -1,5 +1,7 @@
 """Tiny synthetic retail log with planted item pairs. For code tests only;
 never used for any reported number."""
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -35,12 +37,11 @@ def make_raw(n_invoices=1500, n_items=120, seed=0) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-@pytest.fixture(scope="session")
-def tiny_cfg(tmp_path_factory):
-    d = tmp_path_factory.mktemp("mg")
+def tiny_config(d) -> dict:
+    """Default config pointed at a fresh fixture in directory ``d``, scaled down to run in seconds."""
     raw = make_raw()
     raw.to_csv(d / "raw.csv", index=False)
-    with open("configs/default.yaml") as fh:
+    with open(Path(__file__).resolve().parents[1] / "configs" / "default.yaml") as fh:
         cfg = yaml.safe_load(fh)
     cfg["data"]["raw_path"] = str(d / "raw.csv")
     cfg["data"]["clean_path"] = str(d / "processed" / "lines.parquet")
@@ -50,4 +51,10 @@ def tiny_cfg(tmp_path_factory):
     cfg["simulate"]["seeds"] = 2
     cfg["stats"]["n_boot"] = 100
     cfg["rerank"]["n_estimators"] = 50
-    return cfg, d
+    return cfg
+
+
+@pytest.fixture(scope="session")
+def tiny_cfg(tmp_path_factory):
+    d = tmp_path_factory.mktemp("mg")
+    return tiny_config(d), d
