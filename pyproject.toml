@@ -26,10 +26,15 @@ dependencies = [
   "highspy",
   "fastapi",
   "uvicorn",
+  "sqlalchemy>=2.0",
+  "httpx",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx", "ruff", "pre-commit"]
+postgres = ["psycopg[binary]>=3.1"]
+redis = ["redis>=5"]
+service = ["psycopg[binary]>=3.1", "redis>=5"]
+dev = ["pytest", "httpx", "ruff", "pre-commit", "fakeredis"]
 
 [project.urls]
 Repository = "https://github.com/Sanskar1724/MarginGraph"
@@ -52,6 +57,10 @@ extend-exclude = ["notebooks"]
 # to review: the research code keeps long formulas on one line on purpose.
 select = ["E", "F", "W", "I", "B"]
 ignore = ["E501", "E702", "E731", "E741"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency markers are meant to be called in argument defaults
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/margingraph/cli.py" = ["E402"]  # env var must be set before numeric imports

@@ -1,0 +1,42 @@
+{
+  "store_id": "demo",
+  "products": 4707,
+  "history_lines": 952575,
+  "replay_lines": 39335,
+  "cutoff": "2011-11-25 12:50:00",
+  "imported_lines": 952575,
+  "import_seconds": 21.6,
+  "replay_csv": "data/replay_demo.csv",
+  "model": {
+    "version": "20261026-114841",
+    "status": "active",
+    "bundle_mb": 259.0,
+    "train_seconds": 73.0,
+    "peak_rss_mb": 1654.0,
+    "metrics": {
+      "lightgbm": {
+        "hit@5": 0.2621951219512195,
+        "hit@10": 0.36585365853658536,
+        "hit@20": 0.4634146341463415,
+        "hit@50": 0.5853658536585366,
+        "ndcg@10": 0.2104191393765771,
+        "mrr": 0.17410571271862205
+      },
+      "best_baseline": "ease",
+      "gate": {
+        "rule": "lightgbm hit@10 > best baseline hit@10",
+        "passed": true
+      },
+      "pool_recall": 0.6341463414634146,
+      "n_holdout_events": 328
+    },
+    "best_baseline_metrics": {
+      "hit@5": 0.23170731707317074,
+      "hit@10": 0.3048780487804878,
+      "hit@20": 0.4024390243902439,
+      "hit@50": 0.524390243902439,
+      "ndcg@10": 0.18152085088584402,
+      "mrr": 0.1562946813580726
+    }
+  }
+}
