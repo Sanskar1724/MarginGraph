@@ -274,6 +274,17 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     top = top.merge(ev["test"][["event_id", "context", "target"]], on="event_id")
     top["context"] = top["context"].map(lambda c: "|".join(c))
     top.to_parquet(art / "test_slates.parquet", index=False)
+
+    # held-out val events (not used to fit LightGBM trees), for training a
+    # LightGBM + LLM stacker without touching test
+    hv = pd.concat([es_df, cal_df])
+    gv = gens["val"]
+    vs = stage2.build_slates(hv, rr.proba(hv), rr.score(hv), oc["candidates"])
+    vs["item"] = [gv.index.items[i] for i in vs["item_idx"]]
+    vs["description"] = gv.description[vs["item_idx"].to_numpy()]
+    vs = vs.merge(ev["val"][["event_id", "context", "target"]], on="event_id")
+    vs["context"] = vs["context"].map(lambda c: "|".join(c))
+    vs.to_parquet(art / "val_slates.parquet", index=False)
     catalog.to_parquet(art / "catalog.parquet", index=False)
 
     summary.update({"e3_test": e3.query("split=='test' and metric in ['hit@10','ndcg@10']").to_dict("records"), "e9": e9})

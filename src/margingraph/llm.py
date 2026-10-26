@@ -94,3 +94,41 @@ def verdict(table: pd.DataFrame, k: int = 5) -> str:
         return f"GO: {best['a']} beats LightGBM on hit@{k} by {best['diff']:+.4f} (95% CI {best['ci_low']:+.4f} to {best['ci_high']:+.4f})"
     best = rows.sort_values("diff", ascending=False).iloc[0]
     return f"NO-GO: best is {best['a']} at {best['diff']:+.4f} on hit@{k} (95% CI {best['ci_low']:+.4f} to {best['ci_high']:+.4f}); keep LightGBM"
+
+
+def _slate_features(df: pd.DataFrame, llm_col: str) -> pd.DataFrame:
+    g = df.groupby("event_id")
+    return pd.DataFrame(
+        {
+            "lgbm": df["score"],
+            "lgbm_rank": g["score"].rank(ascending=False),
+            "llm": df[llm_col],
+            "llm_rank": g[llm_col].rank(ascending=False),
+            "llm_z": (df[llm_col] - g[llm_col].transform("mean")) / (g[llm_col].transform("std") + 1e-6),
+        }
+    )
+
+
+def stack(val: pd.DataFrame, test: pd.DataFrame, llm_col: str = "llm", n_boot: int = 2000) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Option 1: learn how much to trust the LLM, on held-out val slates only.
+
+    A logistic regression on (LightGBM score/rank, LLM score/rank/z) is fit on
+    val slates, then re-orders the test slates. Returns (paired comparison vs
+    LightGBM, coefficients).
+    """
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    Xv, Xt = _slate_features(val, llm_col), _slate_features(test, llm_col)
+    clf = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=1000)).fit(Xv, val["label"])
+    t = test.copy()
+    t["stacked"] = clf.predict_proba(Xt)[:, 1]
+    rk = {"lightgbm": _ranks(t, "score"), "stacked": _ranks(t, "stacked")}
+    rows = []
+    for k in (1, 5, 10):
+        a = (rk["stacked"] <= k).astype(float).to_numpy()
+        b = (rk["lightgbm"] <= k).astype(float).to_numpy()
+        rows.append({"metric": f"hit@{k}", "a": "stacked", "b": "lightgbm", "a_mean": a.mean(), "b_mean": b.mean(), **paired_bootstrap(a, b, n_boot)})
+    coef = pd.DataFrame({"feature": Xv.columns, "coef": clf[-1].coef_[0]})
+    return pd.DataFrame(rows), coef
