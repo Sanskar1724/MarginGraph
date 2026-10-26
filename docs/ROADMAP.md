@@ -2,6 +2,8 @@
 
 *Last updated 2026-10-26. This is a plan, not a result. Measured results are in [`PROJECT_REPORT.md`](PROJECT_REPORT.md) and [`RESULTS.md`](RESULTS.md). Any number below marked "target" is a goal to test, not a claim.*
 
+**Detailed, self-serve version with commands and checklists: [`industry-plan/`](industry-plan/README.md).**
+
 The rule for the whole roadmap: **a claim moves from "target" to "result" only after an experiment or a live test measures it.**
 
 ---
