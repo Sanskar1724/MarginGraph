@@ -1,0 +1,10 @@
+# Extends the default gitleaks rules with the tokens this project uses.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "kaggle-api-key"
+description = "Kaggle API key (kaggle.json or KAGGLE_KEY)"
+regex = '''(?i)(?:kaggle_key|"key")\s*[:=]\s*["']?([a-f0-9]{32})'''
+secretGroup = 1
+keywords = ["kaggle_key", "\"key\""]

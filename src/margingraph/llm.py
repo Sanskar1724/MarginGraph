@@ -31,7 +31,7 @@ def build_prompt(basket_desc: list[str], candidate_desc: str, max_items: int = 1
 def prompts_for(slates: pd.DataFrame, catalog: pd.DataFrame) -> list[str]:
     desc = catalog.set_index("item")["description"].astype(str).to_dict()
     out = []
-    for ctx, cand in zip(slates["context"], slates["description"]):
+    for ctx, cand in zip(slates["context"], slates["description"], strict=True):
         out.append(build_prompt([desc.get(i, i) for i in ctx.split("|")], str(cand)))
     return out
 
