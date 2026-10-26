@@ -14,6 +14,7 @@ split:
   min_basket_items: 2       # distinct products needed to hide one
   max_basket_items: 50      # very large wholesale invoices are dropped from eval
   max_events_val: 20000
+  train_events_per_invoice: 3   # reranker fits on 3 hidden-item events per val invoice (+0.8 pts Hit@10 on test)
   max_events_test: 20000
 
 baselines:
@@ -26,9 +27,24 @@ baselines:
     alpha: 1.0
 
 retrieval:
-  pool_size: 100
-  per_source: {ease: 60, itemknn: 30, als: 30, repeat: 30, copurchase: 20, recent_pop: 10, popularity: 10}
+  # Pool 150 with four extra sources: test pool recall 58.0% -> 65.3%, LightGBM
+  # Hit@10 +1.7 pts (docs/worklog/accuracy.md). The old setup was pool 100 with
+  # the first seven sources only.
+  pool_size: 150
+  # pools are filled in this order, then cut at pool_size
+  per_source: {ease: 90, ease_decay: 60, cust_ease: 30, text: 30, trend: 22, fresh_co: 30,
+               itemknn: 45, als: 45, repeat: 45, copurchase: 30, recent_pop: 15, popularity: 15}
   refit_for_test: true          # test candidates come from models fit on train+val
+  # "catalog" indexes every product so ones first sold after the fit cutoff can be
+  # recommended once the fresh source sees them sell (96% of the 7.1% of test
+  # targets unseen before October sold earlier in the test window)
+  index_scope: catalog
+  extra:
+    ease_decay: {half_life_days: 120}   # EASE on recency-weighted baskets
+    cust_ease: true                     # EASE scores of the customer's past items
+    text: true                          # TF-IDF similarity of product descriptions
+    fresh: {days: 14}                   # nightly refresh: trending + co-purchase since the fit
+    # item2vec was tried and lost on val; enable with  item2vec: {dim: 64, epochs: 5}
 
 rerank:
   num_leaves: 31

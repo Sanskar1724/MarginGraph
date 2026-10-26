@@ -1,9 +1,12 @@
-# Results: run of 2026-10-26 (CPU, `margingraph run`, seed 42)
+# Results: run of 2026-10-26 13:00 UTC (CPU, `margingraph run`, seed 42)
+
+> **Updated by the accuracy thread** ([worklog](worklog/accuracy.md)): the pool now has four more sources and holds 150 items, and the ranker trains on 3 events per val invoice. LightGBM Hit@10 rose from 35.6% to **38.1%** (paired +2.5 pts [1.6, 3.4]), and pool recall from 58.0% to **65.3%**. The full run took 10 minutes with a peak of 3.9 GB of RAM. The LLM section below was measured on the earlier 35.6% slates.
 
 Data: UCI Online Retail II, 1,067,371 raw rows → 991,910 clean invoice lines, 39,516 invoices, 4,707 products.
 Split: train to 2011-06-30, val Jul–Sep 2011 (3,822 events), test 2011-10-02 to 2011-12-09 (4,480 events).
 Task: checkout add-on, one product hidden per invoice. Test candidates come from models refit on train+val (val ends before test starts); 7.1% of test targets never appear before the test window, so no model can exceed 92.9% Hit@K.
-The reranker is trained on val events scored by train-only models.
+The reranker is trained on val events scored by train-only models (3 hidden-item events per val invoice; early stopping and calibration use only the original events).
+The fresh-sales source sees only invoices from days before each event, like a nightly batch job.
 All CIs are 95% bootstrap over test events. Source files are in `results/`.
 
 ## E1 signal audit (gate: passed)
@@ -18,19 +21,33 @@ Top-lift pairs are real complements (woodland paper cups + plates, pink + blue e
 
 ## E3 baselines and E5 reranker (test)
 
+Single-source Hit@10 (test, from `e3_baselines.csv`):
+
+| Model | Hit@10 |
+| --- | --- |
+| Popularity | 3.1% |
+| Recent popularity, last 90 days (`recent_pop`) | 3.0% |
+| Trending, last 14 days, nightly (`trend`) | 5.4% |
+| Customer EASE (`cust_ease`) | 9.5% |
+| Co-purchase | 13.0% |
+| Repeat purchase | 13.4% |
+| Fresh co-purchase, nightly (`fresh_co`) | 16.8% |
+| ALS | 17.3% |
+| Text similarity, TF-IDF (`text`) | 20.5% |
+| ItemKNN | 22.7% |
+| Time-decayed EASE (`ease_decay`) | 30.1% |
+| EASE (best baseline on val, λ=250) | 31.1% |
+
 | Model | Hit@5 | Hit@10 | NDCG@10 |
 | --- | --- | --- | --- |
-| Popularity | 1.9% | 3.1% | 0.016 |
-| Repeat purchase | 9.3% | 13.9% | 0.079 |
-| Co-purchase | 9.2% | 13.1% | 0.079 |
-| ALS | 12.9% | 17.3% | 0.106 |
-| ItemKNN | 17.4% | 22.7% | 0.144 |
-| EASE (best baseline, λ=250) | 23.2% | 31.1% | 0.188 |
-| **LightGBM rerank** | **26.1%** | **35.6%** | **0.217** |
+| EASE | 23.2% | 31.1% | 0.188 |
+| LightGBM rerank, previous run (pool 100) | 26.1% | 35.6% | 0.217 |
+| **LightGBM rerank, this run (pool 150)** | **28.8%** | **38.1%** | **0.237** |
 
-LightGBM − EASE, paired: Hit@10 +4.5 pts [3.6, 5.5], NDCG@10 +0.029 [0.023, 0.035].
-E4 candidate pool Recall@100 = 58.0% [56.7, 59.5] (was 43.5% at pool 50 without EASE and refit). This caps every reranker, including the LLM.
-E7 isotonic calibration: test Brier 0.00560 vs 0.00568 for a constant base-rate guess, so probabilities are calibrated but only weakly sharp (see `e7_reliability_test.csv`).
+LightGBM − EASE, paired: Hit@10 +7.0 pts [6.0, 8.0], NDCG@10 +0.049 [0.043, 0.055].
+New − previous LightGBM, paired on the same 4,480 events: Hit@10 +2.5 pts [1.6, 3.4], NDCG@10 +0.020 [0.015, 0.025] (`results/accuracy/experiments.csv`, row `F_final_vs_baseline`).
+E4 candidate pool Recall@150 = 65.3% [63.9, 66.7] (was 58.0% at pool 100, 43.5% at pool 50). This caps every reranker, including the LLM.
+E7 isotonic calibration: test Brier 0.00417 vs 0.00435 for a constant base-rate guess (was 0.00560 vs 0.00568), so the probabilities are sharper than before (see `e7_reliability_test.csv`).
 
 ## E8 Stage 2 (simulated cost and stock)
 
@@ -38,18 +55,19 @@ Profit is £ gross profit per basket. *Realized* counts only the product the cus
 
 | Strategy | Hit@2 | Realized profit | Expected profit | 15% floor breaks per basket |
 | --- | --- | --- | --- | --- |
-| Popularity top-2 | 1.2% | 0.013 | 0.017 | 0.002 |
-| Co-purchase top-2 | 6.3% | 0.070 | 0.049 | 0.010 |
-| Ranker top-2 | 16.7% | 0.184 | 0.167 | 0.038 |
-| MILP λ=0.5 | 15.6% | 0.215 | 0.201 | 0 |
-| MILP λ=1.0 | 13.0% | 0.224 | 0.213 | 0 |
-| MILP λ=1, overstock w=2.0 | 12.5% | 0.216 | 0.207 | 0 |
+| Popularity top-2 | 1.1% | 0.013 | 0.014 | 0 |
+| Co-purchase top-2 | 6.1% | 0.072 | 0.057 | 0.004 |
+| Ranker top-2 | 17.8% | 0.205 | 0.185 | 0.037 |
+| MILP λ=0.5 | 16.7% | 0.234 | 0.212 | 0 |
+| MILP λ=1.0 | 14.9% | 0.255 | 0.223 | 0 |
+| MILP λ=1, overstock w=2.0 | 14.6% | 0.245 | 0.219 | 0 |
 
-MILP λ=0.5 − ranker top-2, paired: realized profit +0.031 [0.017, 0.044] (+17%), Hit@2 −1.1 pts [−1.8, −0.5].
-MILP λ=1 − ranker top-2, paired: realized profit +0.040 [0.023, 0.058] (+22%), Hit@2 −3.7 pts [−4.7, −2.8].
-E9: PuLP (HiGHS) and exact enumeration agree on 600/600 problems; mean solve time 3.4 ms.
-E11: across 3 margin distributions × 3 ERP seeds the realized-profit gain of MILP λ=1 stays positive (+0.015 to +0.062, every CI above zero).
-E10 (sequential stock, replay): overstock weight 2.0 clears 114 overstock units vs 74 at w=1.0, for −3.7% profit.
+MILP λ=0.5 − ranker top-2, paired: realized profit +0.028 [0.014, 0.044] (+14%), Hit@2 −1.1 pts [−1.7, −0.6].
+MILP λ=1 − ranker top-2, paired: realized profit +0.049 [0.031, 0.069] (+24%), Hit@2 −2.9 pts [−3.7, −2.0].
+The better ranker raised ranker top-2 itself from Hit@2 16.7% and profit 0.184 (previous run) to 17.8% and 0.205.
+E9: PuLP (HiGHS) and exact enumeration agree on 600/600 problems; mean solve time 2.7 ms.
+E11: across 3 margin distributions × 3 ERP seeds the realized-profit gain of MILP λ=1 stays positive (+0.024 to +0.071, every CI above zero).
+E10 (sequential stock, replay): overstock weight 2.0 clears 116 overstock units vs 78 at w=1.0, for −3.7% profit.
 
 ## E5 LLM rerank (Kaggle T4, run by San on 2026-10-26)
 
