@@ -72,11 +72,9 @@ What this means for a store: checkout traffic of a small or mid-size shop (a few
 | Committed real run (`results/`, test Oct to Dec 2011, 4,480 baskets) | 35.6% | 34.2% | 3.1% | PASS (strict) |
 | Synthetic fixture (code test only, not a reported number) | 48.3% | 41.3% | 11.7% | PASS |
 
-## Not verified here
+## First CI run (PR #11, 2026-10-26 12:20 UTC)
 
-- The GitHub Actions run itself: it runs on the first push; its result is on the PR's Checks tab.
-- The `apt-get` step of the Dockerfile (see failures).
-- Python 3.10 and 3.12 locally (only 3.13 here); CI tests both.
+All seven jobs green on the first push, on both the `push` and `pull_request` runs: lint, pre-commit, secret scan (gitleaks over the full history: no leaks), test (3.10), test (3.12), model quality gate, and docker build + API load smoke test (1.5 min). This confirms the two steps that could not run in this container: the Dockerfile's `apt-get install libgomp1` and gitleaks.
 
 ## How to reproduce
 
