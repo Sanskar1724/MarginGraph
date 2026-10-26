@@ -191,3 +191,10 @@ Note for the fine-tune thread: `notebooks/llm_*.ipynb` still `git clone -b claud
 Fully contained in `main` (checked with `git merge-base --is-ancestor`): `claude/add-notebooks-and-plan`, `claude/project-thread-{42h21l,80g63p,dxygit,hadeju,j64y7y,l6b8ga,oyvjte,r1a0d1}`.
 `git push --delete` was refused by this session's network proxy (HTTP 403), and the GitHub tools have no branch-delete call, so these must be deleted in the GitHub UI (Branches page).
 Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clone it), `claude/project-thread-psfiei` (PR #12 open), `claude/project-thread-t654yh` (this thread).
+
+## 2026-10-26 12:42 UTC: PR #12 (service) merged
+
+- `claude/project-thread-psfiei` (CI green, `main` already merged in by the service thread) merged into `main`. Local run: 80 passed, 1 skipped; `ruff check .` clean.
+- README roadmap: production service ticked, linked to `docs/SERVICE.md`.
+- `feat/api-service` is now the service module: `src/margingraph/service/`, `api.py`, tests, SERVICE/API docs, Docker Compose files, Dockerfile, `.env.example`, replay / A/B / load-test scripts and their measured results (39 files). All module branches refreshed from `main`.
+- `claude/project-thread-psfiei` is now fully in `main` and can be deleted.

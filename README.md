@@ -121,7 +121,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 **Production and pilot**
 
 - [x] FastAPI demo service
-- [ ] Production API with fallback, logging and auth
+- [x] Production service: multi-store API, fallbacks, auth, A/B logging, nightly retraining, Docker ([`docs/SERVICE.md`](docs/SERVICE.md))
 - [x] Gradio demo for Hugging Face Spaces (built; deploy steps in [`space/DEPLOY.md`](space/DEPLOY.md))
 - [x] CSV / Shopify / WooCommerce connector (tested on UCI via CSV; no live store yet)
 - [x] Merchant dashboard (policy settings, KPIs, A/B results with CIs)
