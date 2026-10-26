@@ -91,3 +91,17 @@ UI test (Playwright, headless Chromium), all passed with no page errors:
 * Demo uses EASE, not the stronger LightGBM reranker (Hit@10 35.6% vs 31.1% in the repo).
 * Free Spaces sleep after 48 h idle. Uploaded files are kept only in the session.
 * This container cannot reach huggingface.co, so the Space itself has not been deployed from here; see `space/DEPLOY.md`.
+
+## Deployment (2026-10-26, 13:20 to 13:47 UTC)
+
+San created the Space at https://huggingface.co/spaces/EquilStable/MarginGraph and uploaded `space/` through the browser
+(bundle and guide: `/mnt/project-files/margingraph/space_upload/`). It is live.
+
+1. First start logged `Running on local URL: http://0.0.0.0:7860` and then `Stopping Node.js server...`, then
+   **Runtime error: No @spaces.GPU function detected during startup**. Cause: the Space was created on **ZeroGPU**
+   hardware, which requires at least one `@spaces.GPU` function.
+2. Switching to CPU basic was refused: "Without a PRO subscription, you can't downgrade this Space to cpu-basic."
+3. Fix: `app.py` now defines an empty `@spaces.GPU` placeholder inside `try: import spaces ... except ImportError`.
+   On ZeroGPU it satisfies the startup check; everywhere else (CPU Space, laptop) the import fails and nothing changes.
+   The app itself still runs entirely on CPU. Tested locally before San uploaded it; San confirmed the Space is live at 13:47 UTC.
+4. The API example in the How it works tab now points at `EquilStable/MarginGraph`.
