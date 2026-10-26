@@ -1,4 +1,4 @@
-"""Command line entry point: ``margingraph {prepare,run,serve}``."""
+"""Command line entry point: ``margingraph {prepare,run,serve,dashboard}``."""
 from __future__ import annotations
 
 import argparse
@@ -27,6 +27,13 @@ def main(argv: list[str] | None = None) -> None:
     s = sub.add_parser("serve", help="start the FastAPI demo")
     s.add_argument("--artifacts", default="artifacts")
     s.add_argument("--port", type=int, default=8000)
+    d = sub.add_parser("dashboard", help="start the merchant dashboard")
+    d.add_argument("--db", default="margingraph.db")
+    d.add_argument("--port", type=int, default=8501)
+    d.add_argument("--host", default="127.0.0.1")
+    d.add_argument("--sample", action="store_true", help="(re)seed the 'demo' store with sample data first")
+    d.add_argument("--catalog", help="CSV (item,price,unit_cost,stock,overstock,description) to load for --store")
+    d.add_argument("--store", default="demo")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
 
@@ -44,7 +51,20 @@ def main(argv: list[str] | None = None) -> None:
 
         os.environ["MARGINGRAPH_ARTIFACTS"] = args.artifacts
         uvicorn.run("margingraph.api:app", host="0.0.0.0", port=args.port)
+    elif args.cmd == "dashboard":
+        import uvicorn
 
+        from .dashboard import db, sample
+
+        os.environ["MARGINGRAPH_DB"] = args.db
+        if args.sample:
+            print(json.dumps(sample.seed(db.connect(args.db))))
+        if args.catalog:
+            import pandas as pd
+
+            n = db.import_catalog(db.connect(args.db), args.store, pd.read_csv(args.catalog, dtype={"item": str}))
+            print(f"loaded {n} catalog items into store {args.store!r}")
+        uvicorn.run("margingraph.dashboard.app:app", host=args.host, port=args.port)
 
 if __name__ == "__main__":
     main()
