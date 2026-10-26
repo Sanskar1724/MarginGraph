@@ -12,11 +12,10 @@ import json
 import tempfile
 from pathlib import Path
 
+import core
 import gradio as gr
 import numpy as np
 import pandas as pd
-
-import core
 
 ART = Path(__file__).resolve().parent / "artifacts"
 META = json.loads((ART / "meta.json").read_text())
@@ -171,7 +170,7 @@ def load_store(products_file, orders_file):
         try:
             model = core.train_from_baskets(baskets, prods)
         except ValueError as e:
-            raise gr.Error(str(e))
+            raise gr.Error(str(e)) from e
         h = model.calib["hit"]
         notes.append(f"Trained on **{len(baskets):,}** of your orders ({len(model.items):,} products). "
                      f"Backtest on your most recent 20% of orders: the hidden item is in our top-2 "
