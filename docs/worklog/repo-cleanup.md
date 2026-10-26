@@ -209,3 +209,11 @@ Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clo
 
 - `docs/industry-roadmap` merged into `main` (no conflicts; 86 passed, 1 skipped; ruff clean). Added to the README branch table, CONTRIBUTING and the WORKLOG branch map.
 - `docs/industry-roadmap` trimmed like the other module branches: `docs/industry-plan/`, the A/B sample-size and public-dataset scripts with their tests, the work log, and its own README. That makes 13 module branches.
+
+## 2026-10-26 13:13 UTC: history rewritten to San's name (San: "yes force push now")
+
+- Bare clone of `main` and the 13 module branches; `git filter-repo --mailmap` mapped `Claude <noreply@anthropic.com>` and `Sanskar1724 <…noreply…>` to `Sanskar Chandawar <152592524+Sanskar1724@users.noreply.github.com>`, and a message callback removed every `Co-Authored-By: Claude…` and `Claude-Session:` line and renamed the `Merge remote-tracking branch 'origin/claude/project-thread-…' into trial` messages.
+- Check before pushing: the tree of every rewritten branch is identical to the tree it replaced (14 of 14). After: 104 commits authored and committed by Sanskar Chandawar; 4 authored by San in the GitHub web UI keep GitHub as committer; 0 Claude trailers.
+- Pushed with `--force-with-lease` on each branch's previous SHA. All commit hashes changed; closed PRs keep pointing at the old commits.
+- Branch deletion was tried again and is still refused by this session's proxy (HTTP 403). San deletes the merged `claude/*` branches by hand.
+- Threads still working on old-history branches (`claude/project-thread-mkbaip` for the fine-tune) must move their new commits onto the new `main` (cherry-pick or `git rebase --onto origin/main <old-main-sha>`), or their PR will show the old commits again.
