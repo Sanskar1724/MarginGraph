@@ -2,7 +2,7 @@
 
 # MarginGraph · Live demo (Hugging Face Space)
 
-**A free Gradio app: try the demo store, upload your own orders CSV, or run the backtest.**
+**A free Gradio app, live at https://huggingface.co/spaces/EquilStable/MarginGraph: try the demo store, upload your own orders CSV, or run the backtest.**
 
 ![license](https://img.shields.io/badge/license-MIT-green) ![demo](https://img.shields.io/badge/demo-Gradio-FF7C00?logo=gradio&logoColor=white) ![host](https://img.shields.io/badge/host-Hugging%20Face%20Spaces-FFD21E?logo=huggingface&logoColor=white) ![deps](https://img.shields.io/badge/deps-numpy%20%2B%20pandas-lightgrey)
 
