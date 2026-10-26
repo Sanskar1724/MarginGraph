@@ -9,6 +9,14 @@ margingraph serve            # FastAPI on :8000, POST /recommend
 pytest -q                    # code tests on a tiny synthetic fixture
 ```
 
+To train on a real store's data instead (CSV/Excel export, Shopify or
+WooCommerce), see [CONNECTORS.md](CONNECTORS.md):
+
+```bash
+margingraph sync shopify --out data/store
+margingraph --config data/store/config.yaml run --results results_store --artifacts artifacts_store
+```
+
 | Step | Module | Output in `results/` |
 | --- | --- | --- |
 | Clean data | `data.py` | `clean_log.json` |
