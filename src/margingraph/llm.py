@@ -102,6 +102,21 @@ def sft_examples(slates: pd.DataFrame, catalog: pd.DataFrame, neg_per_pos: int =
     return out[["event_id", "prompt", "label"]]
 
 
+def _skip_torchao_check() -> None:
+    """Kaggle images ship torchao 0.10, which recent peft rejects with an
+    ImportError while wrapping plain Linear layers. We never use torchao, so
+    tell peft it is absent."""
+    import importlib
+
+    for name in ("peft.import_utils", "peft.tuners.lora.torchao", "peft.utils.quantization_utils"):
+        try:
+            mod = importlib.import_module(name)
+        except ImportError:
+            continue
+        if hasattr(mod, "is_torchao_available"):
+            mod.is_torchao_available = lambda: False
+
+
 def finetune_lora(
     model,
     tok,
@@ -121,6 +136,7 @@ def finetune_lora(
     import torch
     from peft import LoraConfig, get_peft_model
 
+    _skip_torchao_check()
     model = get_peft_model(
         model,
         LoraConfig(r=r, lora_alpha=2 * r, lora_dropout=0.05, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]),
