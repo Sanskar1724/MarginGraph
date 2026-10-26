@@ -179,3 +179,22 @@ Checks: `feat/core-pipeline` alone passes its tests (6 passed; first try failed 
 `main` README now has a branch table linking each module branch, and CONTRIBUTING says new work branches from `main` and module branches are refreshed after merge.
 
 Note for the fine-tune thread: `notebooks/llm_*.ipynb` still `git clone -b claude/project-thread-mkbaip`; switch to `main` before that branch is deleted.
+
+## 2026-10-26 12:30 UTC: PRs #10 and #11 merged, branches refreshed
+
+- PR #10 (work log, `claude/project-thread-j64y7y`) and PR #11 (CI, `claude/project-thread-hadeju`, all 7 checks green) merged into `main`. Conflict in `docs/WORKLOG.md` (both edited the thread table): kept #10's table and branch map, took #11's row 9 and marked it merged. Local run: 61 passed, 1 skipped; `ruff check .` clean.
+- Module branches refreshed with a merge commit (parents: old branch tip + `main`) whose tree is the trimmed module, so pushes stay fast-forward. `ci/github-actions` now holds the workflows, pre-commit, gitleaks, Dockerfile, scripts, quality gate and load-test results; `feat/api-service` gained the Dockerfile, load tester and load-test results. `feat/core-pipeline` needed `gate.py` (imported by the pipeline test): added; 6 passed on that branch alone.
+- PR #12 (service) not merged yet: add/add conflicts with #11 in `.dockerignore`, `.github/workflows/ci.yml`, `Dockerfile`, plus `pyproject.toml` and `docs/WORKLOG.md`. Asked the service thread (via the coordinator) to merge `main` and reconcile.
+
+## Branch deletion (San: "repo has 23 branches please remove unwanted")
+
+Fully contained in `main` (checked with `git merge-base --is-ancestor`): `claude/add-notebooks-and-plan`, `claude/project-thread-{42h21l,80g63p,dxygit,hadeju,j64y7y,l6b8ga,oyvjte,r1a0d1}`.
+`git push --delete` was refused by this session's network proxy (HTTP 403), and the GitHub tools have no branch-delete call, so these must be deleted in the GitHub UI (Branches page).
+Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clone it), `claude/project-thread-psfiei` (PR #12 open), `claude/project-thread-t654yh` (this thread).
+
+## 2026-10-26 12:42 UTC: PR #12 (service) merged
+
+- `claude/project-thread-psfiei` (CI green, `main` already merged in by the service thread) merged into `main`. Local run: 80 passed, 1 skipped; `ruff check .` clean.
+- README roadmap: production service ticked, linked to `docs/SERVICE.md`.
+- `feat/api-service` is now the service module: `src/margingraph/service/`, `api.py`, tests, SERVICE/API docs, Docker Compose files, Dockerfile, `.env.example`, replay / A/B / load-test scripts and their measured results (39 files). All module branches refreshed from `main`.
+- `claude/project-thread-psfiei` is now fully in `main` and can be deleted.
