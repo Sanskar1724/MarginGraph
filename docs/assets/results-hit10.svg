@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<title>Hit@10 on held-out test baskets, Oct to Dec 2011</title>
+<rect width="960" height="330" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="40" font-size="18" font-weight="700" fill="#0f172a">Hit@10 on 4,480 held-out test baskets (Oct–Dec 2011)</text>
+<text x="32" y="62" font-size="13" fill="#64748b">UCI Online Retail II, strict temporal split. LightGBM − EASE: +4.5 pts, 95% CI [3.6, 5.5].</text>
+<text x="168" y="102" font-size="13" text-anchor="end" fill="#475569" font-weight="400">Popularity</text>
+<rect x="180" y="86" width="54.2" height="22" rx="4" fill="#cbd5e1"/>
+<text x="242.2" y="102" font-size="13" fill="#0f172a" font-weight="400">3.1%</text>
+<text x="168" y="134" font-size="13" text-anchor="end" fill="#475569" font-weight="400">Co-purchase</text>
+<rect x="180" y="118" width="229.2" height="22" rx="4" fill="#cbd5e1"/>
+<text x="417.2" y="134" font-size="13" fill="#0f172a" font-weight="400">13.1%</text>
+<text x="168" y="166" font-size="13" text-anchor="end" fill="#475569" font-weight="400">Repeat purchase</text>
+<rect x="180" y="150" width="243.3" height="22" rx="4" fill="#cbd5e1"/>
+<text x="431.2" y="166" font-size="13" fill="#0f172a" font-weight="400">13.9%</text>
+<text x="168" y="198" font-size="13" text-anchor="end" fill="#475569" font-weight="400">ALS</text>
+<rect x="180" y="182" width="302.8" height="22" rx="4" fill="#cbd5e1"/>
+<text x="490.8" y="198" font-size="13" fill="#0f172a" font-weight="400">17.3%</text>
+<text x="168" y="230" font-size="13" text-anchor="end" fill="#475569" font-weight="400">ItemKNN</text>
+<rect x="180" y="214" width="397.2" height="22" rx="4" fill="#cbd5e1"/>
+<text x="585.2" y="230" font-size="13" fill="#0f172a" font-weight="400">22.7%</text>
+<text x="168" y="262" font-size="13" text-anchor="end" fill="#475569" font-weight="400">EASE</text>
+<rect x="180" y="246" width="544.2" height="22" rx="4" fill="#cbd5e1"/>
+<text x="732.2" y="262" font-size="13" fill="#0f172a" font-weight="400">31.1%</text>
+<text x="168" y="294" font-size="13" text-anchor="end" fill="#0f172a" font-weight="700">LightGBM (ours)</text>
+<rect x="180" y="278" width="623.0" height="22" rx="4" fill="#2563eb"/>
+<text x="811.0" y="294" font-size="13" fill="#0f172a" font-weight="700">35.6%</text>
+</svg>

@@ -6,6 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "margingraph"
 version = "0.1.0"
 description = "Basket add-on recommender: relevance ranking + margin-aware MILP"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Sanskar1724" }]
+keywords = ["recommender-systems", "e-commerce", "lightgbm", "mixed-integer-programming", "pulp", "learning-to-rank"]
 requires-python = ">=3.10"
 dependencies = [
   "pandas>=2.0",
@@ -26,6 +30,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx"]
+
+[project.urls]
+Repository = "https://github.com/Sanskar1724/MarginGraph"
+Paper = "https://github.com/Sanskar1724/MarginGraph/blob/main/paper/main.pdf"
 
 [project.scripts]
 margingraph = "margingraph.cli:main"
