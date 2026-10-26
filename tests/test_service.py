@@ -40,6 +40,8 @@ def world(tiny_cfg, tmp_path_factory):
     st = _settings(tmp, url)
     if url:
         eng = db.make_engine(url)
+        with eng.begin() as conn:  # the view depends on the tables, so it goes first
+            conn.exec_driver_sql("DROP VIEW IF EXISTS dashboard_events")
         db.metadata.drop_all(eng)
     app = create_app(st)
     client = TestClient(app)
@@ -88,7 +90,7 @@ def test_quality_gate_keeps_the_serving_model(world):
     """A retrain that fails the gate is stored as rejected; the active model stays."""
     import margingraph.service.train as T
 
-    app, eng = world["app"], world["app"].state.svc.engine
+    eng = world["app"].state.svc.engine
     real = T.ranking_metrics
     calls = {"n": 0}
 
@@ -296,8 +298,8 @@ def test_caches(monkeypatch):
 def test_import_sync_folder_keeps_unknown_costs_unrecommendable(tmp_path, tiny_cfg):
     """Connector output -> service store: items without a store cost are never offered."""
     import yaml
-
     from conftest import make_raw
+
     from margingraph.cli import main
     from margingraph.service.cli import import_sync
 

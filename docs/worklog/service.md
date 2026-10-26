@@ -95,6 +95,11 @@ The dashboard adapter was pointed at the service DB (`MARGINGRAPH_EVENTS_DB=data
 | 9 | Quality-gate test failed on the synthetic fixture | Co-purchase alone is perfect on planted pairs, so LightGBM could only tie | Gate is "≥ best single source"; separate test rigs a bad retrain and checks the old model keeps serving |
 | 10 | 259 MB `artifacts_pg/` bundle got into a local commit | `.gitignore` only listed `artifacts/` | Removed before any push; `.gitignore` now has `artifacts*/` |
 | 11 | Merge with `main` conflicted in `cli.py` and `.gitignore` | `main` added `sync` and `dashboard` commands | Kept both sets of commands |
+| 12 | First CI run on PR #12: `test_quality_gate_keeps_the_serving_model` failed with a unique-key error | On GitHub's faster runners two trainings finished in the same second, so both got the same model version | Versions now end in a random 4-hex suffix (`20261026-122832-fce6`) |
+| 13 | PR #12 conflicted with the CI PR #11 (Dockerfile, ci.yml, .dockerignore, pyproject.toml, WORKLOG.md) | Both threads added a Dockerfile and a CI workflow | One Dockerfile: the production API is the default command, and the research demo API runs from the same image with `uvicorn margingraph.api:app`. One ci.yml: #11's jobs (lint, secret scan, pre-commit, tests on 3.10/3.12, quality gate, Docker load test), plus a Postgres service for the service tests and a production API smoke test in the Docker job. `dev` extras merged |
+| 14 | ruff (from #11) flagged FastAPI `Depends` defaults (B008), two `zip()` calls (B905) and an unused variable | New lint rules from main | `extend-immutable-calls` for FastAPI markers, `strict=True` on the zips, variable removed |
+| 15 | pre-commit `check-yaml` rejected `!reset` in `docker-compose.full.yml` | The custom compose tag is not plain YAML | The full stack no longer has a bundled load balancer. With Postgres and Redis shared, more API copies can run behind any load balancer |
+| 16 | Service tests failed on a reused Postgres database | `drop_all` cannot drop tables the `dashboard_events` view depends on | Test setup drops the view first |
 
 ## 6. Not done / open
 

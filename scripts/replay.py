@@ -57,7 +57,7 @@ def main() -> None:
                 "customer_id": cust,
                 "recommendation_id": rec["request_id"],
                 "ts": g["ts"].min().isoformat(),
-                "lines": [{"item": i, "quantity": float(q), "price": float(p)} for i, q, p in zip(g["item"], g["quantity"], g["price"])],
+                "lines": [{"item": i, "quantity": float(q), "price": float(p)} for i, q, p in zip(g["item"], g["quantity"], g["price"], strict=True)],
             }
             c.post("/v1/orders", json=o).raise_for_status()
         wall = time.time() - t_start
