@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx"]
+dev = ["pytest", "httpx", "ruff", "pre-commit"]
 
 [project.urls]
 Repository = "https://github.com/Sanskar1724/MarginGraph"
@@ -37,6 +37,27 @@ Paper = "https://github.com/Sanskar1724/MarginGraph/blob/main/paper/main.pdf"
 
 [project.scripts]
 margingraph = "margingraph.cli:main"
+margingraph-gate = "margingraph.gate:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+# pyflakes + pycodestyle errors + import order + bugbear. Line length is left
+# to review: the research code keeps long formulas on one line on purpose.
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501", "E702", "E731", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/margingraph/cli.py" = ["E402"]  # env var must be set before numeric imports
+"tests/*" = ["E402"]
+"paper/*" = ["B905"]  # figure script zips fixed-length style lists
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: needs the full dataset or a GPU; skipped in CI"]

@@ -16,7 +16,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` → `feat/store-connectors` | Merged into `main` 2026-10-26 | [connectors.md](worklog/connectors.md) |
 | 7 | Improve recommendation accuracy | 2026-10-26 11:43 | not yet | → `feat/ranker-accuracy` | In progress | added when it lands |
 | 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Dashboard: policy settings, KPIs, A/B results with CIs | `claude/project-thread-oyvjte` → `feat/merchant-dashboard` | Merged into `main` 2026-10-26 | [dashboard.md](worklog/dashboard.md) |
-| 9 | Add CI and release checks | 2026-10-26 11:43 | not yet | → `ci/github-actions` | In progress | added when it lands |
+| 9 | Add CI and release checks | 2026-10-26 11:43 | [#11](https://github.com/Sanskar1724/MarginGraph/pull/11) CI: lint, tests, secret scan, quality gate, Docker, load test | `claude/project-thread-hadeju` → `ci/github-actions` | Merged into `main` 2026-10-26; API p50 22 ms / p95 28 ms measured | [ci.md](worklog/ci.md) |
 | 10 | Clean up GitHub repo structure | 2026-10-26 11:53 | pushed to `main` (no PR; San said go ahead) | `claude/project-thread-t654yh` | Done; old `claude/*` branches retire as their threads finish | [repo-cleanup.md](worklog/repo-cleanup.md) |
 | 11 | Write MarginGraph research paper | 2026-10-26 11:50 | [#9](https://github.com/Sanskar1724/MarginGraph/pull/9) arXiv-style paper (LaTeX, PDF, Markdown, figures) | `claude/project-thread-l6b8ga` → `docs/research-paper` | Merged into `main` 2026-10-26 | [paper.md](worklog/paper.md) |
 | 12 | Create MarginGraph pitch deck | 2026-10-26 11:50 | [#7](https://github.com/Sanskar1724/MarginGraph/pull/7) 15-slide pitch deck | `claude/project-thread-42h21l` → `docs/pitch-deck` | Merged into `main` 2026-10-26 | [deck.md](worklog/deck.md) |
@@ -26,7 +26,7 @@ PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed d
 
 ## Branch map
 
-`main` holds the full, tested project. Each module has a long-lived branch cut from `main` on 2026-10-26; changes reach `main` through a pull request. New short-lived branches use `feat/`, `fix/`, `docs/`, `ci/` or `chore/`. Details in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+`main` holds the full, tested project. Each module branch holds only that module's files and its own README; new work branches from `main` and reaches it through a pull request. New short-lived branches use `feat/`, `fix/`, `docs/`, `ci/` or `chore/`. Details in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 | Branch | Module | Main paths | Came from |
 | --- | --- | --- | --- |
@@ -42,9 +42,9 @@ PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed d
 | `docs/research-paper` | arXiv-style paper | `paper/` | #9 `claude/project-thread-l6b8ga` |
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` | #7 `claude/project-thread-42h21l` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` | #8 `claude/project-thread-80g63p` |
-| `ci/github-actions` | CI and release checks | `.github/workflows/` | thread 9 (in progress) |
+| `ci/github-actions` | CI and release checks | `.github/workflows/` | #11 `claude/project-thread-hadeju` |
 
-The old `claude/*` branches stay until their threads finish, then are deleted.
+Old `claude/*` branches are deleted once their work is in `main` (see [repo-cleanup.md](worklog/repo-cleanup.md)).
 
 ## Experiment runs
 
@@ -71,6 +71,8 @@ The old `claude/*` branches stay until their threads finish, then are deleted.
 | 2026-10-26 | `git pull` refused on Kaggle because the run rewrote tracked result files | Discard local `results/` before pulling | instructions to San |
 | 2026-10-26 | Fine-tune: newest `peft` refused Kaggle's old `torchao` 0.10 | Skip peft's torchao version check | `0f22437` |
 | 2026-10-26 | Fine-tune: CUDA out of memory on a T4 (logits for full 151k vocab at every position) | Keep only last-token logits, gradient checkpointing, batch 8 | `4c69f43` |
+| 2026-10-26 | API: first request after restart took 32 s (lazy 257 MB model load) | Load the model at startup; `/health` reports `model_loaded` | PR #11 |
+| 2026-10-26 | API: one worker loses throughput as users are added (GIL-bound) | `margingraph serve --workers N`; 2 workers: 37 → 92 req/s at 4 users | PR #11 |
 | 2026-10-26 | Docs: README linked a missing `docs/experiment_plan.md` and said "no results yet" | README rewritten with current results and links | PR #3 |
 
 ## How to add to this log

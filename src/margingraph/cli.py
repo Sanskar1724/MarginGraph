@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> None:
     s = sub.add_parser("serve", help="start the FastAPI demo")
     s.add_argument("--artifacts", default="artifacts")
     s.add_argument("--port", type=int, default=8000)
+    s.add_argument("--workers", type=int, default=1, help="processes; each holds its own copy of the model (~0.5 GB)")
     y = sub.add_parser("sync", help="pull a store's products and orders into a folder `run` can train on")
     y.add_argument("source", choices=["csv", "shopify", "woocommerce"])
     y.add_argument("--out", default="data/store", help="output folder (default data/store)")
@@ -64,7 +65,7 @@ def main(argv: list[str] | None = None) -> None:
         import uvicorn
 
         os.environ["MARGINGRAPH_ARTIFACTS"] = args.artifacts
-        uvicorn.run("margingraph.api:app", host="0.0.0.0", port=args.port)
+        uvicorn.run("margingraph.api:app", host="0.0.0.0", port=args.port, workers=args.workers)
     elif args.cmd == "dashboard":
         import uvicorn
 

@@ -7,13 +7,12 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from conftest import make_raw
 
 from margingraph import connectors as c
 from margingraph.cli import main
 from margingraph.connectors.http import HttpClient, HttpError, next_link
 from margingraph.pipeline import run
-
-from conftest import make_raw
 
 
 class FakeHttp:
@@ -214,7 +213,7 @@ def test_woocommerce_pagination_variations_cost_meta(tmp_path, tiny_cfg):
     cfg, _ = tiny_cfg
     cl, fake = client(woo_handler)
     src = c.WooCommerceSource("shop.example.com", "ck_1", "cs_2", client=cl)
-    res = c.sync(src, tmp_path / "w", cfg, min_orders=1)
+    c.sync(src, tmp_path / "w", cfg, min_orders=1)
     auth = fake.calls[0][2]["Authorization"]
     assert base64.b64decode(auth.split()[1]).decode() == "ck_1:cs_2"
     assert [p for p, q, _ in fake.calls if p.endswith("/products")] == ["/wp-json/wc/v3/products"] * 2
@@ -287,8 +286,9 @@ def test_cli_sync_csv_then_run_uses_store_costs(tmp_path, tiny_cfg):
     assert (tmp_path / "res/e8_strategies_store_erp.csv").exists()
     assert not (tmp_path / "res/e11_erp_sensitivity_milp_vs_ranker.csv").exists()
 
-    from fastapi.testclient import TestClient
     import os
+
+    from fastapi.testclient import TestClient
 
     os.environ["MARGINGRAPH_ARTIFACTS"] = str(tmp_path / "art")
     from margingraph import api
