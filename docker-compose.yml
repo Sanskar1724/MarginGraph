@@ -1,0 +1,25 @@
+# Lite stack (default): API + nightly scheduler on SQLite with the in-memory cache.
+# Fits an 8 GB laptop.   docker compose up -d
+# Full stack:            docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
+services:
+  api:
+    build: .
+    image: margingraph:latest
+    ports: ["8000:8000"]
+    env_file: [.env]
+    volumes: ["mgdata:/data"]
+    restart: unless-stopped
+    mem_limit: 2g
+
+  # retrains every store once a day at NIGHTLY_HOUR (UTC); new models hot-swap into the api
+  scheduler:
+    image: margingraph:latest
+    command: ["sh", "-c", "margingraph scheduler --hour ${NIGHTLY_HOUR:-3}"]
+    env_file: [.env]
+    volumes: ["mgdata:/data"]
+    restart: unless-stopped
+    mem_limit: 3g
+    depends_on: [api]
+
+volumes:
+  mgdata:
