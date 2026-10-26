@@ -89,3 +89,19 @@ def test_llm_compare_and_prompts():
     df["label"] = (np.arange(1000) % 20 == 3).astype(int)
     out = compare(df, n_boot=50)
     assert set(out["a"]) == {"llm", "blend"}
+
+
+def test_llm_stack_runs():
+    from margingraph.llm import stack
+
+    rng = np.random.default_rng(1)
+
+    def fake(n):
+        df = pd.DataFrame({"event_id": np.repeat(np.arange(n), 20), "score": rng.random(n * 20)})
+        df["label"] = (np.arange(n * 20) % 20 == 0).astype(int)
+        df["llm"] = df["label"] * 2 + rng.random(n * 20)  # informative LLM
+        return df
+
+    table, coef = stack(fake(200), fake(100), n_boot=100)
+    assert table.loc[table.metric == "hit@1", "diff"].iloc[0] > 0
+    assert set(coef.feature) >= {"llm", "lgbm"}
