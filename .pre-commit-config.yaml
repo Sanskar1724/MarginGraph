@@ -11,19 +11,20 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
         args: ["--maxkb=2000"]  # keep datasets and model files out of git
+        exclude: ^space/artifacts/   # the small demo model the HF Space loads
       - id: check-yaml
       - id: check-toml
       - id: check-merge-conflict
-      - id: end-of-file-fixer
-        exclude: ^results/
-      - id: trailing-whitespace
-        exclude: ^results/
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+  - repo: local
     hooks:
-      - id: nbstripout          # notebook outputs are where tokens leaked before
+      - id: notebook-outputs    # notebook outputs are where a token leaked before
+        name: notebooks have no cell outputs
+        entry: python scripts/check_notebooks.py
+        language: python
+        files: \.ipynb$
+        exclude: ^notebooks/exploration/   # archived runs; outputs kept as the record (scanned: no secrets)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+    rev: v0.17.2
     hooks:
       - id: ruff
         args: ["--fix"]

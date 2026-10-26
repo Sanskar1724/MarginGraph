@@ -111,7 +111,7 @@ async def api_put_settings(store_id: str, request: Request) -> dict:
         s.max_addons = int(s.max_addons)
         s.allow_discounts = bool(s.allow_discounts)
     except (TypeError, ValueError) as e:
-        raise HTTPException(422, str(e))
+        raise HTTPException(422, str(e)) from e
     err = db.save_settings(c, store_id, s)
     for item, r in (body.get("items") or {}).items():
         err += db.set_item_rule(c, store_id, item, excluded=r.get("excluded"),
@@ -138,7 +138,7 @@ async def api_events(request: Request) -> dict:
     try:
         n = db.insert_events(con(), rows)
     except (KeyError, ValueError) as e:
-        raise HTTPException(422, f"bad event: {e}")
+        raise HTTPException(422, f"bad event: {e}") from e
     return {"inserted": n}
 
 
@@ -151,7 +151,7 @@ async def api_catalog(store_id: str, request: Request) -> dict:
         df = pd.read_csv(io.StringIO((await request.body()).decode()), dtype={"item": str})
         n = db.import_catalog(con(), store_id, df)
     except (ValueError, pd.errors.ParserError) as e:
-        raise HTTPException(422, str(e))
+        raise HTTPException(422, str(e)) from e
     return {"store_id": store_id, "items": n}
 
 
