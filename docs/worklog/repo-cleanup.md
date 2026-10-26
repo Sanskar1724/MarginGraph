@@ -225,3 +225,10 @@ Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clo
 - The deck was rebuilt with `NODE_PATH=<scratch>/node_modules SKILL=<pptx skill> node docs/deck/build.js docs/deck/MarginGraph_pitch_deck.pptx`.
 - 11 module branches were refreshed from main as fast-forward trimmed commits. `feat/llm-reranker` and `feat/store-connectors` were unchanged.
 - San deleted the old `claude/*` branches. Left on GitHub: `main`, the 13 module branches, `claude/project-thread-mkbaip` (fine-tune, still running) and `claude/readme`. `claude/readme` is a stale pre-rewrite copy of main from 12:42 UTC, and its tip is already in main, so San can delete it too.
+
+## 2026-10-26 13:35 UTC: PR #15 (E6 fine-tune NO-GO) merged
+
+- CI was green on all 14 checks, so `docs/llm-finetune-result` was merged into `main` with a merge commit (`38b1ef7`, pushed as San).
+- Follow-up `bad5fbe`: rebuilt `paper/main.pdf` with the E6 result (0 overfull boxes). Also added the fine-tune NO-GO (Hit@5 7.8% vs 27.6%, below random order at 11.6%) to the README, ROADMAP, PROJECT_REPORT, deck (rebuilt and validated), launch kit and industry plan, where items C1 and C2 are now ticked. The Kaggle notebooks now clone `main` instead of `claude/project-thread-mkbaip`. Tests: 90 passed, 1 skipped; ruff clean.
+- Refreshed `feat/core-pipeline`, `feat/llm-reranker` (README now has a "LoRA fine-tune NO-GO" badge), `docs/project-report`, `docs/research-paper`, `docs/pitch-deck`, `docs/launch-kit` and `docs/industry-roadmap`.
+- San has deleted `claude/readme` and `claude/project-thread-mkbaip`. The only branch left to delete is `docs/llm-finetune-result` (merged). After that the repo has `main` and the 13 module branches.
