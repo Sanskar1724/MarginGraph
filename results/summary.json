@@ -1,0 +1,177 @@
+{
+  "e1": {
+    "events": 3822,
+    "chance_hit@5": 0.0011405109489051094,
+    "chance_hit@10": 0.002281021897810219,
+    "real_hit@5": 0.11878597592883307,
+    "real_hit@10": 0.16117216117216118,
+    "shuffled_hit@5": 0.025379382522239664,
+    "shuffled_hit@10": 0.04369440083725798,
+    "lift_hit@10_vs_shuffled": 3.688622754491018
+  },
+  "e4_test_pool_recall": 0.43526785714285715,
+  "best_baseline_on_val": "ease",
+  "e5_paired": [
+    {
+      "a": "lightgbm",
+      "b": "ease",
+      "metric": "hit@5",
+      "diff": 0.036383928571428574,
+      "ci_low": 0.027232142857142858,
+      "ci_high": 0.04575892857142857,
+      "p_boot": 0.0
+    },
+    {
+      "a": "lightgbm",
+      "b": "ease",
+      "metric": "hit@10",
+      "diff": 0.04308035714285714,
+      "ci_low": 0.03415178571428571,
+      "ci_high": 0.05223214285714286,
+      "p_boot": 0.0
+    },
+    {
+      "a": "lightgbm",
+      "b": "ease",
+      "metric": "ndcg@10",
+      "diff": 0.025103553651877903,
+      "ci_low": 0.01949033186904143,
+      "ci_high": 0.03024122152602862,
+      "p_boot": 0.0
+    }
+  ],
+  "e3_test": [
+    {
+      "model": "popularity",
+      "metric": "hit@10",
+      "mean": 0.0296875,
+      "ci_low": 0.024553571428571428,
+      "ci_high": 0.03482142857142857,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "popularity",
+      "metric": "ndcg@10",
+      "mean": 0.015107012735172745,
+      "ci_low": 0.012271996010413703,
+      "ci_high": 0.01796955498654344,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "recent_pop",
+      "metric": "hit@10",
+      "mean": 0.031473214285714285,
+      "ci_low": 0.026339285714285714,
+      "ci_high": 0.03660714285714286,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "recent_pop",
+      "metric": "ndcg@10",
+      "mean": 0.014793762210433787,
+      "ci_low": 0.012210251962853002,
+      "ci_high": 0.017385832851835044,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "repeat",
+      "metric": "hit@10",
+      "mean": 0.1375,
+      "ci_low": 0.12745535714285713,
+      "ci_high": 0.14776785714285715,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "repeat",
+      "metric": "ndcg@10",
+      "mean": 0.07805738103072903,
+      "ci_low": 0.07187921988165748,
+      "ci_high": 0.0845793928144701,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "copurchase",
+      "metric": "hit@10",
+      "mean": 0.1296875,
+      "ci_low": 0.1203125,
+      "ci_high": 0.1390625,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "copurchase",
+      "metric": "ndcg@10",
+      "mean": 0.07615038111237425,
+      "ci_low": 0.07006155015042567,
+      "ci_high": 0.08261070231256293,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "itemknn",
+      "metric": "hit@10",
+      "mean": 0.20535714285714285,
+      "ci_low": 0.19375,
+      "ci_high": 0.21719308035714283,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "itemknn",
+      "metric": "ndcg@10",
+      "mean": 0.13051983870431227,
+      "ci_low": 0.12218643543238661,
+      "ci_high": 0.13883142504260698,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "ease",
+      "metric": "hit@10",
+      "mean": 0.26160714285714287,
+      "ci_low": 0.24843191964285716,
+      "ci_high": 0.2736607142857143,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "ease",
+      "metric": "ndcg@10",
+      "mean": 0.15971405843877662,
+      "ci_low": 0.1511457331928199,
+      "ci_high": 0.16857342770982872,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "als",
+      "metric": "hit@10",
+      "mean": 0.16674107142857142,
+      "ci_low": 0.15647321428571428,
+      "ci_high": 0.17790178571428572,
+      "n": 4480,
+      "split": "test"
+    },
+    {
+      "model": "als",
+      "metric": "ndcg@10",
+      "mean": 0.10163027949851162,
+      "ci_low": 0.09458436658033442,
+      "ci_high": 0.10919197527637949,
+      "n": 4480,
+      "split": "test"
+    }
+  ],
+  "e9": {
+    "checked": 600,
+    "objective_agree": 600,
+    "max_gap": 0.0,
+    "mean_milp_ms": 2.868851240004915
+  }
+}

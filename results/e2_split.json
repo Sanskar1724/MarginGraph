@@ -1,0 +1,15 @@
+{
+  "train_max_ts": "2011-06-30 20:08:00",
+  "val_min_ts": "2011-07-01 08:16:00",
+  "val_max_ts": "2011-09-30 17:22:00",
+  "test_min_ts": "2011-10-02 10:32:00",
+  "test_max_ts": "2011-12-09 12:50:00",
+  "invoice_overlap": 0,
+  "train_lines": 709574,
+  "val_lines": 120108,
+  "test_lines": 162228,
+  "val_events": 3822,
+  "test_events": 4480,
+  "val_target_seen_in_train": 0.9379905808477237,
+  "test_target_seen_in_train": 0.8334821428571428
+}
