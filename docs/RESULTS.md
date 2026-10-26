@@ -35,7 +35,7 @@ E7 isotonic calibration: test Brier 0.0083 vs base rate 0.0096.
 
 Profit is £ gross profit per basket. *Realized* counts only the product the customer really bought.
 
-| Strategy | Hit@2 | Realized profit | Expected profit | 15% floor breaks |
+| Strategy | Hit@2 | Realized profit | Expected profit | 15% floor breaks per basket |
 | --- | --- | --- | --- | --- |
 | Popularity top-2 | 1.1% | 0.015 | 0.023 | 2.2% |
 | Co-purchase top-2 | 6.1% | 0.067 | 0.055 | 3.3% |
