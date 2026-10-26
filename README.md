@@ -13,7 +13,7 @@
 [![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](space/)
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
 
-[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
+[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [Industry plan](docs/industry-plan/README.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
 
 </div>
 
@@ -127,7 +127,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Merchant dashboard (policy settings, KPIs, A/B results with CIs)
 - [ ] Pilot store with real cost and stock, then an A/B test
 
-Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md). Step-by-step plan to an industry-ready product (more datasets, real store data, A/B test, hardening, free hosting): [`docs/industry-plan/`](docs/industry-plan/README.md)
 
 ## Repository layout
 
