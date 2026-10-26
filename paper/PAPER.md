@@ -26,9 +26,9 @@ $\lambda=0.5$ raises realized gross profit per basket by 14% over the
 ranker’s top-2 (paired CI of the gain £0.014–0.044) for a 1.1-point drop
 in Hit@2, with zero margin-floor violations; the gain stays positive
 over nine cost and stock scenarios. We also report a negative result:
-zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, and a
-stacker that feeds the LLM score to a logistic model all fail to beat
-LightGBM on the same slates. All numbers in this paper are read from
+zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, a stacker
+that feeds the LLM score to a logistic model, and a LoRA fine-tune of
+the 1.5B model all fail to beat LightGBM on the same slates. All numbers in this paper are read from
 files the pipeline writes; none are targets.
 
 ## Introduction
@@ -412,6 +412,9 @@ show its size on a real store’s costs.
 | Qwen2.5-3B zero-shot             |  16.6 |      — | $-11.0$ \[$-13.7$, $-8.4$\] |
 | rank blend with LightGBM         |  22.3 |   33.9 | $-5.3$ \[$-7.2$, $-3.4$\]   |
 | Stacker (LightGBM + 3B features) |  27.5 |      — | $-0.1$ \[$-0.6$, $+0.3$\]   |
+| Qwen2.5-1.5B LoRA fine-tuned     |   7.8 |   17.4 | $-19.8$ \[$-22.8$, $-16.7$\] |
+| rank blend with LightGBM         |  16.2 |   30.4 | $-11.4$ \[$-13.9$, $-8.8$\] |
+| Random order of the slate        |  11.6 |   23.2 | —                           |
 
 LLM reranking on the top-20 LightGBM slate, 1,000 random test baskets,
 same slates for all rows. Differences are paired against LightGBM with
@@ -441,13 +444,20 @@ measurable signal beyond the trained reranker on this task.
 
 This agrees with Hou et al. (2024), who find zero-shot LLM rankers trail
 trained models, and suggests the gap is larger for wholesale baskets
-described only by terse product names. A LoRA fine-tune (E. J. Hu et al.
-2022; Bao et al. 2023) of the 1.5B model on 10,772 training-period pairs
-(one hidden item to three LightGBM hard negatives, two epochs) is
-running at the time of writing; we will report it whatever the outcome.
-Until an LLM wins on a paired test, LightGBM remains MarginGraph’s
-ranker, and the LLM’s role is limited to explanations and to products
-with no purchase history.
+described only by terse product names. We then fine-tuned the 1.5B
+model with LoRA (E. J. Hu et al. 2022; Bao et al. 2023) on 10,772
+training-period pairs (each hidden item with three LightGBM hard
+negatives from the same slate; two epochs, class-weighted yes/no loss).
+The weighted loss fell to about $\ln 2$ within 300 steps and stayed
+there, and the fine-tuned model is worse than zero-shot: Hit@5 7.8%,
+below the 11.6% of a random order of the same slate (the target is in
+the slate for 46.3% of baskets). Its blend with LightGBM also loses at
+Hit@10 ($-5.7$ \[$-7.7$, $-3.6$\]). A likely cause, which we did not
+test, is that LightGBM’s near-misses are often the same product in
+another colour or size, which terse product names cannot separate. We
+therefore keep LightGBM as MarginGraph’s ranker and limit the LLM to
+explanations and to products with no purchase history (7.1% of test
+targets); neither use is evaluated here.
 
 ## Limitations
 
@@ -472,8 +482,9 @@ with no purchase history.
 
 - **LLM scope.** We tested two small instruction-tuned models zero-shot,
   one prompt and one scoring method, on the slates of the first ranker
-  (Hit@10 35.6%). Larger models, other prompts, or fine-tuning may
-  behave differently; the fine-tune is pending.
+  (Hit@10 35.6%). One LoRA fine-tune of the 1.5B model with hard
+  negatives also failed. Larger models, other prompts, richer product
+  text, or easier negatives may behave differently.
 
 - **Latency.** Solver time is 2.7 ms. The serving latency in the
   repository (p50 22 ms for the research API, p95 88 ms end to end for
@@ -486,10 +497,11 @@ On a public retail dataset and a CPU, a calibrated gradient-boosted
 reranker beats a strong classical ladder for checkout add-ons, and a
 tiny per-basket MILP converts its probabilities into choices that
 respect hard margin and stock rules while raising (simulated) profit at
-a small, tunable cost in hit rate. Small open LLMs, used zero-shot, did
-not help. The next steps are to replace simulated costs with a real
-store’s data, to run an online test, and to finish the fine-tuned LLM
-experiment.
+a small, tunable cost in hit rate. Small open LLMs did not help, either
+zero-shot or after a LoRA fine-tune. The next steps are to replace
+simulated costs with a real store’s data, to run an online test, and to
+measure the LLM where it is still used: cold-start products and
+explanations.
 
 ## Reproducibility
 

@@ -134,3 +134,13 @@ GPU notebooks:
 - Unit cost, stock and discount response are simulated, because Online Retail II has none of them. Every Stage 2 profit number depends on them; E11 varies the margin distribution.
 - "Realized" profit counts an add-on as accepted only if it is the product the customer really bought. This is conservative, because real shoppers also accept items they did not buy in the logged invoice.
 - LightGBM is trained on val events that were scored by train-only models. Test events are scored by models refit on train+val.
+
+## 9. E6 closeout PR (after the history rewrite)
+
+The fine-tune result arrived after `main` was rewritten. The edits were therefore committed on a fresh branch from the new `main` (`docs/llm-finetune-result`), with no merge of the old history:
+- `docs/RESULTS.md`: E6 table with Hit@1/5/10, paired CIs, the random-order row and the option 3 closeout.
+- This log (section 5 row 4 and conclusion) and `docs/WORKLOG.md`.
+- Paper: `main.tex` (abstract, Table 3, Section 5.4, limitations, conclusion), `PAPER.md` (same text, edited by hand rather than re-run through pandoc so the earlier clean-up stays), and `figures/fig4_llm` regenerated with the fine-tuned and random-order bars.
+- `paper/main.pdf` was **not** rebuilt: there is no LaTeX in the container. `paper/README.md` lists it as a to-do.
+- `claude/project-thread-mkbaip` holds only the old, pre-rewrite history and can be deleted.
+- Checks: `pytest -q` gives 72 passed; `tests/test_service.py` was skipped because `sqlalchemy` is not installed in this container.
