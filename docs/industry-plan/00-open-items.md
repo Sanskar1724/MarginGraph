@@ -49,7 +49,7 @@ Each item says where it came from, so you can check the original note.
 
 These are not blockers for a pilot, but each is a real gap.
 
-- [ ] The HF Space demo uses EASE, not the stronger LightGBM ranker (Hit@10 31.1% vs 35.6% on UCI). *Source: demo worklog.*
+- [ ] The HF Space demo uses EASE, not the stronger LightGBM ranker (Hit@10 31.1% vs 38.1% on UCI). *Source: demo worklog.*
 - [ ] The demo's "balance" slider barely changes results between 0.5 and 1.0 (the relevance term is tiny next to profit in pounds). A normalized objective would fix it. *Source: demo worklog.*
 - [ ] Dashboard: CSRF protection if it is ever exposed without its token; wire the service's logs to it (PR #12 adds a settings overlay; check after merge). *Source: dashboard worklog.*
 - [ ] Shopify: a GraphQL adapter, since Shopify is moving apps from REST to GraphQL. *Source: connectors worklog.*

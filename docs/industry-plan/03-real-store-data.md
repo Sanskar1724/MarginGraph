@@ -1,6 +1,6 @@
 # Phase 3: real cost and stock from a pilot store
 
-**Goal:** replace the simulated cost and stock with a real store's numbers, and check the offline result on that store's own history before showing anything to its shoppers. This is the step that can turn "+17% profit (simulated)" into a real number, or show that it does not hold.
+**Goal:** replace the simulated cost and stock with a real store's numbers, and check the offline result on that store's own history before showing anything to its shoppers. This is the step that can turn "+14% profit (simulated)" into a real number, or show that it does not hold.
 
 **Needs:** a pilot store that said yes (see [07-business-and-outreach.md](07-business-and-outreach.md)), and PR #12 merged for the live part.
 

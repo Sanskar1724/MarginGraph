@@ -45,7 +45,7 @@ LightGBM stays the ranker. The LLM, or a much smaller text model, gets the jobs 
 - [ ] Embed product titles with a small free sentence model on CPU (`sentence-transformers/all-MiniLM-L6-v2`, about 90 MB, runs on the laptop).
 - [ ] Add a `text` source to the candidate pool (`features.py`, `retrieval.per_source`): for each basket item, its nearest neighbours by text.
 - [ ] **Gate:** pool Recall@100 goes up with the CI above zero, and Hit@10 is not lower (CI includes or is above zero). Report recall on the new-product subset separately.
-- This also attacks the 58.0% pool recall ceiling, which limits every ranker.
+- This also attacks the pool recall ceiling, which limits every ranker. **Done in PR #14:** a TF-IDF text source is now in the pool, and with three other new sources and a 150-item pool it raised recall from 58.0% to 65.3%.
 
 ### B2. "Why this add-on" text
 

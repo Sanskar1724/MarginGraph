@@ -16,9 +16,9 @@ Everything else in this folder (LLM, hardening, hosting, open items, business) s
 
 | Area | Result | Source |
 | --- | --- | --- |
-| Ranker (UCI, 4,480 test baskets) | LightGBM Hit@10 **35.6%** vs EASE 31.1%, +4.5 pts [3.6, 5.5] | `results/e5_*.csv`, [RESULTS.md](../RESULTS.md) |
-| Candidate pool | Recall@100 **58.0%** [56.7, 59.5]; caps every ranker | `results/e4_retrieval.csv` |
-| Optimizer, simulated cost and stock | MILP λ=0.5: **+17%** realized profit per basket, −1.1 pts Hit@2; 0 margin-floor breaks | `results/e8_*.csv` |
+| Ranker (UCI, 4,480 test baskets) | LightGBM Hit@10 **38.1%** vs EASE 31.1%, +7.0 pts [6.0, 8.0] (35.6% before the accuracy work, PR #14) | `results/e5_*.csv`, [RESULTS.md](../RESULTS.md) |
+| Candidate pool | Recall@150 **65.3%** [63.9, 66.7] (was 58.0% at 100); caps every ranker | `results/e4_retrieval.csv` |
+| Optimizer, simulated cost and stock | MILP λ=0.5: **+14%** realized profit per basket, −1.1 pts Hit@2; 0 margin-floor breaks (+17% against the weaker first ranker) | `results/e8_*.csv` |
 | LLM ranker | Qwen2.5 1.5B and 3B zero-shot, and as a stacker feature: **NO-GO**. LoRA fine-tune (E6) running on Kaggle | [RESULTS.md](../RESULTS.md) |
 | Research API latency | p50 22 ms, p95 28 ms (1 user); about 90 req/s with 2 workers | [worklog/ci.md](../worklog/ci.md) |
 | Production service | PR [#12](https://github.com/Sanskar1724/MarginGraph/pull/12), **open**: multi-store API, A/B buckets, nightly training with a quality gate, fallback. Replay p95 89 to 100 ms | `docs/SERVICE.md` on that branch |
