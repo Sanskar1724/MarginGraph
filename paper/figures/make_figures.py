@@ -45,10 +45,12 @@ def fig_ladder():
     lg = lg[lg.model.str.contains("lightgbm|rerank", case=False)] if "model" in lg else lg
     rows = pd.concat([rows, lg[["model", "mean", "ci_low", "ci_high"]].head(1)])
     names = {"popularity": "Popularity", "recent_pop": "Recent popularity", "repeat": "Repeat purchase",
-             "copurchase": "Co-purchase", "als": "ALS", "itemknn": "ItemKNN", "ease": "EASE"}
+             "copurchase": "Co-purchase", "als": "ALS", "itemknn": "ItemKNN", "ease": "EASE",
+             "ease_decay": "Decayed EASE", "cust_ease": "Customer EASE", "text": "Text (TF-IDF)",
+             "trend": "Trending (fresh)", "fresh_co": "Fresh co-purchase"}
     rows["label"] = rows.model.map(names).fillna("LightGBM rerank")
     rows = rows.sort_values("mean")
-    fig, ax = plt.subplots(figsize=(3.4, 2.4))
+    fig, ax = plt.subplots(figsize=(3.4, 3.2))
     colors = [ORANGE if l == "LightGBM rerank" else BLUE for l in rows.label]
     y = range(len(rows))
     ax.barh(y, rows["mean"] * 100, color=colors, height=0.6)

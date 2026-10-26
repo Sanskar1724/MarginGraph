@@ -12,23 +12,24 @@ Recommenders in retail are usually trained to predict what a shopper
 will buy, while the store is paid by what it earns. We study this gap
 for a narrow, common decision: which (at most two) add-on products to
 suggest at checkout. MarginGraph is a two-stage system. Stage 1
-retrieves 100 candidates from seven classical recommenders and reranks
-them with a LightGBM LambdaRank model whose scores are calibrated into
-purchase probabilities. Stage 2 solves a small mixed-integer program per
-basket that trades expected relevance against expected gross profit,
-under a hard 15% per-item margin floor, a two-item limit, stock
-availability, and an optional overstock weight. On a strict temporal
-split of UCI Online Retail II (4,480 test baskets), the reranker reaches
-Hit@10 of 35.6%, 4.5 points above the best baseline (EASE, 31.1%; paired
-95% CI \[3.6, 5.5\]). With *simulated* unit cost and stock, the
-optimizer at $\lambda=0.5$ raises realized gross profit per basket by
-17% over the ranker’s top-2 (paired CI of the gain £0.017–0.044) for a
-1.1-point drop in Hit@2, with zero margin-floor violations; the gain
-stays positive over nine cost and stock scenarios. We also report a
-negative result: zero-shot Qwen2.5 1.5B and 3B rerankers, their rank
-blends, and a stacker that feeds the LLM score to a logistic model all
-fail to beat LightGBM on the same slates. All numbers in this paper are
-read from files the pipeline writes; none are targets.
+retrieves 150 candidates from eleven sources (classical recommenders,
+text similarity and a nightly fresh-sales signal) and reranks them with
+a LightGBM LambdaRank model whose scores are calibrated into purchase
+probabilities. Stage 2 solves a small mixed-integer program per basket
+that trades expected relevance against expected gross profit, under a
+hard 15% per-item margin floor, a two-item limit, stock availability,
+and an optional overstock weight. On a strict temporal split of UCI
+Online Retail II (4,480 test baskets), the reranker reaches Hit@10 of
+38.1%, 7.0 points above the best baseline (EASE, 31.1%; paired 95% CI
+\[6.0, 8.0\]). With *simulated* unit cost and stock, the optimizer at
+$\lambda=0.5$ raises realized gross profit per basket by 14% over the
+ranker’s top-2 (paired CI of the gain £0.014–0.044) for a 1.1-point drop
+in Hit@2, with zero margin-floor violations; the gain stays positive
+over nine cost and stock scenarios. We also report a negative result:
+zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, and a
+stacker that feeds the LLM score to a logistic model all fail to beat
+LightGBM on the same slates. All numbers in this paper are read from
+files the pipeline writes; none are targets.
 
 ## Introduction
 
@@ -50,9 +51,9 @@ This paper makes four contributions.
     cutoff per split, and full-catalog ranking (no sampled
     negatives (Krichene and Rendle 2020)).
 
-2.  **A strong Stage 1**: a seven-model baseline ladder, a 100-item
-    candidate pool, and a calibrated LightGBM reranker, each step
-    measured with bootstrap confidence intervals.
+2.  **A strong Stage 1**: a baseline ladder of eleven candidate sources,
+    a 150-item candidate pool, and a calibrated LightGBM reranker, each
+    step measured with bootstrap confidence intervals.
 
 3.  **A Stage 2 optimizer** that turns calibrated probabilities into an
     add-on choice under hard business rules, checked against exact
@@ -160,26 +161,39 @@ cosies in two colours).
 
 **Baselines and candidate pool**
 
-Seven scorers are fit on the training period: global popularity, 90-day
-popularity, the customer’s repeat purchases, co-purchase counts,
-ItemKNN (Sarwar et al. 2001), EASE ($\lambda=250$, chosen on
-validation) (Steck 2019) and ALS (64 factors) (Y. Hu, Koren, and
-Volinsky 2008). The candidate pool unions the top lists of each source
-(EASE 60, ItemKNN 30, ALS 30, repeat 30, co-purchase 20, the two
-popularity scorers 10 each), deduplicated and capped at 100 items, with
-basket items removed.
+Seven classical scorers are fit on the training period: global
+popularity, 90-day popularity, the customer’s repeat purchases,
+co-purchase counts, ItemKNN (Sarwar et al. 2001), EASE ($\lambda=250$,
+chosen on validation) (Steck 2019) and ALS (64 factors) (Y. Hu, Koren,
+and Volinsky 2008). Four further sources were added after a
+validation-only selection
+(Section 5.1): EASE on recency-weighted
+baskets (half-life 120 days), EASE applied to the customer’s own past
+items, TF-IDF similarity of product descriptions (word 1–2 and character
+3–4 grams, maximum over the basket), and a *fresh* signal that, like a
+nightly job, sees only invoices from days before the event: 14-day
+trending items and co-purchase over that stream. The item index covers
+the whole catalog, so products first sold after the fit cutoff can be
+recommended once the fresh source sees them sell; a product with no
+earlier sales gets zero from every source. The candidate pool unions the
+top lists of each source in a fixed order (EASE 90, decayed EASE 60,
+customer EASE 30, text 30, trending 22, fresh co-purchase 30, ItemKNN
+45, ALS 45, repeat 45, co-purchase 30, the two popularity scorers 15
+each), deduplicated and capped at 150 items, with basket items removed.
 
 **Reranker**
 
 A LightGBM LambdaRank model (Ke et al. 2017; Burges 2010) (31 leaves,
 learning rate 0.05, up to 500 trees with early stopping) scores each
-candidate from 25 features: the score and rank from every source, price,
+candidate from 35 features: the score and rank from every source, price,
 price relative to the basket, item age and recency, basket size, share
 of basket items in the same category, and whether the customer is known.
 It is trained on validation events whose candidates were produced by
-train-only models, so the reranker never sees test-period data. The most
-important features by gain are the EASE rank, the maximum ItemKNN
-similarity to any basket item, and the repeat-purchase score.
+train-only models, so the reranker never sees test-period data; each
+validation invoice contributes three events, each hiding a different
+product (early stopping and calibration use only the original one). The
+most important features by gain are the decayed-EASE and EASE ranks, the
+repeat-purchase score and the text similarity.
 
 **Calibration**
 
@@ -193,9 +207,9 @@ For a basket, take the top $N=20$ reranked candidates. Let
 $x_{i,d}\in\{0,1\}$ mean “offer item $i$ at discount $d$”, with price
 $r_i$, simulated unit cost $c_i$, revenue $r_{i,d}=r_i(1-d)$ and unit
 profit $\pi_{i,d}=r_{i,d}-c_i$. The optimizer solves $$\begin{aligned}
-\max_{x}\;& \sum_{i,d} x_{i,d}\; p_{i,d}\,\Big[(1-\lambda)\,\bar{\pi} + \lambda\, w_i\, \pi_{i,d}\Big] \\
-\text{s.t.}\;& \sum_d x_{i,d} \le 1 \;\;\forall i, \qquad \sum_{i,d} x_{i,d} \le 2,\\
-& x_{i,d}=0 \text{ if stock}_i \le 0, \qquad \pi_{i,d} \ge 0.15\, r_{i,d} \text{ whenever } x_{i,d}=1.
+\max_{x}\;& \sum_{i,d} x_{i,d}\; p_{i,d}\,\Big[(1-\lambda)\,\bar{\pi} + \lambda\, w_i\, \pi_{i,d}\Big] \label{eq:obj}\\
+\text{s.t.}\;& \textstyle\sum_d x_{i,d} \le 1 \;\;\forall i, \qquad \sum_{i,d} x_{i,d} \le 2, \notag\\
+& x_{i,d}=0 \text{ if stock}_i \le 0, \qquad \pi_{i,d} \ge 0.15\, r_{i,d} \text{ whenever } x_{i,d}=1. \notag
 \end{aligned}$$ Here $\bar\pi$ is the catalog’s mean unit gross profit,
 which puts the relevance term on the same scale as profit, so
 $\lambda=0$ ranks by probability alone and $\lambda=1$ maximises
@@ -238,20 +252,26 @@ paired over the same baskets.
 
 <div id="tab:stage1">
 
-| Model                       |    Hit@5 |   Hit@10 |   Hit@50 |   NDCG@10 |       MRR |
-|:----------------------------|---------:|---------:|---------:|----------:|----------:|
-| Popularity                  |      1.9 |      3.1 |     10.0 |     0.016 |     0.017 |
-| Recent popularity (90 days) |      1.8 |      3.0 |     10.6 |     0.016 |     0.018 |
-| Repeat purchase             |      9.3 |     13.9 |     26.9 |     0.079 |     0.068 |
-| Co-purchase                 |      9.2 |     13.1 |     24.8 |     0.079 |     0.071 |
-| ALS                         |     12.9 |     17.3 |     31.9 |     0.106 |     0.095 |
-| ItemKNN                     |     17.4 |     22.7 |     36.6 |     0.144 |     0.128 |
-| *EASE*                      |   *23.2* |   *31.1* |   *48.8* |   *0.188* |   *0.161* |
-| **LightGBM rerank**         | **26.1** | **35.6** | **54.6** | **0.217** | **0.184** |
+| Model                                 |    Hit@5 |   Hit@10 |   Hit@50 |   NDCG@10 |       MRR |
+|:--------------------------------------|---------:|---------:|---------:|----------:|----------:|
+| Popularity                            |      1.9 |      3.1 |     10.0 |     0.016 |     0.017 |
+| Recent popularity (90 days)           |      1.8 |      3.0 |     10.6 |     0.016 |     0.018 |
+| Trending, 14 days (fresh)             |      3.1 |      5.4 |     16.5 |     0.029 |     0.029 |
+| Customer EASE                         |      6.0 |      9.5 |     22.7 |     0.050 |     0.045 |
+| Co-purchase                           |      9.2 |     13.0 |     24.8 |     0.079 |     0.071 |
+| Repeat purchase                       |      9.7 |     13.4 |     26.9 |     0.078 |     0.068 |
+| Fresh co-purchase                     |     12.4 |     16.8 |     29.8 |     0.104 |     0.094 |
+| ALS                                   |     12.7 |     17.3 |     31.8 |     0.105 |     0.094 |
+| Text similarity (TF-IDF)              |     14.3 |     20.5 |     39.4 |     0.113 |     0.096 |
+| ItemKNN                               |     17.4 |     22.7 |     36.6 |     0.144 |     0.128 |
+| Decayed EASE                          |     22.9 |     30.1 |     48.7 |     0.185 |     0.160 |
+| *EASE*                                |   *23.2* |   *31.1* |   *48.9* |   *0.188* |   *0.161* |
+| LightGBM rerank, first run (pool 100) |     26.1 |     35.6 |     54.6 |     0.217 |     0.184 |
+| **LightGBM rerank**                   | **28.8** | **38.1** | **58.4** | **0.237** | **0.204** |
 
 Full-catalog ranking on 4,480 test baskets. Best baseline in italics.
-LightGBM minus EASE, paired: Hit@10 +4.5 pts \[3.6, 5.5\], NDCG@10
-+0.029 \[0.023, 0.035\].
+LightGBM minus EASE, paired: Hit@10 +7.0 pts \[6.0, 8.0\], NDCG@10
++0.049 \[0.043, 0.055\].
 
 </div>
 
@@ -272,20 +292,36 @@ every metric, and the paired intervals exclude zero.
 
 **Retrieval ceiling**
 
-The 100-item pool contains the hidden product for 58.0% of test baskets
-\[56.7, 59.5\]; EASE alone reaches 55.7% at depth 100, ItemKNN 43.3%,
-ALS 38.7%. This recall caps every reranker, including an LLM: 42% of
-test baskets cannot be answered by any choice of Stage 1 order. An
-earlier configuration without EASE in the pool and with a 50-item pool
-reached only 43.5%.
+The 150-item pool contains the hidden product for 65.3% of test baskets
+\[63.9, 66.7\]; EASE alone reaches 55.7% at depth 100, decayed EASE
+56.3%, text 48.7%, ItemKNN 43.4%. This recall caps every reranker,
+including an LLM: 35% of test baskets cannot be answered by any choice
+of Stage 1 order. Earlier configurations reached 43.5% (50 items, no
+EASE) and 58.0% (100 items, seven sources).
 
 **Calibration**
 
-On test, the calibrated probabilities have a Brier score of 0.00560
-against 0.00568 for a constant base-rate guess (base rate 0.57%). They
-track observed rates across bins
-(Figure 3) but are only weakly sharp, which limits
-how much Stage 2 can separate good from bad offers.
+On test, the calibrated probabilities have a Brier score of 0.00417
+against 0.00435 for a constant base-rate guess (first run: 0.00560
+against 0.00568). They track observed rates across bins
+(Figure 3) and are sharper than in the first run,
+but still modest, which limits how much Stage 2 can separate good from
+bad offers.
+
+**What raised Stage 1 (validation-only selection)**
+
+The first run used seven sources, a 100-item pool and one event per
+validation invoice (Hit@10 35.6%). Each change was kept only if it won
+on the last 30% of validation events (1,147 events never used to fit
+trees); test results were recorded for all 19 variants, winners and
+losers. Added one at a time to the 100-item pool, each new source was
+within noise, because it displaced EASE and ItemKNN candidates.
+Together, with the pool enlarged to 150 (chosen over 100 and 200 on
+validation), they raised pool recall by 7.3 points \[6.2, 8.3\];
+training on three events per validation invoice added the rest. Against
+the first run on the same test baskets, Hit@10 rose by 2.5 points \[1.6,
+3.4\] and NDCG@10 by 0.020 \[0.015, 0.025\]. An item2vec source and four
+LightGBM parameter sets lost on validation and were dropped.
 
 ### Stage 2
 
@@ -293,15 +329,15 @@ how much Stage 2 can separate good from bad offers.
 
 | Strategy                               | Hit@2 (%) | Realized profit | Expected profit | Floor breaks / basket |
 |:---------------------------------------|----------:|----------------:|----------------:|----------------------:|
-| Popularity top-2                       |       1.2 |           0.013 |           0.017 |                 0.002 |
-| Co-purchase top-2                      |       6.3 |           0.070 |           0.049 |                 0.010 |
-| Ranker top-2                           |      16.7 |           0.184 |           0.167 |                 0.038 |
-| MILP $\lambda=0$                     |      16.4 |           0.185 |           0.167 |                     0 |
-| MILP $\lambda=0.5$                   |      15.6 |           0.215 |           0.201 |                     0 |
-| MILP $\lambda=1$                     |      13.0 |           0.224 |           0.212 |                     0 |
-| MILP $\lambda=1$, overstock $w=2$  |      12.5 |           0.216 |           0.206 |                     0 |
-| MILP $\lambda=1$, bundle floor       |      13.0 |           0.225 |           0.213 |                     0 |
-| MILP $\lambda=1$, discounts 0/10/20% |      13.0 |           0.224 |           0.212 |                     0 |
+| Popularity top-2                       |       1.1 |           0.013 |           0.014 |                     0 |
+| Co-purchase top-2                      |       6.1 |           0.072 |           0.057 |                 0.004 |
+| Ranker top-2                           |      17.8 |           0.205 |           0.185 |                 0.037 |
+| MILP $\lambda=0$                     |      17.5 |           0.204 |           0.186 |                     0 |
+| MILP $\lambda=0.5$                   |      16.7 |           0.234 |           0.212 |                     0 |
+| MILP $\lambda=1$                     |      14.9 |           0.255 |           0.223 |                     0 |
+| MILP $\lambda=1$, overstock $w=2$  |      14.6 |           0.245 |           0.219 |                     0 |
+| MILP $\lambda=1$, bundle floor       |      15.0 |           0.256 |           0.223 |                     0 |
+| MILP $\lambda=1$, discounts 0/10/20% |      14.9 |           0.255 |           0.223 |                     0 |
 
 Stage 2 on 4,480 test baskets, **simulated cost and stock**. Profit is
 £ gross profit per basket. Baselines run without the floor; the last
@@ -321,42 +357,45 @@ column counts how often they would break the 15% per-item floor.
 Table 2 and
 Figure 4 give the trade-off. Paired against
 the ranker’s top-2 on the same baskets, MILP $\lambda=0.5$ raises
-realized profit by £0.031 per basket \[0.017, 0.044\], or 17%, while
-Hit@2 falls by 1.1 points \[$-1.8$, $-0.5$\]. At $\lambda=1$ the gain
-is £0.040 \[0.023, 0.058\] (22%) for $-3.7$ points of Hit@2 \[$-4.7$,
-$-2.8$\]. At $\lambda=0$ the optimizer is, as intended, almost
-identical to the ranker ($-0.3$ points Hit@2; profit difference not
-significant), the small gap coming from the margin floor removing some
-candidates. Every MILP solution satisfies every hard rule, while the
-unconstrained ranker top-2 would break the margin floor 0.038 times per
-basket.
+realized profit by £0.028 per basket \[0.014, 0.044\], or 14%, while
+Hit@2 falls by 1.1 points \[$-1.7$, $-0.6$\]. At $\lambda=1$ the gain
+is £0.049 \[0.031, 0.069\] (24%) for $-2.9$ points of Hit@2 \[$-3.7$,
+$-2.0$\]. At $\lambda=0$ the optimizer is, as intended, almost
+identical to the ranker ($-0.25$ points Hit@2 and $-$£0.001 profit), the
+small gap coming from the margin floor removing some candidates. Every
+MILP solution satisfies every hard rule, while the unconstrained ranker
+top-2 would break the margin floor 0.037 times per basket. The stronger
+ranker also lifted the ranker’s own top-2, from Hit@2 16.7% and £0.184
+in the first run to 17.8% and £0.205, so the optimizer’s relative gain
+is measured against a harder reference (first run: +17%).
 
 Three further observations. (i) A bundle-level floor behaves like the
 per-item floor here. (ii) With discounts allowed, the optimizer almost
 never discounts (mean discount 0.07%): under the assumed elasticity,
 giving away margin rarely pays. (iii) The solver is not a bottleneck:
 PuLP with HiGHS and exact enumeration agree on all 600 checked problems
-(maximum objective gap 0), with a mean MILP solve time of about 3 ms per
+(maximum objective gap 0), with a mean MILP solve time of 2.7 ms per
 basket on a CPU.
 
 **Overstock (E10)**
 
 In the sequential replay with shared stock, MILP $\lambda=1$ earns
-£1,005 over the test period against £826 for the ranker’s top-2. Raising
+£1,141 over the test period against £920 for the ranker’s top-2. Raising
 the overstock weight from 1.0 to 2.0 increases overstock units sold from
-74 to 114, at a 3.7% profit cost (£969). Note that the plain profit
-objective ($w=1$) sells fewer overstock units than the ranker (99);
-the weight is what moves stock. Over 20 stochastic acceptance seeds the
-ordering is the same (ranker £751, MILP $\lambda=1$ £964, $w=2$ £939
-on average).
+78 to 116, at a 3.7% profit cost (£1,099). The plain profit objective
+($w=1$) sells fewer overstock units than the ranker (114); the weight
+is what moves stock, and at $w=2$ the optimizer roughly matches the
+ranker on overstock while earning 19% more. Over 20 stochastic
+acceptance seeds the ordering is the same (ranker £829, MILP
+$\lambda=1$ £993, $w=2$ £976 on average).
 
 ### Sensitivity to the simulated cost
 
 Figure 6 repeats the MILP $\lambda=1$ versus
 ranker comparison for three margin distributions and three random seeds
 each. The realized-profit gain stays positive in all nine scenarios
-(from £0.015 to £0.062 per basket) with every confidence interval above
-zero; the Hit@2 cost ranges from 2.4 to 6.1 points and is largest when
+(from £0.024 to £0.071 per basket) with every confidence interval above
+zero; the Hit@2 cost ranges from 2.3 to 6.6 points and is largest when
 margins are low, where the floor removes more candidates. This shows the
 direction of the result is not an artefact of one cost draw; it does not
 show its size on a real store’s costs.
@@ -414,7 +453,7 @@ with no purchase history.
 
 - **Simulated economics.** Unit cost, stock and the overstock flag are
   simulated, and the discount response is assumed. All Stage 2 profit
-  numbers, including the 17% and 22% gains, are conditional on these
+  numbers, including the 14% and 24% gains, are conditional on these
   assumptions. Section 5.3 varies the cost distribution, not
   its structure (for example, costs correlated with popularity).
 
@@ -428,15 +467,18 @@ with no purchase history.
   2009–2011. Hiding one item per invoice is a proxy for a real checkout
   widget.
 
-- **Retrieval ceiling.** 42% of test targets are outside the candidate
+- **Retrieval ceiling.** 35% of test targets are outside the candidate
   pool, which bounds every Stage 1 and Stage 2 result.
 
 - **LLM scope.** We tested two small instruction-tuned models zero-shot,
-  one prompt and one scoring method. Larger models, other prompts, or
-  fine-tuning may behave differently; the fine-tune is pending.
+  one prompt and one scoring method, on the slates of the first ranker
+  (Hit@10 35.6%). Larger models, other prompts, or fine-tuning may
+  behave differently; the fine-tune is pending.
 
-- **Latency.** Only solver time is measured (about 3 ms). End-to-end
-  serving latency has not been benchmarked.
+- **Latency.** Solver time is 2.7 ms. The serving latency in the
+  repository (p50 22 ms for the research API, p95 88 ms end to end for
+  the multi-store service) was measured in a container, not in a store’s
+  production setting.
 
 ## Conclusion
 
