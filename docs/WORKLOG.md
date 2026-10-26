@@ -9,7 +9,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | # | Thread (goal) | Started | Pull request | Branch | Status | Detailed log |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Rate MarginGraph and plan experiments | 2026-10-25 | [#1](https://github.com/Sanskar1724/MarginGraph/pull/1) Notebooks, project report, experiment plan | `claude/add-notebooks-and-plan` | Merged into `main` 2026-10-26 | [history](worklog/history-2026-10-26.md#1-review-and-experiment-plan-2026-10-25) |
-| 2 | Build MarginGraph end to end | 2026-10-26 09:00 | [#2](https://github.com/Sanskar1724/MarginGraph/pull/2) Pipeline: audit, baselines, LightGBM, MILP, simulation, API | `claude/project-thread-mkbaip` → `feat/core-pipeline`, `feat/llm-reranker` | Merged into `main` 2026-10-26; E6 fine-tune on Kaggle in progress | [core-pipeline.md](worklog/core-pipeline.md), [history](worklog/history-2026-10-26.md#2-end-to-end-build-2026-10-26) |
+| 2 | Build MarginGraph end to end | 2026-10-26 09:00 | [#2](https://github.com/Sanskar1724/MarginGraph/pull/2) Pipeline: audit, baselines, LightGBM, MILP, simulation, API | `claude/project-thread-mkbaip` → `feat/core-pipeline`, `feat/llm-reranker` | Merged into `main` 2026-10-26; E6 fine-tune NO-GO, LLM track closed (option 3) | [core-pipeline.md](worklog/core-pipeline.md), [history](worklog/history-2026-10-26.md#2-end-to-end-build-2026-10-26) |
 | 3 | Write project report and roadmap | 2026-10-26 11:38 | [#3](https://github.com/Sanskar1724/MarginGraph/pull/3) Project report, roadmap, work log | `claude/project-thread-j64y7y` → `docs/project-report` | Merged into `main` 2026-10-26 | [history](worklog/history-2026-10-26.md#4-project-report-roadmap-and-work-log-2026-10-26) |
 | 4 | Build production recommendation service | 2026-10-26 11:37 | [#12](https://github.com/Sanskar1724/MarginGraph/pull/12) Production service: multi-store API, nightly training, A/B logging, Docker | `claude/project-thread-psfiei` → `feat/api-service` | In review; replay of 1,031 real orders p50 about 65 ms | [service.md](worklog/service.md) |
 | 5 | Deploy free live demo | 2026-10-26 11:37 | [#4](https://github.com/Sanskar1724/MarginGraph/pull/4) Free Hugging Face Space demo | `claude/project-thread-r1a0d1` → `feat/hf-space-demo` | Merged into `main` 2026-10-26 | [demo.md](worklog/demo.md) |
@@ -59,7 +59,7 @@ Old `claude/*` branches are deleted once their work is in `main` (see [repo-clea
 | 2026-10-26 10:17 | LLM rerank, Qwen2.5-1.5B zero-shot | Kaggle T4 (San) | Hit@5 16.8% vs LightGBM 27.6%: **NO-GO** | `RESULTS.md` |
 | 2026-10-26 10:39 | LLM rerank, Qwen2.5-3B zero-shot | Kaggle T4 (San) | Hit@5 16.6% vs 27.6%: **NO-GO** | `RESULTS.md` |
 | 2026-10-26 11:19 | Option 1: LLM score as stacker feature (3B) | Kaggle T4 (San) | Hit@5 27.5% vs 27.6%, LLM weight near 0: **NO-GO** | `RESULTS.md` |
-| 2026-10-26 11:43 → | Option 2 / E6: LoRA fine-tune of Qwen2.5-1.5B | Kaggle T4 (San) | Running, after two fixes (see history) | to be recorded |
+| 2026-10-26 11:43 → | Option 2 / E6: LoRA fine-tune of Qwen2.5-1.5B | Kaggle T4 (San), 3.6 GB peak | Hit@5 7.8% (random order 11.6%), blend 16.2% vs LightGBM 27.6%: **NO-GO**. LLM track closed: LightGBM ranks, LLM only for cold-start and explanations | `RESULTS.md`, [core-pipeline.md](worklog/core-pipeline.md) |
 
 ## Bugs found and fixed
 

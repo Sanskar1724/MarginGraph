@@ -84,3 +84,16 @@ Qwen2.5-1.5B-Instruct, zero-shot yes/no scoring of the top-20 LightGBM slate, 1,
 Qwen2.5-3B-Instruct, same setup and baskets: LLM Hit@5 16.6% vs LightGBM 27.6% (−11.0 [−13.7, −8.4]); blend Hit@5 22.3% (−5.3 [−7.2, −3.4]); blend Hit@10 33.9% vs 36.1% (−2.2 [−4.0, −0.4]). **NO-GO**; 3B is no better than 1.5B zero-shot.
 
 Option 1, LLM as an extra signal (Qwen2.5-3B scores; logistic regression on LightGBM + LLM features fit on 1,147 held-out val baskets, tested on the same 1,000 test baskets): Hit@5 27.5% vs LightGBM 27.6% (−0.1 [−0.6, +0.3]); Hit@10 −0.1 [−0.6, +0.4]. The fitted LLM weights are near zero (llm 0.015, llm_z 0.055 vs lgbm 0.736). **NO-GO**: zero-shot Qwen adds no signal beyond LightGBM. Next: E6 LoRA fine-tune (`notebooks/llm_finetune_gpu.ipynb`).
+
+Option 2 / E6, LoRA fine-tune (Qwen2.5-1.5B, r=16, 10,772 training-period pairs: each hidden item with 3 LightGBM hard negatives from the same slate; 2 epochs, batch 8, class-weighted Yes/No loss; Kaggle T4, 3.6 GB peak GPU). The weighted loss fell from 1.80 to about 0.70 by step 300 and then stayed at ln 2 ≈ 0.693, i.e. the model stopped separating the classes. Same 1,000 test baskets and slates:
+
+| System | Hit@1 | Hit@5 | Hit@10 |
+| --- | --- | --- | --- |
+| LightGBM | 11.1% | 27.6% | 36.1% |
+| Fine-tuned 1.5B alone | 1.4% | 7.8% | 17.4% |
+| Rank blend (LightGBM + fine-tuned) | 4.0% | 16.2% | 30.4% |
+| Random order of the slate | 2.3% | 11.6% | 23.2% |
+
+Paired differences vs LightGBM, points [95% CI]: fine-tuned alone Hit@1 −9.7 [−11.7, −7.7], Hit@5 −19.8 [−22.8, −16.7], Hit@10 −18.7 [−21.7, −15.5]; blend Hit@1 −7.1 [−9.2, −4.9], Hit@5 −11.4 [−13.9, −8.8], Hit@10 −5.7 [−7.7, −3.6]. The random-order row is exact: the target is in the top-20 slate for 46.3% of baskets, so random Hit@k = 0.463 × k/20. **NO-GO**: the fine-tuned model ranks below random order. Our reading (not tested): the negatives are LightGBM's own near-misses, often the same product in another colour or size, so the short product names give the model nothing to tell positive from negative, and it learned to answer 50/50.
+
+**LLM track closed (option 3).** LightGBM stays the ranker. The LLM is kept only for (a) products with no purchase history, which no co-purchase model can rank (7.1% of test targets), and (b) one-line "why this add-on" explanations. Neither use has been measured yet.

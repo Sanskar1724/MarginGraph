@@ -112,12 +112,13 @@ def fig_sensitivity():
 
 # Fig 4: LLM vs LightGBM on the same 1,000 test slates (Hit@5)
 def fig_llm():
-    rows = [("Qwen2.5-1.5B zero-shot", 16.8), ("Qwen2.5-3B zero-shot", 16.6),
+    rows = [("Qwen2.5-1.5B LoRA fine-tuned", 7.8), ("Random order of slate", 11.6),
+            ("Blend: LightGBM + fine-tuned", 16.2), ("Qwen2.5-1.5B zero-shot", 16.8), ("Qwen2.5-3B zero-shot", 16.6),
             ("Blend: LightGBM + 3B", 22.3), ("Blend: LightGBM + 1.5B", 23.2),
             ("Stacker: LightGBM + 3B", 27.5), ("LightGBM alone", 27.6)]
-    fig, ax = plt.subplots(figsize=(3.4, 2.2))
+    fig, ax = plt.subplots(figsize=(3.4, 2.8))
     y = range(len(rows))
-    ax.barh(y, [v for _, v in rows], color=[ORANGE if n == "LightGBM alone" else BLUE for n, _ in rows], height=0.6)
+    ax.barh(y, [v for _, v in rows], color=[ORANGE if n == "LightGBM alone" else GREY if n.startswith("Random") else BLUE for n, _ in rows], height=0.6)
     for yi, (_, v) in zip(y, rows):
         ax.text(v + 0.5, yi, f"{v:.1f}%", va="center", fontsize=7.5, color=INK)
     ax.set_yticks(list(y), [n for n, _ in rows])
