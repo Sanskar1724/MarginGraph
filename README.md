@@ -27,12 +27,13 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 
 | | Result |
 | --- | --- |
-| LightGBM ranker Hit@10 | **35.6%** vs 31.1% for EASE, the best simple method (+4.5 pts, 95% CI [3.6, 5.5]) |
-| Optimizer (λ=0.5) vs ranker top 2 | **+17%** realized profit per basket, −1.1 pts Hit@2 (simulated cost and stock) |
+| LightGBM ranker Hit@10 | **38.1%** vs 31.1% for EASE, the best simple method (+7.0 pts, 95% CI [6.0, 8.0]); was 35.6% before the [accuracy work](docs/worklog/accuracy.md) |
+| Shortlist recall | **65.3%** of hidden items reach the 150-item shortlist (was 58.0% at 100) |
+| Optimizer (λ=0.5) vs ranker top 2 | **+14%** realized profit per basket, −1.1 pts Hit@2 (simulated cost and stock) |
 | 15% margin-floor breaks | **0** with the optimizer |
 | LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune is next |
 
-<p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 35.6%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
+<p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 38.1%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
 
 ---
 
@@ -106,7 +107,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Data signal audit (co-purchase lift vs a shuffled null)
 - [x] Strict temporal train / validation / test split
 - [x] Baseline ladder: popularity, repeat purchase, co-purchase, ALS, ItemKNN, EASE
-- [x] Candidate recall (pool of 100: 58.0%)
+- [x] Candidate recall (pool of 150 with text, fresh-sales, customer and time-decayed EASE sources: 65.3%)
 - [x] LightGBM reranker beats the best baseline
 - [x] Zero-shot LLM rerank (1.5B, 3B) and LLM stacker: NO-GO
 - [ ] LoRA fine-tuned LLM (E6, notebook ready)

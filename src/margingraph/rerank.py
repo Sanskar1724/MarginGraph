@@ -7,17 +7,26 @@ import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 
 from .features import feature_columns
+from .split import AUG_ID
 
 
 def split_events(feats: pd.DataFrame, fractions=(0.7, 0.15)) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Time-ordered split of val events: fit / early-stop / calibrate."""
-    ids = np.sort(feats["event_id"].unique())
-    a = int(len(ids) * fractions[0])
-    b = int(len(ids) * (fractions[0] + fractions[1]))
+    """Time-ordered split of val events: fit / early-stop / calibrate.
+
+    Extra-hide copies (event_id >= AUG_ID, see split.add_extra_hides) go to the
+    fit part when their invoice does and are dropped otherwise, so early stopping
+    and calibration only see original events.
+    """
+    eid = feats["event_id"].to_numpy()
+    base = eid % AUG_ID
+    ids = np.sort(np.unique(base))
+    a = ids[min(int(len(ids) * fractions[0]), len(ids) - 1)]
+    b = ids[min(int(len(ids) * (fractions[0] + fractions[1])), len(ids) - 1)]
+    orig = eid < AUG_ID
     return (
-        feats[feats["event_id"].isin(ids[:a])],
-        feats[feats["event_id"].isin(ids[a:b])],
-        feats[feats["event_id"].isin(ids[b:])],
+        feats[base < a],
+        feats[orig & (base >= a) & (base < b)],
+        feats[orig & (base >= b)],
     )
 
 

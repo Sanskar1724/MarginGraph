@@ -14,7 +14,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 4 | Build production recommendation service | 2026-10-26 11:37 | in progress | | In progress | added when its PR lands |
 | 5 | Deploy free live demo | 2026-10-26 11:37 | [#4](https://github.com/Sanskar1724/MarginGraph/pull/4) Free Hugging Face Space demo for retail stores | `claude/project-thread-r1a0d1` (into #2) | Merged into `main` 2026-10-26 | [demo.md](worklog/demo.md) |
 | 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Store data connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` (into #2) | Merged into `main` 2026-10-26 | [connectors.md](worklog/connectors.md) |
-| 7 | Improve recommendation accuracy | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
+| 7 | Improve recommendation accuracy | 2026-10-26 11:43 | PR into `main` (link in the thread) | `claude/project-thread-pxguuk` | PR open | [accuracy.md](worklog/accuracy.md) |
 | 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Merchant dashboard: policy settings, KPIs and A/B results with CIs | `claude/project-thread-oyvjte` (into #2) | Merged into `main` 2026-10-26 | [dashboard.md](worklog/dashboard.md) |
 | 9 | Add CI and release checks | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
 | 10 | Clean up GitHub repo structure | 2026-10-26 11:53 | pushed to `main` (no PR; San said go ahead) | `claude/project-thread-t654yh` | Done; old `claude/*` branches retire as their threads finish | [repo-cleanup.md](worklog/repo-cleanup.md) |
@@ -24,7 +24,9 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | When (UTC) | Run | Where | Result | Recorded in |
 | --- | --- | --- | --- | --- |
 | 2026-10-26 09:27 | E1–E11, first full CPU run (pool 50) | Claude container | LightGBM Hit@10 30.5% vs EASE 26.2%; MILP +21% profit, −2.5 Hit@2; pool recall 43.5% | superseded by next run |
-| 2026-10-26 09:46 | E1–E11 rerun (EASE in pool, pool 100, train+val refit) | Claude container | LightGBM Hit@10 35.6% vs EASE 31.1%; MILP λ=0.5 +17% profit, −1.1 Hit@2; pool recall 58.0% | `RESULTS.md` (current) |
+| 2026-10-26 09:46 | E1–E11 rerun (EASE in pool, pool 100, train+val refit) | Claude container | LightGBM Hit@10 35.6% vs EASE 31.1%; MILP λ=0.5 +17% profit, −1.1 Hit@2; pool recall 58.0% | superseded at 12:58 |
+| 2026-10-26 11:51–12:56 | Accuracy experiments A–F: 19 variants (5 new sources, pool 100/150/200, ablations, 3× training events, 4 LightGBM settings) | Claude container | Kept: 4 sources, pool 150, 3 events per invoice. Lost: item2vec and all 4 LightGBM settings | [accuracy.md](worklog/accuracy.md), `results/accuracy/` |
+| 2026-10-26 12:47 | E1–E11 rerun with the accuracy config | Claude container (10 min, 3.9 GB peak RAM) | LightGBM Hit@10 38.1% vs EASE 31.1% (+2.5 pts [1.6, 3.4] vs the 35.6% run); pool recall 65.3%; MILP λ=0.5 +14% profit, −1.1 Hit@2 | `RESULTS.md` (current) |
 | 2026-10-26 10:17 | LLM rerank, Qwen2.5-1.5B zero-shot | Kaggle T4 (San) | Hit@5 16.8% vs LightGBM 27.6%: **NO-GO** | `RESULTS.md` |
 | 2026-10-26 10:39 | LLM rerank, Qwen2.5-3B zero-shot | Kaggle T4 (San) | Hit@5 16.6% vs 27.6%: **NO-GO** | `RESULTS.md` |
 | 2026-10-26 11:19 | Option 1: LLM score as stacker feature (3B) | Kaggle T4 (San) | Hit@5 27.5% vs 27.6%, LLM weight near 0: **NO-GO** | `RESULTS.md` |
@@ -45,6 +47,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 2026-10-26 | Fine-tune: newest `peft` refused Kaggle's old `torchao` 0.10 | Skip peft's torchao version check | `0f22437` |
 | 2026-10-26 | Fine-tune: CUDA out of memory on a T4 (logits for full 151k vocab at every position) | Keep only last-token logits, gradient checkpointing, batch 8 | `4c69f43` |
 | 2026-10-26 | Docs: README linked a missing `docs/experiment_plan.md` and said "no results yet" | README rewritten with current results and links | PR #3 |
+| 2026-10-26 | item2vec training did not finish in 12 min (window = largest basket, hundreds of items) | Baskets capped at 50 items, window 20: about 30 s | accuracy PR |
 
 ## How to add to this log
 

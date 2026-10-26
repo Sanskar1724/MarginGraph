@@ -69,3 +69,23 @@ def check_no_leakage(splits: dict[str, pd.DataFrame]) -> dict:
     assert tr["ts"].max() < va["ts"].min() <= va["ts"].max() < te["ts"].min(), "split not ordered"
     assert out["invoice_overlap"] == 0, "invoice straddles split"
     return out
+
+
+AUG_ID = 1_000_000  # extra-hide copies get event_id = original id + j * AUG_ID
+
+
+def add_extra_hides(lines: pd.DataFrame, ev: pd.DataFrame, per_invoice: int, min_items: int, max_items: int, seed: int) -> pd.DataFrame:
+    """More training events: hide a different product of the same invoices.
+
+    Copy j re-draws the hidden product with seed + 1000 * j and keeps only the
+    invoices where it differs from the original event. Copies are training-only;
+    every reported metric uses the original events (event_id < AUG_ID).
+    """
+    parts = [ev]
+    for j in range(1, per_invoice):
+        e = make_events(lines, min_items, max_items, None, seed + 1000 * j)
+        e = e.set_index("invoice").reindex(ev["invoice"]).reset_index()
+        e["event_id"] = ev["event_id"].to_numpy() + AUG_ID * j
+        e = e[e["target"].notna() & (e["target"].to_numpy() != ev["target"].to_numpy())]
+        parts.append(e[ev.columns])
+    return pd.concat(parts).sort_values(["ts", "event_id"]).reset_index(drop=True)
