@@ -18,7 +18,10 @@ class CandidateGenerator:
     def __init__(self, train: pd.DataFrame, history: pd.DataFrame, catalog: pd.DataFrame, cfg: dict):
         b = cfg["baselines"]
         self.cfg = cfg
-        items = sorted(train["item"].unique())
+        # "catalog" also indexes products first sold after the fit cutoff, so the
+        # fresh-sales source can recommend them once they start selling.
+        scope = cfg["retrieval"].get("index_scope", "train")
+        items = sorted(catalog["item"].unique()) if scope == "catalog" else sorted(train["item"].unique())
         self.index = M.ItemIndex(items)
         X = M.basket_matrix(train, self.index)
         cutoff = train["ts"].max()
@@ -31,6 +34,9 @@ class CandidateGenerator:
             "ease": M.EASE(X, lam=b.get("ease_lambda", 500.0)),
             "als": M.ALS(X, b["als"]["factors"], b["als"]["regularization"], b["als"]["iterations"], b["als"]["alpha"], cfg["seed"]),
         }
+        self.sources = list(SOURCES)
+        self.fresh: M.Fresh | None = None
+        self._add_extras(train, cfg)
         cat = catalog.set_index("item").reindex(self.index.items)
         self.price = cat["price"].fillna(cat["price"].median()).to_numpy(np.float32)
         self.log_price = np.log1p(self.price)
@@ -41,11 +47,44 @@ class CandidateGenerator:
         self.days_since_last = (cutoff - last).dt.days.to_numpy(np.float32)
         self.item_age = (cutoff - first).dt.days.to_numpy(np.float32)
 
+        if "text" in self.scorers:
+            self.scorers["text"] = M.TextSim(self.description)
+
+    def _add_extras(self, train: pd.DataFrame, cfg: dict) -> None:
+        """Optional sources from retrieval.extra (see docs/worklog/accuracy.md)."""
+        ex = cfg["retrieval"].get("extra") or {}
+        X = None
+        if "ease_decay" in ex:
+            X = M.basket_matrix(train, self.index)
+            w = M.decay_weights(train[train["item"].isin(self.index.pos)], ex["ease_decay"]["half_life_days"])
+            self.scorers["ease_decay"] = M.DecayEASE(X, w, cfg["baselines"].get("ease_lambda", 500.0))
+        if "cust_ease" in ex:
+            self.scorers["cust_ease"] = M.CustomerEASE(self.scorers["ease"].B, self.scorers)
+        if "text" in ex:
+            self.scorers["text"] = None  # built once descriptions are known
+        if "item2vec" in ex:
+            o = ex["item2vec"] or {}
+            self.scorers["item2vec"] = M.Item2Vec(train, self.index, o.get("dim", 64), o.get("epochs", 10), cfg["seed"])
+        names = [n for n in ("ease_decay", "cust_ease", "text", "item2vec") if n in ex]
+        if "fresh" in ex:
+            self.fresh = M.Fresh(self.index, (ex["fresh"] or {}).get("days", 14))
+            names += ["trend", "fresh_co"]
+        self.sources += names
+
+    def set_stream(self, lines: pd.DataFrame | None) -> None:
+        """Sales after the fit cutoff, for the nightly-refreshed fresh source."""
+        if self.fresh is not None:
+            self.fresh.set_stream(lines)
+
     # ------------------------------------------------------------------
-    def _scores(self, ctx: list[list[int]], customers: list[str]) -> dict[str, np.ndarray]:
+    def _scores(self, ctx: list[list[int]], customers: list[str], times=None) -> dict[str, np.ndarray]:
         S = {name: s.score(ctx, customers) for name, s in self.scorers.items()}
         S["copurchase_max"] = self.scorers["copurchase"].score_max(ctx)
         S["itemknn_max"] = self.scorers["itemknn"].score_max(ctx)
+        if self.fresh is not None:
+            if times is None:
+                times = [pd.Timestamp.now()] * len(ctx)
+            S.update(self.fresh.score_time(ctx, times))
         return S
 
     @staticmethod
@@ -62,6 +101,7 @@ class CandidateGenerator:
         customers: list[str],
         targets: list[str] | None = None,
         event_ids: np.ndarray | None = None,
+        times: list | None = None,
         batch: int = 1000,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return (candidate feature rows, per-event baseline ranks of the target).
@@ -80,7 +120,7 @@ class CandidateGenerator:
 
         for s in range(0, n, batch):
             ctx, cust = enc[s : s + batch], customers[s : s + batch]
-            S = self._scores(ctx, cust)
+            S = self._scores(ctx, cust, None if times is None else times[s : s + batch])
             b = len(ctx)
             mask = np.zeros((b, len(self.index)), dtype=bool)
             for r, c in enumerate(ctx):
@@ -95,15 +135,19 @@ class CandidateGenerator:
             if tgt is not None:
                 t = tgt[s : s + b]
                 rk = {"event_id": event_ids[s : s + b]}
-                for name in SOURCES:
+                for name in self.sources:
                     rk[name] = np.where(t >= 0, R[name][np.arange(b), np.maximum(t, 0)], np.inf).astype(float)
                 rank_parts.append(pd.DataFrame(rk))
 
-            # candidate pool: per-source top lists, then popularity fill
+            # candidate pool: per-source top lists, then popularity fill. Without a
+            # stream the fresh scores are all zero, so their slots would be random.
+            idle = {"trend", "fresh_co"} if self.fresh is not None and self.fresh.stream is None else set()
             pools = []
             for r in range(b):
                 cand = []
                 for src, k in per_source.items():
+                    if src not in R or src in idle:
+                        continue
                     cand.extend(np.argpartition(R[src][r], k)[:k].tolist())
                 cand = list(dict.fromkeys(cand))
                 if len(cand) < pool_size:

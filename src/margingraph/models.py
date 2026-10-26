@@ -149,3 +149,171 @@ class ALS:
     def score(self, ctx, customers):
         U = np.stack([self.fold_in(c) for c in ctx])
         return (U @ self.Y.T).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Extra candidate sources (accuracy thread). Each one is optional and switched
+# on by the config; docs/worklog/accuracy.md records which ones won.
+
+
+def decay_weights(lines: pd.DataFrame, half_life_days: float) -> np.ndarray:
+    """Per-invoice weight 0.5 ** (age / half_life), in basket_matrix row order."""
+    inv_codes, _ = pd.factorize(lines["invoice"])
+    ts = lines.groupby(inv_codes)["ts"].min().sort_index()
+    age = (lines["ts"].max() - ts).dt.total_seconds().to_numpy() / 86400.0
+    return np.power(0.5, age / half_life_days).astype(np.float32)
+
+
+class DecayEASE(EASE):
+    """EASE on a time-weighted Gram matrix: recent baskets count more."""
+
+    name = "ease_decay"
+
+    def __init__(self, X: sp.csr_matrix, w: np.ndarray, lam: float = 250.0):
+        Xw = sp.diags(np.sqrt(w)) @ X
+        super().__init__(Xw.tocsr(), lam)
+
+
+class CustomerEASE:
+    """EASE scores of the customer's past items: "people like you buy" for known customers."""
+
+    name = "cust_ease"
+
+    def __init__(self, B: np.ndarray, scorers: dict):
+        # reads scorers["repeat"] at call time: the pipeline swaps in a history per split
+        self.B, self.scorers = B, scorers
+
+    def score(self, ctx, customers):
+        rep = self.scorers["repeat"]
+        out = np.zeros((len(ctx), self.B.shape[0]), dtype=np.float32)
+        for r, c in enumerate(customers):
+            i = rep.cust_pos.get(c)
+            if i is not None:
+                row = rep.M.getrow(i)
+                out[r] = self.B[row.indices].sum(0)
+        return out
+
+
+class TextSim:
+    """TF-IDF cosine between product descriptions (word + char n-grams).
+
+    Finds variants the basket data cannot (PINK EGG COSY -> BLUE EGG COSY) and
+    works for items with few sales.
+    """
+
+    name = "text"
+
+    def __init__(self, descriptions: np.ndarray):
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.preprocessing import normalize
+
+        docs = [str(d).lower() for d in descriptions]
+        W = TfidfVectorizer(analyzer="word", ngram_range=(1, 2), min_df=2, sublinear_tf=True).fit_transform(docs)
+        C = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 4), min_df=2, sublinear_tf=True).fit_transform(docs)
+        V = normalize(sp.hstack([W, C]).tocsr())
+        S = (V @ V.T).toarray().astype(np.float32)
+        np.fill_diagonal(S, 0.0)
+        self.C = S
+
+    def score(self, ctx, customers):
+        return np.stack([self.C[c].max(0) if c else np.zeros(self.C.shape[0], np.float32) for c in ctx])
+
+
+class Item2Vec:
+    """word2vec (skip-gram) over baskets; score = cosine to the mean basket vector."""
+
+    name = "item2vec"
+
+    def __init__(
+        self, lines: pd.DataFrame, index: ItemIndex, dim: int = 64, epochs: int = 10, seed: int = 0,
+        max_basket: int = 50, window: int = 20,
+    ):
+        from gensim.models import Word2Vec
+
+        lines = lines[lines["item"].isin(index.pos)]
+        baskets = lines.groupby("invoice", sort=False)["item"].agg(list)
+        rng = np.random.default_rng(seed)
+        sents = []
+        for b in baskets:
+            # huge wholesale invoices dominate the cost and carry little pair signal
+            if 1 < len(b) <= max_basket:
+                b = list(b)
+                rng.shuffle(b)  # basket order carries no meaning
+                sents.append(b)
+        m = Word2Vec(
+            sents, vector_size=dim, window=window, min_count=1, sg=1, negative=10,
+            sample=1e-3, epochs=epochs, seed=seed, workers=4,
+        )
+        V = np.zeros((len(index), dim), dtype=np.float32)
+        for it, i in index.pos.items():
+            if it in m.wv:
+                V[i] = m.wv[it]
+        n = np.linalg.norm(V, axis=1, keepdims=True)
+        self.V = V / np.maximum(n, 1e-9)
+
+    def score(self, ctx, customers):
+        out = np.zeros((len(ctx), self.V.shape[0]), dtype=np.float32)
+        for r, c in enumerate(ctx):
+            if c:
+                q = self.V[c].mean(0)
+                out[r] = self.V @ (q / max(np.linalg.norm(q), 1e-9))
+        return out
+
+
+class Fresh:
+    """Signals from sales since the models were fit, refreshed nightly.
+
+    ``stream`` holds invoices after the fit cutoff. For an event on day d only
+    invoices from days before d are used, as a nightly batch job would. Gives
+    two scores: ``trend`` (invoices with the item in the last ``days`` days) and
+    ``fresh_co`` (co-purchase counts with the basket over the whole stream).
+    """
+
+    uses_time = True
+
+    def __init__(self, index: ItemIndex, days: int = 14):
+        self.index, self.days = index, days
+        self.stream: pd.DataFrame | None = None
+        self._cache: dict = {}
+
+    def set_stream(self, lines: pd.DataFrame | None) -> None:
+        self.stream = None if lines is None else lines[lines["item"].isin(self.index.pos)][["invoice", "item", "ts"]]
+        self._cache = {}
+
+    def _day(self, day: pd.Timestamp):
+        if day in self._cache:
+            return self._cache[day]
+        n = len(self.index)
+        s = self.stream
+        if s is None or not len(s):
+            res = (np.zeros(n, np.float32), sp.csr_matrix((n, n), dtype=np.float32))
+        else:
+            past = s[s["ts"] < day]
+            rec = past[past["ts"] >= day - pd.Timedelta(days=self.days)]
+            trend = np.zeros(n, np.float32)
+            if len(rec):
+                cnt = rec.groupby("item")["invoice"].nunique()
+                trend[cnt.index.map(self.index.pos).to_numpy()] = cnt.to_numpy()
+            if len(past):
+                X = basket_matrix(past, self.index)
+                C = (X.T @ X).tocsr()
+                C.setdiag(0)
+                C.eliminate_zeros()
+            else:
+                C = sp.csr_matrix((n, n), dtype=np.float32)
+            res = (trend, C)
+        if len(self._cache) > 8:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[day] = res
+        return res
+
+    def score_time(self, ctx, ts) -> dict[str, np.ndarray]:
+        n = len(self.index)
+        trend = np.zeros((len(ctx), n), np.float32)
+        co = np.zeros((len(ctx), n), np.float32)
+        for r, (c, t) in enumerate(zip(ctx, ts, strict=True)):
+            tr, C = self._day(pd.Timestamp(t).normalize())
+            trend[r] = tr
+            if c:
+                co[r] = np.asarray(C[c].sum(0)).ravel()
+        return {"trend": trend, "fresh_co": co}
