@@ -26,10 +26,15 @@ dependencies = [
   "highspy",
   "fastapi",
   "uvicorn",
+  "sqlalchemy>=2.0",
+  "httpx",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx"]
+postgres = ["psycopg[binary]>=3.1"]
+redis = ["redis>=5"]
+service = ["psycopg[binary]>=3.1", "redis>=5"]
+dev = ["pytest", "httpx", "fakeredis"]
 
 [project.urls]
 Repository = "https://github.com/Sanskar1724/MarginGraph"

@@ -1,0 +1,38 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: {POSTGRES_USER: mg, POSTGRES_PASSWORD: mg, POSTGRES_DB: mgtest}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mg" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -e ".[dev,service]"
+      - name: tests (SQLite)
+        run: pytest -q
+      - name: service tests (Postgres)
+        run: pytest -q tests/test_service.py
+        env:
+          MARGINGRAPH_TEST_DATABASE_URL: postgresql+psycopg://mg:mg@localhost:5432/mgtest
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t margingraph:ci .
+      - name: smoke test the image
+        run: |
+          docker run -d --name mg -p 8000:8000 -e MARGINGRAPH_ADMIN_KEY=ci margingraph:ci
+          for i in $(seq 1 30); do curl -fsS localhost:8000/health && break; sleep 2; done
+          curl -fsS localhost:8000/ready
+          curl -fsS -X POST localhost:8000/v1/admin/stores -H 'X-Admin-Key: ci' -H 'content-type: application/json' -d '{"store_id":"ci"}'

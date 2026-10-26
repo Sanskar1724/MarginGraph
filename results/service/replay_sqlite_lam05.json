@@ -1,0 +1,61 @@
+{
+  "orders_replayed": 1031,
+  "wall_seconds": 89.6,
+  "sources": {
+    "model": 1027,
+    "fallback": 4
+  },
+  "server_latency_ms": {
+    "p50": 61.0,
+    "p95": 87.6,
+    "p99": 100.8
+  },
+  "client_roundtrip_ms": {
+    "p50": 65.4,
+    "p95": 92.8
+  },
+  "hit_rate_by_variant": {
+    "treatment": 0.1311,
+    "control": 0.161
+  },
+  "n_by_variant": {
+    "treatment": 534,
+    "control": 497
+  },
+  "report": [
+    {
+      "variant": "control",
+      "requests": 497,
+      "addons_shown": 994,
+      "fallback_share": 0.006036217303822937,
+      "expected_profit": 85.0811,
+      "p50_latency_ms": 60.73,
+      "p95_latency_ms": 87.53999999999999,
+      "clicks": 0.0,
+      "add_to_carts": 0.0,
+      "purchases": 78,
+      "purchased_revenue": 3805.05,
+      "purchased_profit": 1394.775971117799,
+      "requests_with_purchase": 78,
+      "conversion_rate": 0.15694164989939638,
+      "profit_per_request": 2.8063902839392334
+    },
+    {
+      "variant": "treatment",
+      "requests": 534,
+      "addons_shown": 1068,
+      "fallback_share": 0.0018726591760299626,
+      "expected_profit": 105.4367,
+      "p50_latency_ms": 61.2,
+      "p95_latency_ms": 87.60249999999999,
+      "clicks": 0.0,
+      "add_to_carts": 0.0,
+      "purchases": 69,
+      "purchased_revenue": 6338.93,
+      "purchased_profit": 3192.173632701362,
+      "requests_with_purchase": 69,
+      "conversion_rate": 0.12921348314606743,
+      "profit_per_request": 5.977853244759104
+    }
+  ]
+}
