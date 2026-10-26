@@ -2,7 +2,7 @@
 
 ## Branches
 
-`main` always holds the full, working project. Each module has its own long-lived branch for development; changes reach `main` through a pull request.
+`main` always holds the full, integrated, tested project. Each module also has its own branch that contains **only that module's files** and a README written for that module, so each part can be read on its own.
 
 | Branch | Module | Main paths |
 | --- | --- | --- |
@@ -24,10 +24,11 @@ New short-lived work uses the same prefixes: `feat/…`, `fix/…`, `docs/…`, 
 
 ## Workflow
 
-1. Branch from the module branch (or `main`), make the change, add tests.
+1. Branch from `main` (`feat/…`, `fix/…`, `docs/…`), make the change, add tests. Module branches are trimmed views, so code is developed against the full project on `main`.
 2. Run `pytest -q`.
 3. Record what you did, why, the commands and the results in `docs/worklog/<topic>.md`.
-4. Open a PR into the module branch or `main`. Use merge commits so the history stays traceable.
+4. Open a PR into `main`. Use merge commits so the history stays traceable.
+5. After it merges, refresh the matching module branch with that module's files from `main`.
 
 ## Checks (run before you push)
 

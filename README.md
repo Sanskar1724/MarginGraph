@@ -150,7 +150,13 @@ MarginGraph/
 
 ## Branches
 
-`main` holds the full, integrated project. Each module also has its own branch for focused development (`feat/core-pipeline`, `feat/store-connectors`, `feat/merchant-dashboard`, `feat/hf-space-demo`, `docs/research-paper`, …). The full list and the workflow are in [CONTRIBUTING.md](CONTRIBUTING.md).
+`main` holds the full, integrated project. Each module also has its own branch with only that module's files and its own README:
+
+| Code | Docs and tooling |
+| --- | --- |
+| [`feat/core-pipeline`](../../tree/feat/core-pipeline) · [`feat/ranker-accuracy`](../../tree/feat/ranker-accuracy) · [`feat/llm-reranker`](../../tree/feat/llm-reranker) · [`feat/api-service`](../../tree/feat/api-service) · [`feat/store-connectors`](../../tree/feat/store-connectors) · [`feat/merchant-dashboard`](../../tree/feat/merchant-dashboard) · [`feat/hf-space-demo`](../../tree/feat/hf-space-demo) | [`docs/project-report`](../../tree/docs/project-report) · [`docs/research-paper`](../../tree/docs/research-paper) · [`docs/pitch-deck`](../../tree/docs/pitch-deck) · [`docs/launch-kit`](../../tree/docs/launch-kit) · [`ci/github-actions`](../../tree/ci/github-actions) |
+
+Workflow and what each branch contains: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Merchant dashboard
 
