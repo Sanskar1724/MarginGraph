@@ -11,7 +11,7 @@ jobs:
         env: {POSTGRES_USER: mg, POSTGRES_PASSWORD: mg, POSTGRES_DB: mgtest}
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U mg" --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U mg -d mgtest" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       OPENBLAS_NUM_THREADS: "1"
     steps:
