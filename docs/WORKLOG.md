@@ -16,7 +16,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 6 | Connect real store data sources | 2026-10-26 11:38 | [#5](https://github.com/Sanskar1724/MarginGraph/pull/5) Store data connectors: CSV/Excel, Shopify, WooCommerce + `margingraph sync` | `claude/project-thread-dxygit` (into #2) | Merged into `main` 2026-10-26 | [connectors.md](worklog/connectors.md) |
 | 7 | Improve recommendation accuracy | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
 | 8 | Build merchant dashboard | 2026-10-26 11:43 | [#6](https://github.com/Sanskar1724/MarginGraph/pull/6) Merchant dashboard: policy settings, KPIs and A/B results with CIs | `claude/project-thread-oyvjte` (into #2) | Merged into `main` 2026-10-26 | [dashboard.md](worklog/dashboard.md) |
-| 9 | Add CI and release checks | 2026-10-26 11:43 | in progress | | In progress | added when its PR lands |
+| 9 | Add CI and release checks | 2026-10-26 11:43 | [#11](https://github.com/Sanskar1724/MarginGraph/pull/11) CI: lint, tests, secret scan, quality gate, Docker, load test | `claude/project-thread-hadeju` (into `main`) | Open; API p50 22 ms / p95 28 ms measured | [ci.md](worklog/ci.md) |
 | 10 | Clean up GitHub repo structure | 2026-10-26 11:53 | pushed to `main` (no PR; San said go ahead) | `claude/project-thread-t654yh` | Done; old `claude/*` branches retire as their threads finish | [repo-cleanup.md](worklog/repo-cleanup.md) |
 
 ## Experiment runs
@@ -44,6 +44,8 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 2026-10-26 | `git pull` refused on Kaggle because the run rewrote tracked result files | Discard local `results/` before pulling | instructions to San |
 | 2026-10-26 | Fine-tune: newest `peft` refused Kaggle's old `torchao` 0.10 | Skip peft's torchao version check | `0f22437` |
 | 2026-10-26 | Fine-tune: CUDA out of memory on a T4 (logits for full 151k vocab at every position) | Keep only last-token logits, gradient checkpointing, batch 8 | `4c69f43` |
+| 2026-10-26 | API: first request after restart took 32 s (lazy 257 MB model load) | Load the model at startup; `/health` reports `model_loaded` | PR #11 |
+| 2026-10-26 | API: one worker loses throughput as users are added (GIL-bound) | `margingraph serve --workers N`; 2 workers: 37 → 92 req/s at 4 users | PR #11 |
 | 2026-10-26 | Docs: README linked a missing `docs/experiment_plan.md` and said "no results yet" | README rewritten with current results and links | PR #3 |
 
 ## How to add to this log
