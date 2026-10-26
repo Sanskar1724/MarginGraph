@@ -1,6 +1,6 @@
 # Product Hunt and Show HN
 
-*Replace `DEMO_URL`, `SITE_URL` and `BLOG_URL` first. Both sites need something people can try: launch only after the demo is live.*
+*Replace `SITE_URL` and `BLOG_URL` first. The demo is live at https://huggingface.co/spaces/EquilStable/MarginGraph.*
 
 ---
 
@@ -79,6 +79,6 @@ Alternative:
 >
 > On real orders from a UK gift shop, it found the item shoppers actually bought in its top 10 suggestions 38.1% of the time (vs 31.1% for the best standard method), and choosing for profit raised add-on profit by about 14%. Honest caveat: that dataset has no costs, so costs were simulated. That's why I'm looking for 2–3 shops for a free pilot with a real A/B test.
 >
-> It's open source and runs on a single ordinary server. Try the demo: DEMO_URL. I'd love your feedback, especially from anyone who runs a store. 🙏
+> It's open source and runs on a single ordinary server. Try the demo: https://huggingface.co/spaces/EquilStable/MarginGraph. I'd love your feedback, especially from anyone who runs a store. 🙏
 
 **Launch day tips:** launch at 12:01 am Pacific; reply to every comment; share the PH link on LinkedIn and X that morning; do not ask for upvotes directly (PH penalizes it), ask for feedback instead.

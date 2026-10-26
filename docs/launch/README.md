@@ -52,7 +52,7 @@ Use only these. Copy the wording of the caveat with every profit number.
 
 - [ ] **Add a license.** The repo has no `LICENSE` file, so nobody else can legally use or fork the code. MIT or Apache-2.0 are the usual choices for a project like this. Every "open-source" line in this kit assumes one is added.
 - [ ] **Merge the base work** (PR #2) so the repo's `README.md` shows the results instead of "no claims yet".
-- [ ] **Deploy the demo** (Hugging Face Space, see `space/DEPLOY.md` in PR #4) and replace `DEMO_URL` in every file of this kit. Search for it: `grep -rn DEMO_URL docs/launch`.
+- [x] **Deploy the demo**: live at https://huggingface.co/spaces/EquilStable/MarginGraph (see `space/DEPLOY.md`), and `https://huggingface.co/spaces/EquilStable/MarginGraph` is filled in across this kit.
 - [ ] **Publish the landing page** (below) and replace `SITE_URL`.
 - [ ] Replace `YOUR_EMAIL` with the contact address you want public. Consider a separate address for the project.
 - [ ] Re-read the [fact sheet](#approved-facts-and-numbers) against `docs/RESULTS.md`. The LoRA fine-tune (E6) result is in every file.

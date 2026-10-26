@@ -53,4 +53,4 @@ MarginGraph is an **open-source research prototype**. It has been tested offline
 
 ---
 
-**Contact:** San · YOUR_EMAIL · Code: github.com/Sanskar1724/MarginGraph · Demo: DEMO_URL
+**Contact:** San · YOUR_EMAIL · Code: github.com/Sanskar1724/MarginGraph · Demo: https://huggingface.co/spaces/EquilStable/MarginGraph

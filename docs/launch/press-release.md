@@ -1,6 +1,6 @@
 # Press release
 
-*Template. Replace `[brackets]`, `DEMO_URL` and `SITE_URL` before sending. Keep the "simulated cost" sentence: removing it would make the release inaccurate.*
+*Template. Replace `[brackets]` and `SITE_URL` before sending. Keep the "simulated cost" sentence: removing it would make the release inaccurate.*
 
 ---
 
@@ -24,7 +24,7 @@ MarginGraph runs on a single ordinary server without a GPU and was built entirel
 
 ### About MarginGraph
 
-MarginGraph is an open-source research prototype for margin-aware product recommendations. Code, data pipeline and full results: github.com/Sanskar1724/MarginGraph. Project page: SITE_URL. Demo: DEMO_URL.
+MarginGraph is an open-source research prototype for margin-aware product recommendations. Code, data pipeline and full results: github.com/Sanskar1724/MarginGraph. Project page: SITE_URL. Demo: https://huggingface.co/spaces/EquilStable/MarginGraph.
 
 ### Key facts
 
