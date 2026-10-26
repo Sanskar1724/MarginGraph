@@ -125,6 +125,6 @@ My reading: these product titles are short ("PINK REGENCY TEACUP AND SAUCER"), a
 
 ## What is next
 
-Real costs. The next step is a pilot with a small online store: import its real unit costs and stock, rerun the offline check on its history, then a 50/50 A/B test on gross profit per visitor with conversion as a guard metric. If you run a shop and want to try it, or you want to poke at the code, the repo is [github.com/Sanskar1724/MarginGraph](https://github.com/Sanskar1724/MarginGraph) and the demo is at DEMO_URL.
+Real costs. The next step is a pilot with a small online store: import its real unit costs and stock, rerun the offline check on its history, then a 50/50 A/B test on gross profit per visitor with conversion as a guard metric. If you run a shop and want to try it, or you want to poke at the code, the repo is [github.com/Sanskar1724/MarginGraph](https://github.com/Sanskar1724/MarginGraph) and the demo is at https://huggingface.co/spaces/EquilStable/MarginGraph.
 
 Everything here was built with free tools on an 8 GB laptop and a free Kaggle GPU.

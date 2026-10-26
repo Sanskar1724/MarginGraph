@@ -17,7 +17,7 @@ The rule for the whole roadmap: **a claim moves from "target" to "result" only a
 | Margin floor | 0 breaks in every test |
 | LLM ranker | NO-GO zero-shot (1.5B, 3B) and as a stacker feature. LoRA fine-tune (E6) NO-GO too; LLM track closed |
 | API | Demo-level FastAPI (`margingraph serve`) |
-| Production API, demo app, store connectors | **In progress** in separate pull requests |
+| Production API, demo app, store connectors | Done: `src/margingraph/service/`, `connectors/`, and the demo live at [EquilStable/MarginGraph](https://huggingface.co/spaces/EquilStable/MarginGraph) |
 
 ## Phase 1: finish the research (now, free)
 

@@ -39,7 +39,7 @@ Kind regards,
 [Your full name]
 [University / course, if you want to mention it]
 [Email] · [Phone]
-github.com/Sanskar1724/MarginGraph · DEMO_URL
+github.com/Sanskar1724/MarginGraph · https://huggingface.co/spaces/EquilStable/MarginGraph
 
 ---
 

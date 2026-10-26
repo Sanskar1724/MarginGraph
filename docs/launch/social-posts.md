@@ -1,6 +1,6 @@
 # Social posts
 
-*Replace `DEMO_URL`, `SITE_URL` and `BLOG_URL` before posting. Attach a screenshot of the demo (a basket with its 2 add-ons) or the profit vs hits chart. Keep the "simulated cost" wording in every post that mentions profit.*
+*Replace `SITE_URL` and `BLOG_URL` before posting. Attach a screenshot of the demo (a basket with its 2 add-ons) or the profit vs hits chart. Keep the "simulated cost" wording in every post that mentions profit.*
 
 ---
 

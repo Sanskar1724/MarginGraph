@@ -13,7 +13,7 @@
 [![LightGBM](https://img.shields.io/badge/ranker-LightGBM-9cf)](src/margingraph/rerank.py)
 [![PuLP MILP](https://img.shields.io/badge/optimizer-PuLP%20%2F%20HiGHS-orange)](src/margingraph/optimize.py)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](src/margingraph/api.py)
-[![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](space/)
+[![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/spaces/EquilStable/MarginGraph)
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
 
 [Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [Industry plan](docs/industry-plan/README.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
@@ -126,7 +126,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 
 - [x] FastAPI demo service
 - [x] Production service: multi-store API, fallbacks, auth, A/B logging, nightly retraining, Docker ([`docs/SERVICE.md`](docs/SERVICE.md))
-- [x] Gradio demo for Hugging Face Spaces (built; deploy steps in [`space/DEPLOY.md`](space/DEPLOY.md))
+- [x] Gradio demo for Hugging Face Spaces, live at [EquilStable/MarginGraph](https://huggingface.co/spaces/EquilStable/MarginGraph)
 - [x] CSV / Shopify / WooCommerce connector (tested on UCI via CSV; no live store yet)
 - [x] Merchant dashboard (policy settings, KPIs, A/B results with CIs)
 - [ ] Pilot store with real cost and stock, then an A/B test
