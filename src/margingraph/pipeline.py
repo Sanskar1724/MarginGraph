@@ -157,9 +157,24 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     gen = gens["test"]  # Stage 2, the API and the LLM slates all live in the test model's item index
     cat_idx = catalog.set_index("item").reindex(gen.index.items).reset_index()
     cat_idx["price"] = cat_idx["price"].fillna(cat_idx["price"].median())
-    erp = data.simulate_erp(hist["test"], cat_idx, cfg, seed)
+    erp_path = cfg["data"].get("erp_path")
+    real_erp = bool(erp_path) and Path(erp_path).exists()
+    if real_erp:
+        # Connected store: its own cost and stock, assumptions only where it has none.
+        erp = data.store_erp(hist["test"], cat_idx, pd.read_parquet(erp_path), cfg, seed)
+        summary["erp"] = {
+            "source": cfg["data"].get("source", "store"),
+            "cost_from_store_share": float((erp["cost_source"] == "store").mean()),
+            "stock_from_store_share": float((erp["stock_source"] == "store").mean()),
+            "cost_ratio_assumed": cfg["erp"].get("cost_ratio", 0.6),
+        }
+        erp.to_csv(out / "erp_store.csv", index=False)
+        _log(f"store ERP: {summary['erp']}")
+    else:
+        erp = data.simulate_erp(hist["test"], cat_idx, cfg, seed)
+        summary["erp"] = {"source": "simulated"}
+        erp.to_csv(out / "erp_simulated.csv", index=False)
     p_bar = float((erp["price"] - erp["unit_cost"]).clip(lower=0).mean())
-    erp.to_csv(out / "erp_simulated.csv", index=False)
 
     ft = feats["test"]
     slates = {
@@ -193,7 +208,7 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
         rows.append(row)
         _log(f"  {name}: hit={row['hit']:.4f} realized={row['realized_profit']:.4f} expected={row['expected_profit']:.4f}")
     e8 = pd.DataFrame(rows)
-    e8.to_csv(out / "e8_strategies_simulated_erp.csv", index=False)
+    e8.to_csv(out / ("e8_strategies_store_erp.csv" if real_erp else "e8_strategies_simulated_erp.csv"), index=False)
 
     ref = "ranker_top2"
     e8p = []
@@ -249,7 +264,8 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     # ---- E11 ERP sensitivity -----------------------------------------
     _log("E11 ERP sensitivity")
     e11 = []
-    for mb in ([2.0, 8.0], [4.0, 6.0], [6.0, 4.0]):
+    # With real store costs the simulated-margin sweep says nothing about the store.
+    for mb in ([] if real_erp else ([2.0, 8.0], [4.0, 6.0], [6.0, 4.0])):
         for es in range(3):
             c2 = {**cfg, "erp": {**cfg["erp"], "margin_beta": mb}}
             erp2 = data.simulate_erp(hist["test"], cat_idx, c2, seed + 100 + es)
@@ -258,7 +274,8 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
             milp_r = stage2.evaluate(slates["ranker"], "milp", strategies["milp_lam1.0"][2], erp2, pb2)
             for col in ("hit", "realized_profit", "expected_profit"):
                 e11.append({"margin_beta": str(mb), "erp_seed": es, "metric": col, **paired_bootstrap(milp_r[col], ref_r[col], 500, seed)})
-    pd.DataFrame(e11).to_csv(out / "e11_erp_sensitivity_milp_vs_ranker.csv", index=False)
+    if e11:
+        pd.DataFrame(e11).to_csv(out / "e11_erp_sensitivity_milp_vs_ranker.csv", index=False)
 
     # ---- artifacts for the API ---------------------------------------
     art = Path(artifacts_dir)

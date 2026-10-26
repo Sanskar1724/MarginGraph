@@ -55,6 +55,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 | [UCI Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii) | Primary: real invoices (baskets), real prices, product descriptions |
 | H&M Personalized Fashion (Kaggle) | Scale-up option with richer product text |
 | Simulated ERP fields | Cost, stock level and overstock flags where real data is unavailable; always labelled as simulated |
+| Your own store | `margingraph sync csv / shopify / woocommerce` loads a store's products, orders, cost and stock; see [docs/CONNECTORS.md](docs/CONNECTORS.md) |
 
 ## Evaluation
 
