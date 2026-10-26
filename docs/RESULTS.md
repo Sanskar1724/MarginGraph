@@ -50,3 +50,15 @@ MILP λ=1 − ranker top-2, paired: realized profit +0.040 [0.023, 0.058] (+22%)
 E9: PuLP (HiGHS) and exact enumeration agree on 600/600 problems; mean solve time 3.4 ms.
 E11: across 3 margin distributions × 3 ERP seeds the realized-profit gain of MILP λ=1 stays positive (+0.015 to +0.062, every CI above zero).
 E10 (sequential stock, replay): overstock weight 2.0 clears 114 overstock units vs 74 at w=1.0, for −3.7% profit.
+
+## E5 LLM rerank (Kaggle T4, run by San on 2026-10-26)
+
+Qwen2.5-1.5B-Instruct, zero-shot yes/no scoring of the top-20 LightGBM slate, 1,000 random test baskets. Paired against LightGBM on the same slates.
+
+| Metric | LLM | Blend (rank average) | LightGBM | LLM − LGBM [95% CI] | Blend − LGBM [95% CI] |
+| --- | --- | --- | --- | --- | --- |
+| Hit@1 | 5.1% | 7.3% | 11.1% | −6.0 [−8.2, −3.8] | −3.8 [−5.6, −2.0] |
+| Hit@5 | 16.8% | 23.2% | 27.6% | −10.8 [−13.7, −7.9] | −4.4 [−6.5, −2.4] |
+| Hit@10 | 29.5% | 34.8% | 36.1% | −6.6 [−9.3, −3.8] | −1.3 [−3.0, +0.4] |
+
+**Gate: NO-GO** for 1.5B zero-shot. LightGBM stays the reranker. Next: Qwen2.5-3B zero-shot, then E6 (fine-tune on LightGBM slates with hard negatives, or use the LLM score as a LightGBM feature).
