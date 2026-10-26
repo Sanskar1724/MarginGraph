@@ -139,7 +139,7 @@ const source = (slide, t, dark = false) =>
   s.addText("From basket to two margin-safe add-ons", { placeholder: "title" });
   const steps = [
     [fa.FaCartShopping, "Basket", "Items in the cart, plus history if the customer is known"],
-    [fa.FaFilter, "Shortlist", "EASE, ItemKNN, ALS, repeat, co-purchase, popularity: up to 100 items"],
+    [fa.FaFilter, "Shortlist", "EASE (3 variants), text, fresh sales, ItemKNN, ALS, repeat, co-purchase, popularity: up to 150 items"],
     [fa.FaRankingStar, "LightGBM ranker", "~20 features, LambdaRank, isotonic calibration: top 20"],
     [fa.FaCalculator, "PuLP optimizer", "Max expected profit, 15% floor, max 2, stock rules"],
     [fa.FaGift, "Add-ons", "Up to 2 suggestions, with a best-seller fallback"],
@@ -174,7 +174,7 @@ const source = (slide, t, dark = false) =>
   s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
   s.addText("The ranker beats every standard method", { placeholder: "title" });
   const models = ["Popularity", "Co-purchase", "Repeat purchase", "ALS", "ItemKNN", "EASE", "MarginGraph ranker"];
-  const hit10 = [3.1, 13.1, 13.9, 17.3, 22.7, 31.1, 35.6];
+  const hit10 = [3.1, 13.0, 13.4, 17.3, 22.7, 31.1, 38.1];
   s.addChart(pres.charts.BAR, [{ name: "Hit@10 (%)", labels: models, values: hit10 }], {
     x: 0.6, y: 1.6, w: 7.6, h: 4.8, barDir: "bar",
     chartColors: [H.accent6, H.accent6, H.accent6, H.accent6, H.accent6, H.accent3, H.accent1],
@@ -184,16 +184,16 @@ const source = (slide, t, dark = false) =>
     valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" }, valAxisMaxVal: 42,
     showLegend: false, barGapWidthPct: 45, objectName: "Hit@10 chart",
   });
-  stat(s, "+4.5 pts", "Hit@10 over EASE, the best standard method\n95% CI [3.6, 5.5]", 8.8, 1.7, 3.9, { size: 48 });
-  stat(s, "0.217", "NDCG@10 vs 0.188 for EASE\n95% CI of the gain [0.023, 0.035]", 8.8, 3.75, 3.9, { size: 48 });
-  source(s, "Measured, real baskets. Shortlist recall@100 = 58.0%, which caps any ranker.");
-  s.addNotes("On 4,480 real test baskets the LightGBM ranker puts the hidden item in its top 10 35.6% of the time, against 31.1% for EASE, the strongest standard method. The gain of 4.5 points has a confidence interval well above zero.");
+  stat(s, "+7.0 pts", "Hit@10 over EASE, the best standard method\n95% CI [6.0, 8.0]", 8.8, 1.7, 3.9, { size: 48 });
+  stat(s, "0.237", "NDCG@10 vs 0.188 for EASE\n95% CI of the gain [0.043, 0.055]", 8.8, 3.75, 3.9, { size: 48 });
+  source(s, "Measured, real baskets. Shortlist recall@150 = 65.3% (was 58.0% at 100), which caps any ranker.");
+  s.addNotes("On 4,480 real test baskets the LightGBM ranker puts the hidden item in its top 10 38.1% of the time, against 31.1% for EASE, the strongest standard method. The gain of 7.0 points has a confidence interval well above zero.");
 
   // ===== 7. Profit =====
   s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
   s.addText("More profit per basket, zero floor breaks", { placeholder: "title" });
   const strat = ["Popularity top 2", "Co-purchase top 2", "Ranker top 2", "Optimizer λ=0.5", "Optimizer λ=1.0"];
-  const prof = [0.013, 0.070, 0.184, 0.215, 0.224];
+  const prof = [0.013, 0.072, 0.205, 0.234, 0.255];
   s.addChart(pres.charts.BAR, [{ name: "Realized profit (£ per basket)", labels: strat, values: prof }], {
     x: 0.6, y: 1.6, w: 7.6, h: 4.7, barDir: "col",
     chartColors: [H.accent6, H.accent6, H.accent3, H.accent1, H.accent1],
@@ -203,20 +203,20 @@ const source = (slide, t, dark = false) =>
     valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" }, valAxisMaxVal: 0.26,
     showLegend: false, barGapWidthPct: 50, objectName: "profit chart",
   });
-  stat(s, "+17%", "profit per basket at λ=0.5 vs the ranker's top 2,\nfor 1.1 pts fewer hits", 8.8, 1.55, 3.9, { size: 48 });
-  stat(s, "+22%", "profit at λ=1.0, for 3.7 pts fewer hits", 8.8, 3.25, 3.9, { size: 48 });
-  stat(s, "0", "margin-floor breaks, vs 0.038 per basket\nfor the ranker's top 2", 8.8, 4.75, 3.9, { size: 48, bigColor: C.accent2 });
+  stat(s, "+14%", "profit per basket at λ=0.5 vs the ranker's top 2,\nfor 1.1 pts fewer hits", 8.8, 1.55, 3.9, { size: 48 });
+  stat(s, "+24%", "profit at λ=1.0, for 2.9 pts fewer hits", 8.8, 3.25, 3.9, { size: 48 });
+  stat(s, "0", "margin-floor breaks, vs 0.037 per basket\nfor the ranker's top 2", 8.8, 4.75, 3.9, { size: 48, bigColor: C.accent2 });
   source(s, "Simulated: the dataset has real prices but no unit cost or stock, so cost and stock are simulated. Profit claims need a real store to confirm.");
-  s.addNotes("Realized profit only counts the item the customer really bought. At lambda 0.5 the optimizer earns 17% more per basket than showing the ranker's top two, for about one point fewer hits, and with zero margin-floor breaks. Be clear: unit cost and stock were simulated because the public dataset does not include them.");
+  s.addNotes("Realized profit only counts the item the customer really bought. At lambda 0.5 the optimizer earns 14% more per basket than showing the ranker's top two, for about one point fewer hits, and with zero margin-floor breaks. Be clear: unit cost and stock were simulated because the public dataset does not include them.");
 
   // ===== 8. Robustness =====
   s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
   s.addText("The result holds when we change the assumptions", { placeholder: "title" });
   const rob = [
-    [fa.FaFlask, "9 of 9", "cost scenarios keep a positive profit gain", "3 margin distributions × 3 seeds; gain +£0.015 to +£0.062 per basket, every CI above zero"],
+    [fa.FaFlask, "9 of 9", "cost scenarios keep a positive profit gain", "3 margin distributions × 3 seeds; gain +£0.024 to +£0.071 per basket, every CI above zero"],
     [fa.FaCircleCheck, "600 / 600", "problems solved exactly", "PuLP (HiGHS) matches brute-force enumeration on every test problem"],
-    [fa.FaStopwatch, "3.4 ms", "mean optimizer solve time", "Solver step only; end-to-end API latency is not benchmarked yet"],
-    [fa.FaBoxOpen, "114 vs 74", "overstock units cleared", "Overstock weight 2.0 vs 1.0 in a stock replay, for 3.7% less profit"],
+    [fa.FaStopwatch, "2.7 ms", "mean optimizer solve time", "Solver step; the API measured p50 22 ms in a container"],
+    [fa.FaBoxOpen, "116 vs 78", "overstock units cleared", "Overstock weight 2.0 vs 1.0 in a stock replay, for 3.7% less profit"],
   ];
   for (let i = 0; i < 4; i++) {
     const x = 0.6 + (i % 2) * 6.15, y = 1.65 + Math.floor(i / 2) * 2.45;
@@ -360,7 +360,7 @@ const source = (slide, t, dark = false) =>
   card(s, 0.6, 1.65, colw, 3.7, C.background2, "real card");
   await iconCircle(s, fa.FaCheck, 0.9, 1.9, 0.7, C.accent1, "measured icon");
   txt(s, "Measured on real data", { x: 1.8, y: 1.98, w: 4.5, h: 0.5, fontSize: 20, bold: true, fontFace: "Cambria", color: C.text2 });
-  txt(s, ["Real baskets and real prices, 39,516 invoices", "Relevance gain over standard methods (+4.5 pts Hit@10)", "Optimizer is exact and fast (600/600, 3.4 ms)", "Margin floor holds in every test", "LLM ranker NO-GO, with numbers"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
+  txt(s, ["Real baskets and real prices, 39,516 invoices", "Relevance gain over standard methods (+7.0 pts Hit@10)", "Optimizer is exact and fast (600/600, 2.7 ms)", "Margin floor holds in every test", "LLM ranker NO-GO, with numbers"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
     { x: 0.95, y: 2.85, w: 5.3, h: 3.3, fontSize: 15, paraSpaceAfter: 8 });
   card(s, 6.75, 1.65, colw, 3.7, C.background2, "assumed card");
   await iconCircle(s, fa.FaTriangleExclamation, 7.05, 1.9, 0.7, C.accent2, "assumption icon");

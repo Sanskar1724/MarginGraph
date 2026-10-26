@@ -145,7 +145,7 @@ Paste the table, then for each dataset add: the converter options, the caveats f
 
 That is a result, not a failure. Check, in this order, and write down what you find:
 
-1. **Pool recall** (`e4_retrieval.csv`): if the hidden item is rarely in the 100 candidates, no reranker can help. Fix the pool, not the ranker.
+1. **Pool recall** (`e4_retrieval.csv`): if the hidden item is rarely in the 150 candidates, no reranker can help. Fix the pool, not the ranker.
 2. **Signal audit** (`e1_audit.json`): if co-purchase on real baskets is barely above shuffled baskets, the dataset has little basket signal (likely for Olist).
 3. **Too few validation events** to train LightGBM well: the reranker is trained on validation events, so a small store gives it little to learn from. Try `split` dates that give more validation data.
 4. **Hyperparameters** in `configs/default.yaml` (`rerank`, `baselines.ease_lambda`) were tuned on UCI. Retune on validation only, never on test.

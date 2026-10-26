@@ -23,7 +23,7 @@ I came across [Store name] while looking at [one real detail, e.g. "independent 
 
 Most "customers also bought" boxes push whatever sells most, which is often your cheapest, lowest-margin stock. MarginGraph picks up to 2 add-ons that the shopper is likely to buy, then chooses among them for expected profit, and it never suggests anything below a margin floor that you set.
 
-So far I have tested it on two years of real sales from a UK online gift shop. It found the item shoppers actually bought in its top 10 suggestions for 35.6% of orders, against 31.1% for the best standard method. With simulated costs, choosing for profit raised the profit from the add-on by about 17%, for a small drop in hits. I want to be clear that those costs were simulated, because the public data has none. That is why I am looking for a real store to test it with.
+So far I have tested it on two years of real sales from a UK online gift shop. It found the item shoppers actually bought in its top 10 suggestions for 38.1% of orders, against 31.1% for the best standard method. With simulated costs, choosing for profit raised the profit from the add-on by about 14%, for a small drop in hits. I want to be clear that those costs were simulated, because the public data has none. That is why I am looking for a real store to test it with.
 
 **What I am offering:**
 

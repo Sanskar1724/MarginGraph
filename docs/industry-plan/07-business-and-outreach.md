@@ -12,8 +12,8 @@
 
 Use the wording from the launch kit ([product-sheet.md](../launch/product-sheet.md), [pilot-proposal.md](../launch/pilot-proposal.md)), which already follows these rules:
 
-- "On two years of real sales from a UK online gift shop, it found the item shoppers actually bought in its top 10 for **35.6%** of orders, against **31.1%** for the best standard method."
-- "With **simulated** costs, choosing for profit raised add-on profit by about **17%** for a small drop in hits." Always say simulated.
+- "On two years of real sales from a UK online gift shop, it found the item shoppers actually bought in its top 10 for **38.1%** of orders, against **31.1%** for the best standard method."
+- "With **simulated** costs, choosing for profit raised add-on profit by about **14%** for a small drop in hits." Always say simulated.
 - After Phase 1: add the multi-dataset sentence exactly as measured.
 - Never quote a profit gain for a real store until its A/B test is finished.
 

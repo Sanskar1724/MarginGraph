@@ -36,7 +36,8 @@ Before building anything, I checked that co-purchase structure is real. A simple
 Basket
   │
   ▼
-Shortlist      EASE, ItemKNN, ALS, repeat purchase, co-purchase, popularity  →  up to 100 items
+Shortlist      EASE (plain, time-decayed, per customer), text similarity, fresh sales,
+               ItemKNN, ALS, repeat purchase, co-purchase, popularity  →  up to 150 items
   │
   ▼
 Ranker         LightGBM (lambdarank), isotonic calibration  →  p(buy) for the top 20
@@ -67,16 +68,17 @@ subject to Σ_i x_i ≤ 2
 | ALS | 12.9% | 17.3% | 0.106 |
 | ItemKNN | 17.4% | 22.7% | 0.144 |
 | EASE (λ=250) | 23.2% | 31.1% | 0.188 |
-| **LightGBM rerank** | **26.1%** | **35.6%** | **0.217** |
+| LightGBM rerank, first run | 26.1% | 35.6% | 0.217 |
+| **LightGBM rerank, current** | **28.8%** | **38.1%** | **0.237** |
 
-LightGBM minus EASE, paired over the same test baskets: Hit@10 +4.5 points, 95% bootstrap CI [3.6, 5.5].
+LightGBM minus EASE, paired over the same test baskets: Hit@10 +7.0 points, 95% bootstrap CI [6.0, 8.0] (first run: +4.5 [3.6, 5.5]).
 
 Two things mattered more than model choice:
 
-1. **The shortlist.** Adding EASE to the candidate pool and widening it from 50 to 100 raised shortlist recall from 43.5% to 58.0%. Recall caps every reranker, including an LLM, so this was the biggest single lever.
+1. **The shortlist.** Adding EASE to the candidate pool and widening it from 50 to 100 raised shortlist recall from 43.5% to 58.0%. Later, four more sources (time-decayed EASE, per-customer EASE, text similarity of product names, and a nightly fresh-sales signal) and a 150-item pool took it to 65.3%. Recall caps every reranker, including an LLM, so this was the biggest single lever.
 2. **Training the reranker honestly.** The reranker learns from validation events scored by models trained only on the training period, then the candidate models are refit on train plus validation before test. Skipping this leaks future data and inflates everything.
 
-Calibration was weak but real: isotonic regression gave a test Brier score of 0.00560 against 0.00568 for a constant base rate. Good enough to multiply into profit, not something to brag about.
+Calibration was modest but real: isotonic regression gives a test Brier score of 0.00417 against 0.00435 for a constant base rate (0.00560 vs 0.00568 in the first run). Good enough to multiply into profit, not something to brag about.
 
 ## Stage 2: profit
 
@@ -84,18 +86,18 @@ The dataset has real prices but **no unit cost and no stock**. I simulated them,
 
 | Strategy | Hit@2 | Realized profit per basket (£) | Margin-floor breaks per basket |
 | --- | --- | --- | --- |
-| Popularity top 2 | 1.2% | 0.013 | 0.002 |
-| Ranker top 2 | 16.7% | 0.184 | 0.038 |
-| MILP λ=0.5 | 15.6% | 0.215 | 0 |
-| MILP λ=1.0 | 13.0% | 0.224 | 0 |
+| Popularity top 2 | 1.1% | 0.013 | 0 |
+| Ranker top 2 | 17.8% | 0.205 | 0.037 |
+| MILP λ=0.5 | 16.7% | 0.234 | 0 |
+| MILP λ=1.0 | 14.9% | 0.255 | 0 |
 
-At λ=0.5, profit is up 17% (CI +£0.017 to +£0.044 per basket) for −1.1 points Hit@2 (CI [−1.8, −0.5]). At λ=1.0 it is +22% for −3.7 points. That is the trade-off a store owner would actually choose on, so the product exposes λ as a single dial.
+At λ=0.5, profit is up 14% (CI +£0.014 to +£0.044 per basket) for −1.1 points Hit@2 (CI [−1.7, −0.6]). At λ=1.0 it is +24% for −2.9 points. (Against the weaker first ranker these were +17% and +22%: a better ranker raises the baseline the optimizer has to beat.) That is the trade-off a store owner would actually choose on, so the product exposes λ as a single dial.
 
-Does the result survive different cost assumptions? I reran it with 3 margin distributions × 3 random seeds. The gain at λ=1 stayed positive in all nine, from +£0.015 to +£0.062 per basket, every CI above zero. That is reassuring, but it is still simulation. Only real costs settle it.
+Does the result survive different cost assumptions? I reran it with 3 margin distributions × 3 random seeds. The gain at λ=1 stayed positive in all nine, from +£0.024 to +£0.071 per basket, every CI above zero. That is reassuring, but it is still simulation. Only real costs settle it.
 
-The solver itself is not the bottleneck. PuLP with HiGHS matched brute-force enumeration on 600 of 600 problems, with a mean solve time of 3.4 ms. (I have not benchmarked end-to-end API latency yet, so I will not quote one.)
+The solver itself is not the bottleneck. PuLP with HiGHS matched brute-force enumeration on 600 of 600 problems, with a mean solve time of 2.7 ms. (I have not benchmarked end-to-end API latency yet, so I will not quote one.)
 
-I also ran a sequential stock replay. Setting the overstock weight to 2.0 cleared 114 overstock units versus 74 at 1.0, for 3.7% less profit. Useful as a knob, with a visible price.
+I also ran a sequential stock replay. Setting the overstock weight to 2.0 cleared 116 overstock units versus 78 at 1.0, for 3.7% less profit. Useful as a knob, with a visible price.
 
 ## The LLM experiment
 
@@ -116,9 +118,9 @@ My reading: these product titles are short ("PINK REGENCY TEACUP AND SAUCER"), a
 ## What I would tell someone building this
 
 - **Audit the signal against a shuffled null before you model.** It takes ten minutes and tells you whether there is anything to learn.
-- **Spend effort on the shortlist.** A better reranker on a 43% recall pool loses to a plain one on a 58% pool.
+- **Spend effort on the shortlist.** A better reranker on a 43% recall pool loses to a plain one on a 58% pool, and going from 58% to 65% recall was worth more than any LightGBM tuning I tried.
 - **Multiply profit by probability.** It is the one line that keeps a profit optimizer honest.
-- **Put business rules in code, not in a model.** The margin floor was broken 0 times by the optimizer and 0.038 times per basket by the plain top 2.
+- **Put business rules in code, not in a model.** The margin floor was broken 0 times by the optimizer and 0.037 times per basket by the plain top 2.
 - **Set the gate before the run, and publish the NO-GO.**
 
 ## What is next

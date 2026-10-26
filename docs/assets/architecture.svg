@@ -16,21 +16,21 @@
 
     <rect x="222" y="96" width="170" height="110" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
     <text x="307" y="124" text-anchor="middle" font-weight="700" fill="#1e3a8a">1a · Retrieval</text>
-    <text x="307" y="150" text-anchor="middle" fill="#1e40af">EASE · ItemKNN · ALS</text>
-    <text x="307" y="168" text-anchor="middle" fill="#1e40af">co-purchase · repeat</text>
-    <text x="307" y="190" text-anchor="middle" fill="#3b82f6" font-size="11">100 candidates · recall 58%</text>
+    <text x="307" y="150" text-anchor="middle" fill="#1e40af">EASE · ItemKNN · ALS · text</text>
+    <text x="307" y="168" text-anchor="middle" fill="#1e40af">fresh sales · co-purchase</text>
+    <text x="307" y="190" text-anchor="middle" fill="#3b82f6" font-size="11">150 candidates · recall 65.3%</text>
 
     <rect x="432" y="96" width="170" height="110" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
     <text x="517" y="124" text-anchor="middle" font-weight="700" fill="#1e3a8a">1b · Rerank</text>
     <text x="517" y="150" text-anchor="middle" fill="#1e40af">LightGBM ranker</text>
     <text x="517" y="168" text-anchor="middle" fill="#1e40af">+ isotonic p(buy)</text>
-    <text x="517" y="190" text-anchor="middle" fill="#3b82f6" font-size="11">Hit@10 35.6% vs 31.1%</text>
+    <text x="517" y="190" text-anchor="middle" fill="#3b82f6" font-size="11">Hit@10 38.1% vs 31.1%</text>
 
     <rect x="642" y="96" width="170" height="110" rx="10" fill="#ecfdf5" stroke="#6ee7b7"/>
     <text x="727" y="124" text-anchor="middle" font-weight="700" fill="#064e3b">2 · Optimize</text>
     <text x="727" y="150" text-anchor="middle" fill="#065f46">PuLP / HiGHS MILP</text>
     <text x="727" y="168" text-anchor="middle" fill="#065f46">max expected profit</text>
-    <text x="727" y="190" text-anchor="middle" fill="#10b981" font-size="11">+17% profit · 0 floor breaks</text>
+    <text x="727" y="190" text-anchor="middle" fill="#10b981" font-size="11">+14% profit · 0 floor breaks</text>
 
     <rect x="852" y="96" width="80" height="110" rx="10" fill="#0f172a"/>
     <text x="892" y="140" text-anchor="middle" font-weight="700" fill="#ffffff">≤ 2</text>

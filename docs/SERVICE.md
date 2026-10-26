@@ -62,7 +62,7 @@ The last 14 days (to 2011-12-09, 39,335 lines) were held back to replay as live 
 | SQLite, 30-day holdout | 21.6 s | 73.0 s | 1.65 GB | 259 MB | 328 | 36.6% | EASE 30.5% | passed |
 | Postgres, 60-day holdout | 41.5 s | 84.4 s | 1.68 GB | 259 MB | 565 | 34.0% | EASE 29.0% | passed |
 
-The research pipeline measured 35.6% vs 31.1% (EASE) on 20,000 test events, so the nightly job's small holdout gives the same picture. The 60-day holdout is now the default because it trains on more events. Holdout sets this small have wide error bars (a few points), which is why the gate only asks LightGBM to match or beat the best single source.
+The research pipeline measured 35.6% vs 31.1% (EASE) in its first run (38.1% after the accuracy work) on 20,000 test events, so the nightly job's small holdout gives the same picture. The 60-day holdout is now the default because it trains on more events. Holdout sets this small have wide error bars (a few points), which is why the gate only asks LightGBM to match or beat the best single source.
 
 ### Live replay through the API (real orders, one product hidden per order)
 
@@ -90,7 +90,7 @@ What this says, honestly:
 
 * The margin-aware policy **does cost conversion**. At λ = 1 the drop is about 5 points and clearly real; at λ = 0.5 it is smaller and not significant at this sample size.
 * **Profit gains are not proven by these replays.** The point estimates are positive, but every profit CI includes zero. Online Retail II is wholesale, so a few orders with huge quantities dominate profit; per unit sold the difference is near zero or negative (for example −0.05 [−0.12, +0.02] at λ = 0.5).
-* So the default is now λ = 0.5 (it was 1.0 in the first draft), matching the offline result (+17% expected profit for −1.1 pts Hit@2) and the dashboard's default. A store should run its own A/B test for a few thousand checkouts before trusting any profit number. The report and the dashboard are built for exactly that.
+* So the default is now λ = 0.5 (it was 1.0 in the first draft), matching the offline result (+14% realized profit for −1.1 pts Hit@2 after the accuracy work; +17% in the first run) and the dashboard's default. A store should run its own A/B test for a few thousand checkouts before trusting any profit number. The report and the dashboard are built for exactly that.
 
 ### Tests
 

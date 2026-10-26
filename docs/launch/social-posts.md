@@ -16,8 +16,8 @@
 > No AI model sets prices or can break those rules.
 >
 > What I measured on 4,480 real orders from a UK online gift shop (public UCI dataset):
-> ✅ The item the shopper really bought was in the top 10 for 35.6% of orders, vs 31.1% for the best standard method (+4.5 points, 95% CI 3.6 to 5.5)
-> ✅ Choosing for profit raised profit per order from the add-on by about 17%, for ~1 point fewer hits
+> ✅ The item the shopper really bought was in the top 10 for 38.1% of orders, vs 31.1% for the best standard method (+7.0 points, 95% CI 6.0 to 8.0)
+> ✅ Choosing for profit raised profit per order from the add-on by about 14%, for ~1 point fewer hits
 > ✅ 0 margin-floor breaks
 >
 > The honest part: the dataset has no unit costs, so the profit numbers use simulated costs. The gain held across 9 different cost assumptions, but only a real store can confirm it.
@@ -37,7 +37,7 @@
 
 > A lesson from building MarginGraph: the biggest gain did not come from a better model.
 >
-> Widening the candidate shortlist from 50 to 100 items, and adding EASE to it, raised the chance that the right product was even in the shortlist from 43.5% to 58.0%. A better reranker cannot recover an item that was never shortlisted.
+> Widening the candidate shortlist from 50 to 100 items, and adding EASE to it, raised the chance that the right product was even in the shortlist from 43.5% to 58.0%, and four more sources at 150 items took it to 65.3%. A better reranker cannot recover an item that was never shortlisted.
 >
 > If your recommender is stuck, measure shortlist recall first.
 >
@@ -55,7 +55,7 @@
 >
 > LightGBM ranks → a 3 ms integer program picks 2 under a 15% margin floor.
 >
-> On 4,480 real orders: Hit@10 35.6% vs 31.1% (EASE). ~+17% add-on profit (simulated costs). 0 floor breaks.
+> On 4,480 real orders: Hit@10 38.1% vs 31.1% (EASE). ~+14% add-on profit (simulated costs). 0 floor breaks.
 >
 > The LLM lost. 🧵👇 github.com/Sanskar1724/MarginGraph
 
@@ -65,17 +65,17 @@
 
 2/ Setup: real invoices from a UK online gift shop (UCI Online Retail II). 39,516 orders, 4,707 products. Train on older months, test on 4,480 baskets from Oct to Dec 2011, hide one item per basket, try to suggest it.
 
-3/ Stage 1: a shortlist from EASE, ItemKNN, ALS and co-purchase, then a LightGBM ranker. Hit@10: 35.6%. Best single model (EASE): 31.1%. Best sellers: 3.1%. Paired gain +4.5 pts, CI [3.6, 5.5].
+3/ Stage 1: a shortlist from EASE, ItemKNN, ALS, co-purchase, text similarity and fresh sales, then a LightGBM ranker. Hit@10: 38.1%. Best single model (EASE): 31.1%. Best sellers: 3.1%. Paired gain +7.0 pts, CI [6.0, 8.0].
 
 4/ Stage 2: a PuLP integer program picks 2 add-ons to maximize p(buy) × profit, with a hard 15% margin floor. Profit is always multiplied by p(buy), so it can't push an irrelevant pricey item.
 
-5/ Result: ~+17% profit per order from the add-on vs just showing the top 2, for −1.1 pts Hit@2. 0 margin-floor breaks (the plain top 2 broke it 3.8 times per 100 orders).
+5/ Result: ~+14% profit per order from the add-on vs just showing the top 2, for −1.1 pts Hit@2. 0 margin-floor breaks (the plain top 2 broke it 3.7 times per 100 orders).
 
 6/ Caveat, in bold: the dataset has no unit costs. Costs and stock are simulated. The gain held in all 9 cost scenarios I tried, but a real store is the real test.
 
 7/ The LLM part: Qwen2.5 1.5B zero-shot as reranker: Hit@5 16.8% vs LightGBM 27.6%. 3B: 16.6%. As a stacker feature: weight ≈ 0. NO-GO ×3. Short titles + strong co-purchase signal = behaviour beats text here.
 
-8/ Lessons: audit the signal vs a shuffled null first. Shortlist recall (58%) caps everything. Put business rules in code, not in a model. Set the gate before the run.
+8/ Lessons: audit the signal vs a shuffled null first. Shortlist recall (now 65%) caps everything. Put business rules in code, not in a model. Set the gate before the run.
 
 9/ All free tools, an 8 GB laptop, a free Kaggle T4. Code, results, and the failed experiments: github.com/Sanskar1724/MarginGraph. Write-up: BLOG_URL
 

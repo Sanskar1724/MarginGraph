@@ -269,7 +269,7 @@ Picking at random from {META['n_items']:,} products would hit about {2/META['n_i
 
 Costs and stock in this table are **simulated** (Beta(4,6) margins, mean 40%; 15% of items overstocked),
 so profit numbers show how the optimizer behaves, not what a real store would earn.
-The full research pipeline (LightGBM reranker, Hit@10 35.6%) lives in the main repo.
+The full research pipeline (LightGBM reranker, Hit@10 38.1%) lives in the main repo.
 """
 
 

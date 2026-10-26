@@ -52,8 +52,8 @@ Most recommenders optimize for clicks or conversion and ignore economics. A rele
 Customer history / cart
         │
         ▼
-Stage 1a: Candidate retrieval   (EASE, ItemKNN, ALS, repeat purchase, co-purchase, popularity)
-        │  up to 100 candidates
+Stage 1a: Candidate retrieval   (EASE, ItemKNN, ALS, text, fresh sales, repeat, co-purchase, popularity)
+        │  up to 150 candidates
         ▼
 Stage 1b: Reranker              (LightGBM; LLM tested, NO-GO so far)
         │  relevance score → calibrated purchase probability p(accept)

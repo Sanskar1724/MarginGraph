@@ -6,7 +6,7 @@ the pipeline's simulated unit cost, stock and overstock flags.
 Events: a 50/50 A/B test. Control shows the 2 most "relevant" items (sampled
 by real weekly demand). Treatment shows 2 items picked by the store's policy
 (margin floor, exclusions, overstock weight, profit weight lambda). Per-item
-purchase rates are set from the offline E8 result (ranker top-2 Hit@2 16.7%,
+purchase rates are set from the offline E8 result (first run: ranker top-2 Hit@2 16.7%,
 MILP lambda=0.5 15.6%), so conversion is lower in treatment and any profit
 gain comes only from which items get shown. This is demo data for the UI,
 not evidence; every row is stored with source='sample'.

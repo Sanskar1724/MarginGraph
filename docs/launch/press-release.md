@@ -12,7 +12,7 @@
 
 Most product-suggestion boxes optimize for clicks or sales alone and tend to push the cheapest, best-selling items. MarginGraph splits the job in two. A ranking model, trained on the store's past orders, finds the items a shopper is likely to want. A mathematical optimizer then chooses which two to show, maximizing expected profit under rules enforced by plain code: a minimum margin, at most two items, and an optional push for overstocked products. No AI model sets prices or can override the rules.
 
-In an offline test on two years of real orders from a UK online gift retailer (the public UCI Online Retail II dataset, 39,516 orders and 4,707 products), MarginGraph's ranker found the item shoppers actually bought among its top ten suggestions in 35.6% of 4,480 test orders, compared with 31.1% for the best standard method and 3.1% for a best-seller list. Choosing for profit raised the profit per order from the add-on by about 17% compared with showing the two most likely items, for a drop of about one percentage point in hits, and broke the margin floor zero times.
+In an offline test on two years of real orders from a UK online gift retailer (the public UCI Online Retail II dataset, 39,516 orders and 4,707 products), MarginGraph's ranker found the item shoppers actually bought among its top ten suggestions in 38.1% of 4,480 test orders, compared with 31.1% for the best standard method and 3.1% for a best-seller list. Choosing for profit raised the profit per order from the add-on by about 14% compared with showing the two most likely items, for a drop of about one percentage point in hits, and broke the margin floor zero times.
 
 The dataset contains real prices but no unit costs or stock levels, so those were simulated. The project reports the profit result with that caveat, along with tests showing that the gain held across nine different cost assumptions.
 
@@ -29,8 +29,8 @@ MarginGraph is an open-source research prototype for margin-aware product recomm
 ### Key facts
 
 - Tested offline on real public sales data; not yet deployed in a live store.
-- Top-10 hit rate 35.6% vs 31.1% for the best standard method (+4.5 points, 95% confidence interval 3.6 to 5.5).
-- About +17% profit per order from the add-on under simulated costs; 0 margin-floor breaks.
+- Top-10 hit rate 38.1% vs 31.1% for the best standard method (+7.0 points, 95% confidence interval 6.0 to 8.0).
+- About +14% profit per order from the add-on under simulated costs; 0 margin-floor breaks.
 - Language models tested as rankers did not beat the conventional model.
 
 ### Media contact

@@ -128,20 +128,20 @@
     <h2>What we have measured</h2>
     <p class="sub">Two years of real orders from a UK online gift shop (UCI Online Retail II). Trained on older months, tested on 4,480 real baskets from Oct to Dec 2011, one item hidden in each.</p>
     <div class="grid">
-      <div class="card"><div class="stat">35.6%</div><div class="stat-label">found in the top 10</div><p>vs 31.1% for the best standard method (EASE) and 3.1% for best sellers. Gain +4.5 points, 95% CI [3.6, 5.5].</p></div>
-      <div class="card"><div class="stat">+17%</div><div class="stat-label">add-on profit per order*</div><p>Optimizer vs showing the 2 most likely items, for 1.1 points fewer hits. CI +£0.017 to +£0.044 per order.</p></div>
+      <div class="card"><div class="stat">38.1%</div><div class="stat-label">found in the top 10</div><p>vs 31.1% for the best standard method (EASE) and 3.1% for best sellers. Gain +7.0 points, 95% CI [6.0, 8.0].</p></div>
+      <div class="card"><div class="stat">+14%</div><div class="stat-label">add-on profit per order*</div><p>Optimizer vs showing the 2 most likely items, for 1.1 points fewer hits. CI +£0.014 to +£0.044 per order.</p></div>
       <div class="card"><div class="stat">0</div><div class="stat-label">margin-floor breaks</div><p>vs 3.8 per 100 orders when simply showing the top 2 likely items.</p></div>
-      <div class="card"><div class="stat">3.4 ms</div><div class="stat-label">mean optimizer solve</div><p>Matches brute force on 600 of 600 problems. Full API latency is not benchmarked yet.</p></div>
+      <div class="card"><div class="stat">2.7 ms</div><div class="stat-label">mean optimizer solve</div><p>Matches brute force on 600 of 600 problems. Full API latency is not benchmarked yet.</p></div>
     </div>
 
     <div class="table-wrap" style="margin-top:24px">
       <table>
         <thead><tr><th>Strategy (simulated cost)</th><th class="num">Hit@2</th><th class="num">Profit / order (£)</th><th class="num">Floor breaks / order</th></tr></thead>
         <tbody>
-          <tr><td>Best sellers, top 2</td><td class="num">1.2%</td><td class="num">0.013</td><td class="num">0.002</td></tr>
-          <tr><td>Ranker, top 2</td><td class="num">16.7%</td><td class="num">0.184</td><td class="num bad">0.038</td></tr>
-          <tr class="hl"><td>MarginGraph, balanced (λ=0.5)</td><td class="num">15.6%</td><td class="num">0.215</td><td class="num">0</td></tr>
-          <tr><td>MarginGraph, profit (λ=1.0)</td><td class="num">13.0%</td><td class="num">0.224</td><td class="num">0</td></tr>
+          <tr><td>Best sellers, top 2</td><td class="num">1.1%</td><td class="num">0.013</td><td class="num">0</td></tr>
+          <tr><td>Ranker, top 2</td><td class="num">17.8%</td><td class="num">0.205</td><td class="num bad">0.037</td></tr>
+          <tr class="hl"><td>MarginGraph, balanced (λ=0.5)</td><td class="num">16.7%</td><td class="num">0.234</td><td class="num">0</td></tr>
+          <tr><td>MarginGraph, profit (λ=1.0)</td><td class="num">14.9%</td><td class="num">0.255</td><td class="num">0</td></tr>
         </tbody>
       </table>
     </div>

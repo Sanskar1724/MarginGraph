@@ -4,7 +4,7 @@ Self-contained (numpy + pandas only) so it runs on a free CPU Space.
 
 Stage 1  EASE item-item model (Steck 2019). On Online Retail II it is the
          strongest single baseline in the main repo (test Hit@10 31.1%); the
-         repo's LightGBM reranker beats it (35.6%) but needs the full feature
+         repo's LightGBM reranker beats it (38.1%) but needs the full feature
          pipeline, so the demo ships EASE only.
 Stage 1b Logistic calibration of the EASE score into p(accept), fitted on
          held-out baskets (leave-one-out: hide one item, can we find it?).
