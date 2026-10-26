@@ -232,3 +232,10 @@ Kept for now: `claude/project-thread-mkbaip` (the Kaggle fine-tune notebooks clo
 - Follow-up `bad5fbe`: rebuilt `paper/main.pdf` with the E6 result (0 overfull boxes). Also added the fine-tune NO-GO (Hit@5 7.8% vs 27.6%, below random order at 11.6%) to the README, ROADMAP, PROJECT_REPORT, deck (rebuilt and validated), launch kit and industry plan, where items C1 and C2 are now ticked. The Kaggle notebooks now clone `main` instead of `claude/project-thread-mkbaip`. Tests: 90 passed, 1 skipped; ruff clean.
 - Refreshed `feat/core-pipeline`, `feat/llm-reranker` (README now has a "LoRA fine-tune NO-GO" badge), `docs/project-report`, `docs/research-paper`, `docs/pitch-deck`, `docs/launch-kit` and `docs/industry-roadmap`.
 - San has deleted `claude/readme` and `claude/project-thread-mkbaip`. The only branch left to delete is `docs/llm-finetune-result` (merged). After that the repo has `main` and the 13 module branches.
+
+## 2026-10-26 14:00 UTC: PR #16 (Space on ZeroGPU) merged; demo URL filled in
+
+- CI on PR #16 was green, but its commit `bd0498d` was authored by "Claude" and had co-author trailers. It went into `main` as `707aae5` instead: same tree and parent, authored by San, trailers removed. The merge is `46854dc`. PR #16 was closed with a comment, because GitHub can't mark it merged when the SHA differs.
+- `db6c826` puts the live demo URL, https://huggingface.co/spaces/EquilStable/MarginGraph, in the README badge and roadmap, in `docs/ROADMAP.md`, in every `DEMO_URL` placeholder in `docs/launch/` (including the template notes and the launch checklist), and in industry-plan item A (deploy, ticked). Tests: 90 passed; ruff clean.
+- Refreshed `feat/hf-space-demo` (its README now links the live Space), `docs/project-report`, `docs/launch-kit` and `docs/industry-roadmap`.
+- Branches for San to delete: `fix/space-zerogpu` (PR #16, content in main) and `docs/llm-finetune-result` (PR #15, merged).
