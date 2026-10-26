@@ -36,31 +36,128 @@ def prompts_for(slates: pd.DataFrame, catalog: pd.DataFrame) -> list[str]:
     return out
 
 
-def score_slates(slates: pd.DataFrame, catalog: pd.DataFrame, model_name: str, batch_size: int = 32) -> np.ndarray:
+def load_model(model_name: str):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tok = AutoTokenizer.from_pretrained(model_name, padding_side="left")
     assert torch.cuda.is_available(), "no GPU attached"
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": 0}).eval()  # one GPU; T4 x2 splitting only slows a 1.5-3B model
-    yes = tok.encode("Yes", add_special_tokens=False)[0]
-    no = tok.encode("No", add_special_tokens=False)[0]
-    texts = [
+    tok = AutoTokenizer.from_pretrained(model_name, padding_side="left")
+    # one GPU; splitting a 1.5-3B model across T4 x2 only slows it down
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map={"": 0}).eval()
+    return model, tok
+
+
+def _chat(tok, prompts: list[str]) -> list[str]:
+    return [
         tok.apply_chat_template(
             [{"role": "system", "content": SYSTEM}, {"role": "user", "content": p}],
             tokenize=False,
             add_generation_prompt=True,
         )
-        for p in prompts_for(slates, catalog)
+        for p in prompts
     ]
+
+
+def _yes_no_ids(tok) -> tuple[int, int]:
+    return tok.encode("Yes", add_special_tokens=False)[0], tok.encode("No", add_special_tokens=False)[0]
+
+
+def _yes_no_logits(model, tok, texts: list[str]):
+    enc = tok(texts, return_tensors="pt", padding=True).to(model.device)
+    logits = model(**enc).logits[:, -1, :]
+    yes, no = _yes_no_ids(tok)
+    return logits[:, [no, yes]].float()
+
+
+def score_slates(
+    slates: pd.DataFrame, catalog: pd.DataFrame, model_name: str | None = None, batch_size: int = 32, model=None, tok=None
+) -> np.ndarray:
+    """log P(Yes) - log P(No) per candidate row. Pass model/tok to reuse a loaded (or fine-tuned) model."""
+    import torch
+
+    if model is None:
+        model, tok = load_model(model_name)
+    model.eval()
+    texts = _chat(tok, prompts_for(slates, catalog))
     scores = []
     with torch.no_grad():
         for s in range(0, len(texts), batch_size):
-            enc = tok(texts[s : s + batch_size], return_tensors="pt", padding=True).to(model.device)
-            logits = model(**enc).logits[:, -1, :].float()
-            lp = torch.log_softmax(logits, -1)
-            scores.append((lp[:, yes] - lp[:, no]).cpu().numpy())
+            lg = _yes_no_logits(model, tok, texts[s : s + batch_size])
+            scores.append((lg[:, 1] - lg[:, 0]).cpu().numpy())
     return np.concatenate(scores)
+
+
+def sft_examples(slates: pd.DataFrame, catalog: pd.DataFrame, neg_per_pos: int = 3, seed: int = 0) -> pd.DataFrame:
+    """E6 training rows: every held-out item (Yes) plus its top-ranked wrong candidates (No).
+
+    Only events whose target made the slate are used, so every positive has
+    hard negatives from the same basket.
+    """
+    df = slates[slates.groupby("event_id")["label"].transform("max") > 0]
+    df = df.sort_values(["event_id", "score"], ascending=[True, False])
+    pos = df[df["label"] == 1]
+    neg = df[df["label"] == 0].groupby("event_id").head(neg_per_pos)
+    out = pd.concat([pos, neg]).sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    out["prompt"] = prompts_for(out, catalog)
+    return out[["event_id", "prompt", "label"]]
+
+
+def finetune_lora(
+    model,
+    tok,
+    examples: pd.DataFrame,
+    epochs: int = 2,
+    lr: float = 2e-4,
+    batch_size: int = 16,
+    r: int = 16,
+    log_every: int = 50,
+):
+    """LoRA fine-tune as a 2-way Yes/No classifier on the answer token.
+
+    The loss is cross-entropy over the (No, Yes) logits at the last prompt
+    position, which is exactly what ``score_slates`` reads, so training and
+    scoring agree. Positives are up-weighted to balance the 1:neg_per_pos ratio.
+    """
+    import torch
+    from peft import LoraConfig, get_peft_model
+
+    model = get_peft_model(
+        model,
+        LoraConfig(r=r, lora_alpha=2 * r, lora_dropout=0.05, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]),
+    )
+    for p in model.parameters():  # LoRA weights in fp32 for stable fp16 autocast training
+        if p.requires_grad:
+            p.data = p.data.float()
+    model.print_trainable_parameters()
+    texts = _chat(tok, examples["prompt"].tolist())
+    y = torch.tensor(examples["label"].to_numpy(), dtype=torch.long)
+    pos_w = float((y == 0).sum()) / max(float((y == 1).sum()), 1.0)
+    weight = torch.tensor([1.0, pos_w], device=model.device)
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr, weight_decay=0.0)
+    n_steps = epochs * ((len(texts) + batch_size - 1) // batch_size)
+    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=n_steps, pct_start=0.05)
+    use_amp = model.device.type == "cuda"
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+    model.train()
+    step, run = 0, 0.0
+    for ep in range(epochs):
+        order = np.random.default_rng(ep).permutation(len(texts))
+        for s in range(0, len(order), batch_size):
+            idx = order[s : s + batch_size]
+            with torch.autocast(device_type=model.device.type, dtype=torch.float16, enabled=use_amp):
+                lg = _yes_no_logits(model, tok, [texts[i] for i in idx])
+            loss = torch.nn.functional.cross_entropy(lg, y[idx].to(model.device), weight=weight)
+            opt.zero_grad(set_to_none=True)
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
+            sched.step()
+            step += 1
+            run = 0.98 * run + 0.02 * loss.item() if step > 1 else loss.item()
+            if step % log_every == 0 or step == n_steps:
+                print(f"epoch {ep + 1} step {step}/{n_steps} loss {run:.4f}", flush=True)
+    model.eval()
+    return model
 
 
 def _ranks(df: pd.DataFrame, col: str) -> pd.Series:
