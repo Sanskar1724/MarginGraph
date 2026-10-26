@@ -285,6 +285,20 @@ def run(cfg: dict, results_dir: str = "results", artifacts_dir: str = "artifacts
     vs = vs.merge(ev["val"][["event_id", "context", "target"]], on="event_id")
     vs["context"] = vs["context"].map(lambda c: "|".join(c))
     vs.to_parquet(art / "val_slates.parquet", index=False)
+
+    # LLM fine-tuning data (E6): leave-one-out events from the last 90 days of
+    # train, top-20 LightGBM slates. Hard negatives = LightGBM's wrong picks.
+    # Train-period baskets only, so test stays untouched.
+    tail = splits["train"][splits["train"]["ts"] >= splits["train"]["ts"].max() - pd.Timedelta(days=90)]
+    ev_tr = split.make_events(tail, sc["min_basket_items"], sc["max_basket_items"], 6000, seed + 7)
+    gv.scorers["repeat"] = Repeat(splits["train"], gv.index)
+    ftr, _ = gv.generate(ev_tr["context"].tolist(), ev_tr["customer"].tolist(), ev_tr["target"].tolist(), ev_tr["event_id"].to_numpy())
+    ts = stage2.build_slates(ftr, rr.proba(ftr), rr.score(ftr), oc["candidates"])
+    ts["item"] = [gv.index.items[i] for i in ts["item_idx"]]
+    ts["description"] = gv.description[ts["item_idx"].to_numpy()]
+    ts = ts.merge(ev_tr[["event_id", "context", "target"]], on="event_id")
+    ts["context"] = ts["context"].map(lambda c: "|".join(c))
+    ts.to_parquet(art / "train_slates.parquet", index=False)
     catalog.to_parquet(art / "catalog.parquet", index=False)
 
     summary.update({"e3_test": e3.query("split=='test' and metric in ['hit@10','ndcg@10']").to_dict("records"), "e9": e9})
