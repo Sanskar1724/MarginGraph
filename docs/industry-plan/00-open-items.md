@@ -36,13 +36,13 @@ Each item says where it came from, so you can check the original note.
 
 ## C. Record results that are still pending
 
-- [ ] **C1. E6 LoRA fine-tune result** (running on Kaggle). When it finishes, record it in all of these, with the same numbers:
+- [x] **C1. E6 LoRA fine-tune result**: NO-GO (Hit@5 7.8% vs 27.6%), recorded in PR #15 and on `main`. When it finishes, record it in all of these, with the same numbers:
   - `docs/RESULTS.md` (E5 LLM section), `docs/worklog/core-pipeline.md` (table row 4), `docs/WORKLOG.md` (experiment runs)
   - `paper/PAPER.md` and `paper/main.tex` (LLM section)
   - Launch kit: `docs/launch/product-sheet.md`, `blog-post.md`, `faq.md`, `site/index.html`, `social-posts.md` (search for "fine-tune" and "NO-GO")
   - README results table (LLM row) and roadmap checkbox
   - Then follow [02-llm-options.md](02-llm-options.md).
-- [ ] **C2.** Point the Kaggle notebooks at `main` instead of `claude/project-thread-mkbaip` (search the notebooks for `mkbaip`), then delete that branch.
+- [x] **C2.** Point the Kaggle notebooks at `main` instead of `claude/project-thread-mkbaip` (search the notebooks for `mkbaip`), then delete that branch.
 - [ ] **C3.** [ROADMAP.md](../ROADMAP.md) Phase 1 still has "Benchmark end-to-end API latency" unticked. It was measured (p50 22 ms, p95 28 ms; [ci.md](../worklog/ci.md)). Tick it and link the result.
 
 ## D. Known limits to fix later (logged by earlier threads)

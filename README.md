@@ -34,7 +34,7 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 | Shortlist recall | **65.3%** of hidden items reach the 150-item shortlist (was 58.0% at 100) |
 | Optimizer (λ=0.5) vs ranker top 2 | **+14%** realized profit per basket, −1.1 pts Hit@2 (simulated cost and stock) |
 | 15% margin-floor breaks | **0** with the optimizer |
-| LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune is next |
+| LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune of 1.5B: Hit@5 7.8%, below random order. LLM track closed |
 
 <p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 38.1%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
 
@@ -113,7 +113,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Candidate recall (pool of 150 with text, fresh-sales, customer and time-decayed EASE sources: 65.3%)
 - [x] LightGBM reranker beats the best baseline
 - [x] Zero-shot LLM rerank (1.5B, 3B) and LLM stacker: NO-GO
-- [ ] LoRA fine-tuned LLM (E6, notebook ready)
+- [x] LoRA fine-tuned LLM (E6): NO-GO, LightGBM stays the ranker
 
 **Stage 2**
 

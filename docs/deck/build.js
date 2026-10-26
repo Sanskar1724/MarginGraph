@@ -247,7 +247,7 @@ const source = (slide, t, dark = false) =>
   await iconCircle(s, fa.FaLightbulb, 9.2, 1.95, 0.8, C.accent2, "lesson icon");
   txt(s, "What it tells us", { x: 9.2, y: 2.95, w: 3.3, h: 0.4, fontSize: 18, bold: true, fontFace: "Cambria", color: C.text2 });
   txt(s, "A general LLM reading product names knows less about this store's buying patterns than a model trained on its baskets. A bigger model did not help.", { x: 9.2, y: 3.4, w: 3.3, h: 1.7, fontSize: 14 });
-  txt(s, "Next: a LoRA fine-tune on free Kaggle GPUs. If it also loses, the LLM's role is new products and plain-language explanations, not ranking.", { x: 9.2, y: 5.05, w: 3.3, h: 1.1, fontSize: 13, color: C.accent1 });
+  txt(s, "A LoRA fine-tune also lost (Hit@5 7.8%, below random order). The LLM's role is new products and plain-language explanations, not ranking.", { x: 9.2, y: 5.05, w: 3.3, h: 1.1, fontSize: 13, color: C.accent1 });
   txt(s, "We publish failures too. A feature only ships when it beats the current model with a confidence interval above zero.", { x: 0.6, y: 4.75, w: 7.9, h: 0.8, fontSize: 15, italic: true, color: C.accent1 });
   source(s, "Run on a free Kaggle T4 GPU, 2026-10-26, on the same top-20 shortlists as LightGBM.");
   s.addNotes("The original idea was LLM personalization. We tested it properly and it did not win, so LightGBM stays the ranker. This is a strength of the project: every claim has to pass a gate.");
@@ -332,7 +332,7 @@ const source = (slide, t, dark = false) =>
   s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Business and plan" });
   s.addText("Roadmap: from target to measured result", { placeholder: "title" });
   const ms = [
-    ["M1", "Research complete", "LoRA fine-tune run, API latency benchmarked"],
+    ["M1", "Research complete", "Fine-tune run (NO-GO), API latency benchmarked"],
     ["M2", "Service live", "Production API, fallback, logging, public demo"],
     ["M3", "First store", "Real cost and stock imported, offline gate passed"],
     ["M4", "Pilot result", "2+ week A/B test on profit per visitor, written up win or lose"],

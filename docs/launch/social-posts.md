@@ -22,7 +22,7 @@
 >
 > The honest part: the dataset has no unit costs, so the profit numbers use simulated costs. The gain held across 9 different cost assumptions, but only a real store can confirm it.
 >
-> And the part I learned the most from: I tested open LLMs (Qwen2.5 1.5B and 3B) as the ranker. They lost clearly to LightGBM. As an extra feature they added nothing. I published those results too.
+> And the part I learned the most from: I tested open LLMs (Qwen2.5 1.5B and 3B) as the ranker. They lost clearly to LightGBM. As an extra feature they added nothing, and a LoRA fine-tune ranked below random. I published those results too.
 >
 > Everything was built with free tools on an 8 GB laptop and a free Kaggle GPU.
 >
@@ -73,7 +73,7 @@
 
 6/ Caveat, in bold: the dataset has no unit costs. Costs and stock are simulated. The gain held in all 9 cost scenarios I tried, but a real store is the real test.
 
-7/ The LLM part: Qwen2.5 1.5B zero-shot as reranker: Hit@5 16.8% vs LightGBM 27.6%. 3B: 16.6%. As a stacker feature: weight ≈ 0. NO-GO ×3. Short titles + strong co-purchase signal = behaviour beats text here.
+7/ The LLM part: Qwen2.5 1.5B zero-shot as reranker: Hit@5 16.8% vs LightGBM 27.6%. 3B: 16.6%. As a stacker feature: weight ≈ 0. LoRA fine-tune: 7.8%, below random. NO-GO ×4. Short titles + strong co-purchase signal = behaviour beats text here.
 
 8/ Lessons: audit the signal vs a shuffled null first. Shortlist recall (now 65%) caps everything. Put business rules in code, not in a model. Set the gate before the run.
 

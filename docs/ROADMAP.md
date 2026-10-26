@@ -15,13 +15,13 @@ The rule for the whole roadmap: **a claim moves from "target" to "result" only a
 | Relevance (LightGBM ranker) | Proven offline on real baskets: Hit@10 38.1% vs 31.1% for EASE (was 35.6% before the accuracy work) |
 | Profit optimizer (PuLP) | Proven offline, **with simulated cost and stock**: +14% profit at λ=0.5 |
 | Margin floor | 0 breaks in every test |
-| LLM ranker | NO-GO zero-shot (1.5B, 3B) and as a stacker feature. LoRA fine-tune (E6) is next |
+| LLM ranker | NO-GO zero-shot (1.5B, 3B) and as a stacker feature. LoRA fine-tune (E6) NO-GO too; LLM track closed |
 | API | Demo-level FastAPI (`margingraph serve`) |
 | Production API, demo app, store connectors | **In progress** in separate pull requests |
 
 ## Phase 1: finish the research (now, free)
 
-- [ ] **E6 LoRA fine-tune** on free Kaggle T4 (`notebooks/llm_finetune_gpu.ipynb`). Gate: must beat LightGBM Hit@5 on the same 1,000 paired baskets, with the CI above zero.
+- [x] **E6 LoRA fine-tune** on free Kaggle T4 (`notebooks/llm_finetune_gpu.ipynb`). Gate: must beat LightGBM Hit@5 on the same 1,000 paired baskets, with the CI above zero. Result: Hit@5 7.8% vs 27.6%, below random order (11.6%); NO-GO ([RESULTS.md](RESULTS.md)).
 - [ ] If E6 is NO-GO, use the LLM only for **cold-start items** (new products with no sales) and **plain-language explanations** ("goes with your woodland party cups"), never for ranking or prices.
 - [x] Raise shortlist recall above 58.0%: now 65.3% with a 150-item pool and text, fresh-sales, customer-EASE and time-decayed EASE sources ([accuracy worklog](worklog/accuracy.md)).
 - [ ] Pick the pool size (150 vs 200) on a fresh validation window; 200 reached 69.0% recall but did not win on val.

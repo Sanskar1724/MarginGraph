@@ -171,7 +171,7 @@ All runs: 1,000 test baskets, LightGBM's top-20 shortlist, paired against LightG
 | Qwen2.5-3B blended with LightGBM | 22.3% | −5.3 [−7.2, −3.4] | NO-GO |
 | Qwen2.5-3B score as an extra feature (stacker) | 27.5% | −0.1 [−0.6, +0.3] | NO-GO, LLM weight near zero |
 
-**What this tells us:** a general-purpose LLM reading product names does not know this store's buying patterns as well as a model trained on its baskets. A bigger model did not help. **Next:** a LoRA fine-tune on this store's baskets (E6, `notebooks/llm_finetune_gpu.ipynb`, built, not yet run). If that also fails, the LLM's place is cold-start items (new products with no sales yet) and plain-language explanations, not ranking.
+**What this tells us:** a general-purpose LLM reading product names does not know this store's buying patterns as well as a model trained on its baskets. A bigger model did not help. A LoRA fine-tune on this store's baskets (E6, `notebooks/llm_finetune_gpu.ipynb`) did worse still: Hit@5 7.8% vs 27.6%, below random order of the slate (11.6%). So the LLM's place is cold-start items (new products with no sales yet) and plain-language explanations, not ranking.
 
 ## 6. Work done
 
@@ -188,9 +188,9 @@ All runs: 1,000 test baskets, LightGBM's top-20 shortlist, paired against LightG
 | One-command pipeline `margingraph run` | `cli.py`, `pipeline.py` | Done |
 | FastAPI demo `POST /recommend` | `api.py` | Done (demo level) |
 | LLM rerank notebook (Kaggle) | `notebooks/llm_rerank_gpu.ipynb` | Run, NO-GO |
-| LLM fine-tune notebook (E6) | `notebooks/llm_finetune_gpu.ipynb` | Built, not run yet |
+| LLM fine-tune notebook (E6) | `notebooks/llm_finetune_gpu.ipynb` | Run, NO-GO |
 | Tests on a small synthetic fixture | `tests/` | Done |
-| Production API, demo app, store connectors | separate pull requests | **In progress** |
+| Production API, demo app, store connectors | `src/margingraph/service/`, `space/`, `connectors/` | Done (merged into `main`) |
 
 The earlier V1 and V2 notebooks are kept as history only. Their numbers came from mock or random data and are not results.
 
