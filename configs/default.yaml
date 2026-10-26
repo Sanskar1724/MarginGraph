@@ -18,6 +18,7 @@ split:
 
 baselines:
   recent_days: 90
+  ease_lambda: 250              # best Recall@50 on val among 100/250/500/1000
   als:
     factors: 64
     regularization: 0.05
@@ -25,8 +26,9 @@ baselines:
     alpha: 1.0
 
 retrieval:
-  pool_size: 50
-  per_source: {ease: 30, itemknn: 15, als: 15, repeat: 15, copurchase: 10, recent_pop: 5, popularity: 5}
+  pool_size: 100
+  per_source: {ease: 60, itemknn: 30, als: 30, repeat: 30, copurchase: 20, recent_pop: 10, popularity: 10}
+  refit_for_test: true          # test candidates come from models fit on train+val
 
 rerank:
   num_leaves: 31

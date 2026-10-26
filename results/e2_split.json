@@ -11,5 +11,6 @@
   "val_events": 3822,
   "test_events": 4480,
   "val_target_seen_in_train": 0.9379905808477237,
-  "test_target_seen_in_train": 0.8334821428571428
+  "test_target_seen_in_train": 0.8334821428571428,
+  "test_target_seen_in_train_or_val": 0.9292410714285714
 }
