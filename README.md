@@ -6,7 +6,7 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 
 > **Status: working research prototype, tested offline on real data.** Every number below comes from an experiment in this repo. Cost and stock are simulated, so profit numbers are estimates until a real store's data is used.
 
-**Read next:** [Project report](docs/PROJECT_REPORT.md) (problem, idea, approach, results, glossary) · [Roadmap](docs/ROADMAP.md) (path to production, A/B test, free stack, business model) · [Results tables](docs/RESULTS.md) · [How to run](docs/RUNNING.md)
+**Read next:** [Project report](docs/PROJECT_REPORT.md) (problem, idea, approach, results, glossary) · [Roadmap](docs/ROADMAP.md) (path to production, A/B test, free stack, business model) · [Results tables](docs/RESULTS.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md) (every thread, PR, run and bug fix)
 
 ## Results so far (test: Oct–Dec 2011, 4,480 real baskets)
 
@@ -113,7 +113,7 @@ src/margingraph/   pipeline: data, audit, split, baselines, rerank, optimizer, s
 configs/           default.yaml (split dates, pool sizes, margin floor, simulated ERP)
 results/           raw experiment outputs (E1–E11)
 notebooks/         run_all, LLM rerank and fine-tune notebooks for free Kaggle / Colab GPUs
-docs/              project report, roadmap, results, running guide
+docs/              project report, roadmap, results, running guide, work log
 tests/             tests on a small synthetic fixture
 ```
 
