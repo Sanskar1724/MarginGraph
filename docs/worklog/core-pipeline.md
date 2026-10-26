@@ -112,6 +112,7 @@ Runs 4–5 (10:40, 11:17) only added exports (`val_slates.parquet`, `train_slate
 | 11:42 | CUDA OOM at the lm_head | The model computed logits for the full 151k vocabulary at every position, for batch 16 | `logits_to_keep=1`, gradient checkpointing, batch size 8 (4c69f43) |
 | 11:43 | CUDA OOM again (14 GB used) | Models from the earlier failed attempts were still on the GPU | Asked for Restart & Run All |
 | 12:00 | CUDA OOM in `load_model` (same kernel, 14 GB used) | The restart had not happened, so the old models still filled GPU 0 | `load_model` now picks the GPU with the most free memory (the second T4 is empty), and stops with a clear "stop the session and start again" message if under 6 GB is free |
+| 12:02 | CUDA OOM during the backward pass (still the same kernel) | Training started, but leftover models from earlier attempts were still using GPU memory | Asked for a real restart (power button → stop session → Run All); added printouts of free GPU memory at load and peak GPU memory on every loss line |
 
 ## 7. How to reproduce
 
