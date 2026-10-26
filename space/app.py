@@ -14,6 +14,15 @@ from pathlib import Path
 
 import core
 import gradio as gr
+
+try:  # ZeroGPU Spaces refuse to start without one @spaces.GPU function; the app itself runs on CPU.
+    import spaces
+
+    @spaces.GPU
+    def _zerogpu_placeholder():
+        return None
+except ImportError:
+    pass
 import numpy as np
 import pandas as pd
 
@@ -382,7 +391,7 @@ subject to margin ≥ floor, stock > 0, one discount per item. Rules are enforce
 **Call it from code** (every button is also an API endpoint):
 ```python
 from gradio_client import Client
-c = Client("YOUR-HF-USERNAME/margingraph")
+c = Client("EquilStable/MarginGraph")
 print(c.view_api())
 ```
 Source and research pipeline: [github.com/Sanskar1724/MarginGraph](https://github.com/Sanskar1724/MarginGraph)
