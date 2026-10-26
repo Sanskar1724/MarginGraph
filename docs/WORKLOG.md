@@ -43,6 +43,7 @@ PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed d
 | `docs/research-paper` | arXiv-style paper | `paper/` | #9 `claude/project-thread-l6b8ga` |
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` | #7 `claude/project-thread-42h21l` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` | #8 `claude/project-thread-80g63p` |
+| `docs/industry-roadmap` | Industry plan, A/B sizing, public dataset converters | `docs/industry-plan/` | #13 `docs/industry-roadmap` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` | #11 `claude/project-thread-hadeju` |
 
 Old `claude/*` branches are deleted once their work is in `main` (see [repo-cleanup.md](worklog/repo-cleanup.md)).

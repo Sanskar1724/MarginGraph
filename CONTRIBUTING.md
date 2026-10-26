@@ -18,6 +18,7 @@
 | `docs/research-paper` | arXiv-style paper | `paper/` |
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` |
+| `docs/industry-roadmap` | Plan to an industry-ready product, A/B sizing, public datasets | `docs/industry-plan/`, `scripts/ab_sample_size.py`, `scripts/public_datasets.py` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` |
 
 New short-lived work uses the same prefixes: `feat/…`, `fix/…`, `docs/…`, `ci/…`, `chore/…`, lowercase with hyphens.
