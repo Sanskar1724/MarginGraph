@@ -8,7 +8,7 @@ Each item says where it came from, so you can check the original note.
 
 ## A. Things only you can do (accounts and settings)
 
-- [ ] **Deploy the Hugging Face Space demo.** Follow [`space/DEPLOY.md`](../../space/DEPLOY.md) (about 10 minutes, free CPU basic). Option A is all in the browser. *Source: demo worklog, "this container cannot reach huggingface.co".*
+- [x] **Deploy the Hugging Face Space demo.** Live at https://huggingface.co/spaces/EquilStable/MarginGraph. Follow [`space/DEPLOY.md`](../../space/DEPLOY.md) (about 10 minutes, free CPU basic). Option A is all in the browser. *Source: demo worklog, "this container cannot reach huggingface.co".*
   - Done when: `https://huggingface.co/spaces/<your-username>/margingraph` loads and returns 2 add-ons for a sample basket.
 - [ ] **Turn on GitHub Pages for the landing page.** Repo → Settings → Pages → Source: **GitHub Actions**. Then Actions → "Landing page" → Run workflow. The workflow is [`.github/workflows/pages.yml`](../../.github/workflows/pages.yml). *Source: launch worklog item 3.*
   - Done when: `https://sanskar1724.github.io/MarginGraph/` loads.
