@@ -30,8 +30,8 @@ We tested MarginGraph on two years of real sales from a UK online gift shop (a p
 
 | | Result |
 | --- | --- |
-| Finds the item the shopper really bought, in its top 10 | **35.6%** of orders, against 3.1% for a "top sellers" list and 31.1% for the best standard method |
-| Extra profit per order from the add-on, at the balanced setting | **+17%** compared with just showing the 2 most likely items\* |
+| Finds the item the shopper really bought, in its top 10 | **38.1%** of orders, against 3.1% for a "top sellers" list and 31.1% for the best standard method |
+| Extra profit per order from the add-on, at the balanced setting | **+14%** compared with just showing the 2 most likely items\* |
 | Cost in relevance for that profit | About 1 order in 100 where the shopper's item drops out of the 2 shown |
 | Times the margin floor was broken | **0** |
 

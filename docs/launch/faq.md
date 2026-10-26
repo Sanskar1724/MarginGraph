@@ -9,7 +9,7 @@ A system that suggests up to 2 add-on products at checkout. It picks items the s
 "Customers also bought" looks only at what sells together. MarginGraph uses that too, and then chooses among the likely items for expected profit, with hard rules: a margin floor, a limit of 2 items, and optional extra push for overstock.
 
 **Will it raise my profit?**
-We do not know yet for your store, and we will not promise a number. On a public dataset of real UK gift-shop orders, it raised the profit from the add-on by about 17% compared with showing the 2 most likely items, for a small drop in hits. But that dataset has no unit costs, so we simulated them. A pilot with your real costs is how we would find out, with a fair A/B test.
+We do not know yet for your store, and we will not promise a number. On a public dataset of real UK gift-shop orders, it raised the profit from the add-on by about 14% compared with showing the 2 most likely items, for a small drop in hits. But that dataset has no unit costs, so we simulated them. A pilot with your real costs is how we would find out, with a fair A/B test.
 
 **Will it hurt sales by pushing expensive items?**
 The optimizer can only choose from items the ranking model already rates as likely to be bought, and it weighs profit by that likelihood. You set how far it leans toward profit. At the balanced setting, the shopper's item dropped out of the 2 shown in about 1 order in 100. In a pilot, conversion is tracked as a guard metric, and MarginGraph is called a win only if conversion is not clearly worse.
@@ -44,16 +44,16 @@ No. It has been tested offline on real sales data, not yet in a live store. We a
 ## For developers and researchers
 
 **What is the architecture?**
-A candidate shortlist (EASE, ItemKNN, ALS, repeat purchase, co-purchase, popularity; up to 100 items), a LightGBM reranker with isotonic calibration to get p(buy), and a PuLP mixed-integer program that maximizes Σ (price·(1−d) − cost) · p(buy) · overstock weight, subject to at most 2 items and a 15% post-discount margin floor.
+A candidate shortlist (EASE in three variants, text similarity, a nightly fresh-sales signal, ItemKNN, ALS, repeat purchase, co-purchase, popularity; up to 150 items), a LightGBM reranker with isotonic calibration to get p(buy), and a PuLP mixed-integer program that maximizes Σ (price·(1−d) − cost) · p(buy) · overstock weight, subject to at most 2 items and a 15% post-discount margin floor.
 
 **What data and split?**
 UCI Online Retail II (UK online gift retailer, Dec 2009 to Dec 2011): 991,910 clean invoice lines, 39,516 invoices, 4,707 products. Strict time split: train to 30 June 2011, validation Jul to Sep 2011, test 2 Oct to 9 Dec 2011 (4,480 events). One product hidden per invoice (checkout add-on framing).
 
 **Headline results?**
-LightGBM Hit@10 35.6% vs EASE 31.1% (+4.5 points, 95% paired bootstrap CI [3.6, 5.5]). MILP at λ=0.5 vs ranker top-2: realized profit +17% (CI +£0.017 to +£0.044 per basket), Hit@2 −1.1 points. All in [`docs/RESULTS.md`](../RESULTS.md).
+LightGBM Hit@10 38.1% vs EASE 31.1% (+7.0 points, 95% paired bootstrap CI [6.0, 8.0]). MILP at λ=0.5 vs ranker top-2: realized profit +14% (CI +£0.014 to +£0.044 per basket), Hit@2 −1.1 points. All in [`docs/RESULTS.md`](../RESULTS.md).
 
 **What is the ceiling?**
-The 100-item shortlist contains the hidden item 58.0% of the time, and 7.1% of test items never appear before the test window. Raising shortlist recall is the most direct way to improve.
+The 150-item shortlist contains the hidden item 65.3% of the time (58.0% at 100 items before the accuracy work), and 7.1% of test items never appear before the test window. Raising shortlist recall is the most direct way to improve.
 
 **How are cost and stock simulated, and does that matter?**
 The dataset has no cost or stock. Experiment E11 reruns the comparison under 3 margin distributions × 3 seeds; the profit gain stayed positive in all 9 (every CI above zero). Real costs from a pilot store are the next test.
@@ -62,7 +62,7 @@ The dataset has no cost or stock. Experiment E11 reruns the comparison under 3 m
 Zero-shot yes/no scoring of the top 20 LightGBM items with Qwen2.5-1.5B gave Hit@5 16.8% vs 27.6% for LightGBM on the same 1,000 baskets; 3B was no better. Used as an extra feature in a stacker, its fitted weight was near zero. Product titles in this dataset are short and the co-purchase signal is strong, so behaviour data beats text understanding here. A LoRA fine-tune is in progress; the gate is the same paired test.
 
 **Is it fast enough?**
-The optimizer solves in 3.4 ms on average and matches exact enumeration on 600 of 600 problems. End-to-end API latency has not been benchmarked yet, so we do not quote one.
+The optimizer solves in 2.7 ms on average and matches exact enumeration on 600 of 600 problems. Measured in a container, the research API answers in 22 ms at the median (p95 28 ms) and the multi-store service in 88 ms at p95 end to end; a store's own hosting will differ.
 
 **Does it need a GPU?**
 No, for serving or for the main pipeline. Only the optional LLM experiments use a free Kaggle or Colab GPU.

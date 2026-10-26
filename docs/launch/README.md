@@ -26,22 +26,23 @@ Use only these. Copy the wording of the caveat with every profit number.
 
 | Claim | Number | Caveat to carry with it |
 | --- | --- | --- |
-| Ranker finds the hidden item in its top 10 | **35.6%** of test baskets | Offline backtest on one public dataset |
+| Ranker finds the hidden item in its top 10 | **38.1%** of test baskets | Offline backtest on one public dataset |
 | Best simple method (EASE) on the same test | 31.1% | |
-| Ranker gain over EASE | **+4.5 points**, 95% CI [3.6, 5.5] | Paired bootstrap over test baskets |
+| Ranker gain over EASE | **+7.0 points**, 95% CI [6.0, 8.0] | Paired bootstrap over test baskets |
 | "Top sellers" list on the same test | 3.1% | |
-| Profit per basket, optimizer (λ=0.5) vs showing the ranker's top 2 | **+17%** (+£0.031 per basket, CI [0.017, 0.044]) | **Cost and stock are simulated.** The dataset has no unit cost |
-| What that costs in relevance | −1.1 points Hit@2, CI [−1.8, −0.5] | |
-| Stronger profit setting (λ=1.0) | +22% profit for −3.7 points Hit@2 | Simulated cost and stock |
-| Margin-floor (15%) breaks | **0** with the optimizer vs 0.038 per basket for the plain top 2 | Under simulated cost |
+| Profit per basket, optimizer (λ=0.5) vs showing the ranker's top 2 | **+14%** (+£0.028 per basket, CI [0.014, 0.044]) | **Cost and stock are simulated.** The dataset has no unit cost |
+| What that costs in relevance | −1.1 points Hit@2, CI [−1.7, −0.6] | |
+| Stronger profit setting (λ=1.0) | +24% profit for −2.9 points Hit@2 | Simulated cost and stock |
+| Margin-floor (15%) breaks | **0** with the optimizer vs 0.037 per basket for the plain top 2 | Under simulated cost |
 | Robustness | Profit gain stayed positive in all 9 cost scenarios tested (3 margin shapes × 3 seeds) | Still simulated, but a range of assumptions |
-| Optimizer correctness and speed | Matches brute force on 600 of 600 problems, 3.4 ms mean solve time | Solver time only. **End-to-end API latency is not measured yet** |
-| Shortlist coverage | Hidden item is in the 100-item shortlist 58.0% of the time | This caps every ranker |
+| Optimizer correctness and speed | Matches brute force on 600 of 600 problems, 2.7 ms mean solve time | Solver time only |
+| API latency, measured in a container | Research API p50 22 ms, p95 28 ms; multi-store service p95 88 ms end to end | Container measurement, not a store's production traffic |
+| Shortlist coverage | Hidden item is in the 150-item shortlist 65.3% of the time (58.0% at 100 before the accuracy work) | This caps every ranker |
 | LLM as ranker (Qwen2.5 1.5B and 3B, zero-shot, and as an extra feature) | **NO-GO.** Hit@5 16.8% (1.5B) vs 27.6% for LightGBM on the same 1,000 baskets | A LoRA fine-tune is still being tested |
 
 **Status words to use:** "open-source research prototype", "tested offline on real sales data", "looking for pilot stores".
 
-**Never say:** "AI that boosts profit by 17%" (without the simulated-cost caveat), "proven in stores", "LLM-powered ranking", "real-time" or any latency figure, "production-ready", "used by retailers", or any revenue, conversion, or customer count. None of these are measured.
+**Never say:** "AI that boosts profit by 14%" (without the simulated-cost caveat), "proven in stores", "LLM-powered ranking", "real-time", any latency figure without "measured in a container", "production-ready", "used by retailers", or any revenue, conversion, or customer count. None of these are measured.
 
 **Why this matters:** the honesty is the selling point. Most recommender pitches quote targets. This one quotes confidence intervals and admits what lost.
 
