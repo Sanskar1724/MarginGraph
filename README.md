@@ -6,7 +6,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![CI](https://github.com/Sanskar1724/MarginGraph/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sanskar1724/MarginGraph/actions/workflows/ci.yml)
 [![LightGBM](https://img.shields.io/badge/ranker-LightGBM-9cf)](src/margingraph/rerank.py)
 [![PuLP MILP](https://img.shields.io/badge/optimizer-PuLP%20%2F%20HiGHS-orange)](src/margingraph/optimize.py)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](src/margingraph/api.py)
