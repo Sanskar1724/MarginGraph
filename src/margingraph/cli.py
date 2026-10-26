@@ -46,6 +46,9 @@ def main(argv: list[str] | None = None) -> None:
     d.add_argument("--sample", action="store_true", help="(re)seed the 'demo' store with sample data first")
     d.add_argument("--catalog", help="CSV (item,price,unit_cost,stock,overstock,description) to load for --store")
     d.add_argument("--store", default="demo")
+    from .service.cli import add_parsers
+
+    add_parsers(sub)
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
 
@@ -79,6 +82,10 @@ def main(argv: list[str] | None = None) -> None:
             n = db.import_catalog(db.connect(args.db), args.store, pd.read_csv(args.catalog, dtype={"item": str}))
             print(f"loaded {n} catalog items into store {args.store!r}")
         uvicorn.run("margingraph.dashboard.app:app", host=args.host, port=args.port)
+    else:
+        from .service.cli import run as run_service
+
+        run_service(args, cfg)
 
 
 def _sync(args, cfg: dict) -> None:
