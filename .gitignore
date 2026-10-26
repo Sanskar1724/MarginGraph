@@ -1,11 +1,36 @@
-.ipynb_checkpoints/
+# Python
 __pycache__/
+*.py[cod]
 *.egg-info/
-.pytest_cache/
+build/
+dist/
+.venv/
+venv/
 .env
-kaggle.json
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Data, models and local outputs (regenerate with `margingraph prepare` / `run`)
 data/
-artifacts/
-*.parquet
+/artifacts/
 outputs/
-!space/artifacts/
+*.parquet
+*.xlsx
+*.db
+*.sqlite
+*.log
+
+# Secrets
+kaggle.json
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
