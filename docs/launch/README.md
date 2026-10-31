@@ -31,6 +31,8 @@ Use only these. Copy the wording of the caveat with every profit number.
 | Ranker gain over EASE | **+7.0 points**, 95% CI [6.0, 8.0] | Paired bootstrap over test baskets |
 | "Top sellers" list on the same test | 3.1% | |
 | Profit per basket, optimizer (λ=0.5) vs showing the ranker's top 2 | **+14%** (+£0.028 per basket, CI [0.014, 0.044]) | **Cost and stock are simulated.** The dataset has no unit cost |
+| Same pipeline on 4 more public datasets | Wins on Ta Feng (+8.3 pts Hit@10) and Dunnhumby (+7.8); **loses on Instacart (−3.0)**, +4.1 after putting past purchases first; tie on Olist (169 baskets) | Offline; say the Instacart loss whenever you quote the wins |
+| 30-day simulated store | **£1,141 vs £920** add-on profit (+24%; +19% over 5 seeds), 0 vs 164 offers under the floor | **Cost and stock are simulated**; real checkouts replayed |
 | What that costs in relevance | −1.1 points Hit@2, CI [−1.7, −0.6] | |
 | Stronger profit setting (λ=1.0) | +24% profit for −2.9 points Hit@2 | Simulated cost and stock |
 | Margin-floor (15%) breaks | **0** with the optimizer vs 0.037 per basket for the plain top 2 | Under simulated cost |

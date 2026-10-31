@@ -26,6 +26,8 @@ Alternative:
 >
 > - Hit@10: 38.1% vs 31.1% for EASE, the best baseline (+7.0 pts, paired bootstrap CI [6.0, 8.0])
 > - Optimizer vs plain top-2: about +14% realized profit per basket, −1.1 pts Hit@2, 0 margin-floor breaks
+> - Same pipeline on Ta Feng (+8.3 pts), Dunnhumby (+7.8), Instacart (−3.0, then +4.1 with past purchases first in the pool), Olist (tie, 169 baskets)
+> - 30-day simulated store: £1,141 vs £920 add-on profit, 0 vs 164 floor breaks (simulated cost)
 > - The dataset has no unit cost or stock, so those are simulated. The gain stayed positive across 9 cost scenarios, but I'd treat it as a sign, not a result, until a real store tests it
 >
 > The original plan put an LLM at the centre. Qwen2.5 1.5B and 3B zero-shot lost to LightGBM by ~11 pts Hit@5 on the same slates, and as a stacker feature they got ~0 weight. My guess: short product titles and a strong co-purchase signal. A LoRA fine-tune of the 1.5B did worse (Hit@5 7.8%, below random order), so the LLM is out of the ranking.
