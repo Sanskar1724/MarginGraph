@@ -34,6 +34,7 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 | Shortlist recall | **65.3%** of hidden items reach the 150-item shortlist (was 58.0% at 100) |
 | Optimizer (λ=0.5) vs ranker top 2 | **+14%** realized profit per basket, −1.1 pts Hit@2 (simulated cost and stock) |
 | 15% margin-floor breaks | **0** with the optimizer |
+| Other stores ([RESULTS_PUBLIC.md](docs/RESULTS_PUBLIC.md)) | LightGBM beat the best simple method on Ta Feng (+8.3 pts) and Dunnhumby (+7.8 pts), lost to "buy it again" on Instacart (-3.0 pts; candidate pool drops repeat items), tied on Olist (169 baskets) |
 | LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune of 1.5B: Hit@5 7.8%, below random order. LLM track closed |
 
 <p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 38.1%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
