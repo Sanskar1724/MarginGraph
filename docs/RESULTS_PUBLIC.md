@@ -23,7 +23,16 @@ Same pipeline as Online Retail II, unchanged: 150-candidate pool, LightGBM Lambd
 
 ## Why Instacart lost
 
-The pool is filled in `retrieval.per_source` order and cut at 150; `ease` and `ease_decay` fill it before the customer's own past items (`repeat`). Pool recall is 51.7%, but `repeat` alone reaches 59.5% at 100. The reranker cannot rank items that never enter the pool. A rerun with `repeat` first (for Instacart and Dunnhumby) was started; its result will be added here when it finishes. The run above stays the official gate result.
+The pool is filled in `retrieval.per_source` order and cut at 150; `ease` and `ease_decay` fill it before the customer's own past items (`repeat`). Pool recall is 51.7%, but `repeat` alone reaches 59.5% at 100. The reranker cannot rank items that never enter the pool.
+
+**Fix: the customer's past items first.** Same data and settings, only `repeat: 60` moved to the front of `per_source` (chosen from the diagnosis; validation pool recall went 51.5% → 68.0% before test was looked at):
+
+| Instacart run | Pool recall (test) | LightGBM Hit@10 | vs `repeat` 37.5% | Verdict |
+| --- | --- | --- | --- | --- |
+| Default pool (official gate result) | 51.7% | 34.5% | -3.0 [-3.6, -2.4] | baseline wins |
+| Repeat-first pool | **70.1%** | **41.6%** | **+4.1 [+3.7, +4.5]** | LightGBM wins |
+
+So the loss came from the candidate pool, not the ranker. For stores with heavy re-buying, `repeat` should be filled first. The gate above still counts the default run, because the bar was fixed before running.
 
 ## Stage 2 (profit is not real)
 
