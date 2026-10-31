@@ -1,0 +1,30 @@
+{
+  "skew": {
+    "items": 4980,
+    "share_top1pct_items": 0.16786836028317603,
+    "share_top10pct_items": 0.4374801134308113,
+    "gini": 0.48924699671296945
+  },
+  "repeat": {
+    "lines_with_customer": 1.0,
+    "repeat_line_rate": 0.5542362031665666,
+    "customers_with_2plus_invoices": 0.9971853638922397,
+    "median_invoices_per_customer": 69.0
+  },
+  "baskets": {
+    "invoices": 169947,
+    "median_basket_items": 3.0,
+    "mean_basket_items": 6.74993380289149,
+    "share_baskets_2plus": 0.7162056405820638
+  },
+  "copurchase_vs_shuffled_on_val": {
+    "events": 20000,
+    "chance_hit@5": 0.001,
+    "chance_hit@10": 0.002,
+    "real_hit@5": 0.08905,
+    "real_hit@10": 0.1254,
+    "shuffled_hit@5": 0.05225,
+    "shuffled_hit@10": 0.0724,
+    "lift_hit@10_vs_shuffled": 1.7320441988950277
+  }
+}
