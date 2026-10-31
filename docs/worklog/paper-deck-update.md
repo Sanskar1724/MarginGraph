@@ -48,3 +48,8 @@ PRs #17 and #18 hold the result files the paper cites (`results/public/`, `resul
 ## Still to do (San)
 - Fill in college and e-mail in `paper/main.tex` (red placeholders), rebuild the PDF.
 - arXiv cs.IR needs an endorsement for a first submission.
+
+## Module branches
+Clean versions of `docs/research-paper` and `docs/pitch-deck` were built with only their own files and only their own history (two commits each: the 26 Oct first version, then this update; no `main` commits). The existing remote branches carry mixed history and this environment cannot force-push, so San deletes the two old branches on GitHub first, then the clean ones are pushed under the same names. Rebuild script and module READMEs: `/mnt/project-files/margingraph/paper-deck/`.
+
+Note: `paper/figures/data/` would be ignored by the repo's `data/` rule in `.gitignore`, so the figure inputs live in `paper/figures/figdata/`.
