@@ -2,19 +2,27 @@
 
 # MarginGraph · Research paper
 
-**An arXiv-style paper on margin-aware add-on recommendation, built from the results in this repo.**
+**A 15-page research paper on margin-aware checkout add-on recommendation: five public retail datasets, a 30-day store simulation, and a negative result for small LLM rerankers.**
 
-![license](https://img.shields.io/badge/license-MIT-green) ![paper](https://img.shields.io/badge/paper-PDF-b31b1b) ![LaTeX](https://img.shields.io/badge/LaTeX-source-008080?logo=latex&logoColor=white) ![citations](https://img.shields.io/badge/citations-verified-brightgreen)
+![license](https://img.shields.io/badge/license-MIT-green) ![paper](https://img.shields.io/badge/paper-PDF-b31b1b) ![LaTeX](https://img.shields.io/badge/LaTeX-source-008080?logo=latex&logoColor=white) ![citations](https://img.shields.io/badge/citations-29-brightgreen)
 
-[Full project (`main`)](https://github.com/Sanskar1724/MarginGraph) · [All modules](https://github.com/Sanskar1724/MarginGraph/blob/main/CONTRIBUTING.md#branches) · [Results](https://github.com/Sanskar1724/MarginGraph/blob/main/docs/RESULTS.md)
+[Read the PDF](paper/main.pdf) · [Markdown copy](paper/PAPER.md) · [Full project (`main`)](https://github.com/Sanskar1724/MarginGraph)
 
 </div>
 
 > This branch holds only the **Research paper** module of [MarginGraph](https://github.com/Sanskar1724/MarginGraph), a margin-aware e-commerce recommender (LightGBM ranker + MILP optimizer). The integrated, runnable project lives on `main`.
 
-## What this module does
+## Key results in the paper
 
-LaTeX source, built PDF, figures regenerated from `results/`, and a bibliography where every entry was checked against the publisher or arXiv.
+| Result | Number |
+| --- | --- |
+| Ranker vs best baseline, UCI Online Retail II (4,480 baskets) | Hit@10 +7.0 pts [6.0, 8.0] |
+| Ta Feng / Dunnhumby, unchanged pipeline | +8.3 [7.7, 8.8] / +7.8 [7.2, 8.4] |
+| Instacart, official / with past purchases first in the pool | −3.0 [−3.6, −2.4] / +4.1 [3.7, 4.5] |
+| Olist (169 baskets) | tie, +3.6 [−1.2, 8.9] |
+| Profit per basket, optimizer vs ranker top-2 (simulated cost) | +14% UCI, +17% Ta Feng, +13% Dunnhumby |
+| 30-day store simulation (simulated cost) | £1,141 vs £920, 0 vs 164 margin-floor breaks |
+| Qwen2.5 1.5B/3B rerankers (zero-shot, blend, stacker, LoRA) | none beat LightGBM |
 
 ## What's in this branch
 
@@ -24,13 +32,13 @@ LaTeX source, built PDF, figures regenerated from `results/`, and a bibliography
 | `paper/main.tex` | LaTeX source |
 | `paper/references.bib` | Bibliography |
 | `paper/PAPER.md` | Markdown copy |
-| `paper/figures/` | Figures and the script that makes them |
-| `docs/worklog/paper.md` | Work log |
+| `paper/figures/` | Figures 1-7, the script that makes them, and `figdata/` extracts for figs 6-7 |
+| `docs/worklog/paper.md`, `docs/worklog/paper-deck-update.md` | Work logs |
 
-## Run it
+## Build it
 
 ```bash
-python paper/figures/make_figures.py
+python paper/figures/make_figures.py      # figs 1-5 need results/ from main
 cd paper && latexmk -pdf main.tex
 ```
 

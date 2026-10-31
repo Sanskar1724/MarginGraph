@@ -13,14 +13,19 @@
 \usepackage{microtype}
 
 \newcommand{\pts}{\,pts}
+% Placeholder marker: shows in red in the PDF until it is filled in.
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
 
 \title{MarginGraph: Margin-Aware, Constrained Recommendation of Checkout Add-Ons\\[4pt]
-\large A reproducible study on UCI Online Retail II, with a negative result for small LLM rerankers}
+\large Evidence from five public retail datasets and a 30-day store simulation,\\ with a negative result for small LLM rerankers}
 
-\author{Sanskar\\
-\small \href{https://github.com/Sanskar1724/MarginGraph}{\texttt{github.com/Sanskar1724/MarginGraph}}}
+% TODO (author): replace the two red placeholders with your college and e-mail.
+\author{Sanskar Chandawar\\
+\small \todo{Department, College / University, City, Country}\\
+\small \todo{e-mail}\quad
+\href{https://github.com/Sanskar1724/MarginGraph}{\texttt{github.com/Sanskar1724/MarginGraph}}}
 
-\date{Draft of 26 October 2026}
+\date{Preprint, 31 October 2026}
 
 \begin{document}
 \maketitle
@@ -29,12 +34,15 @@
 Recommenders in retail are usually trained to predict what a shopper will buy, while the store is paid by what it earns.
 We study this gap for a narrow, common decision: which (at most two) add-on products to suggest at checkout.
 MarginGraph is a two-stage system.
-Stage~1 retrieves 150 candidates from eleven sources (classical recommenders, text similarity and a nightly fresh-sales signal) and reranks them with a LightGBM LambdaRank model whose scores are calibrated into purchase probabilities.
-Stage~2 solves a small mixed-integer program per basket that trades expected relevance against expected gross profit, under a hard 15\% per-item margin floor, a two-item limit, stock availability, and an optional overstock weight.
-On a strict temporal split of UCI Online Retail II (4,480 test baskets), the reranker reaches Hit@10 of 38.1\%, 7.0 points above the best baseline (EASE, 31.1\%; paired 95\% CI [6.0, 8.0]).
-With \emph{simulated} unit cost and stock, the optimizer at $\lambda{=}0.5$ raises realized gross profit per basket by 14\% over the ranker's top-2 (paired CI of the gain \pounds0.014--0.044) for a 1.1-point drop in Hit@2, with zero margin-floor violations; the gain stays positive over nine cost and stock scenarios.
-We also report a negative result: zero-shot Qwen2.5 1.5B and 3B rerankers, their rank blends, a stacker that feeds the LLM score to a logistic model, and a LoRA fine-tune of the 1.5B model all fail to beat LightGBM on the same slates.
-All numbers in this paper are read from files the pipeline writes; none are targets.
+Stage~1 retrieves 150 candidates from eleven sources and reranks them with a calibrated LightGBM LambdaRank model.
+Stage~2 solves a small mixed-integer program per basket that trades expected relevance against expected gross profit under a hard 15\% margin floor, a two-item limit, stock availability and an optional overstock weight.
+On a strict temporal split of UCI Online Retail II (4,480 test baskets) the reranker reaches Hit@10 of 38.1\%, 7.0 points above the best baseline (EASE; paired 95\% CI [6.0, 8.0]).
+Against a success criterion fixed before running, the same pipeline, unchanged, beats the best validation-selected baseline on Ta Feng (+8.3 [7.7, 8.8], 14,346 baskets) and Dunnhumby (+7.8 [7.2, 8.4]), ties on Olist (169 baskets), and loses on Instacart ($-3.0$ [$-3.6$, $-2.4$]).
+We trace the Instacart loss to the order in which the candidate pool is filled: putting the customer's past purchases first raises pool recall from 51.7\% to 70.1\% and turns the loss into a gain of +4.1 [3.7, 4.5] (Dunnhumby: +9.8 [9.3, 10.3]).
+With \emph{simulated} unit cost and stock, the optimizer raises gross profit per basket by 13--17\% over the ranker's top-2 on three datasets for about one point of hit rate, and in a 30-day replay of real UCI checkouts it earns \pounds1,141 of add-on profit against \pounds920 (+24\%; +19\% under stochastic acceptance over five seeds) with zero margin-floor violations against 164.
+On Ta Feng, with the dataset's own \texttt{ASSET} field read as unit cost, a fixed 15\% item floor halves the hit rate, which argues for store-specific or bundle-level floors.
+Finally, zero-shot and LoRA-tuned Qwen2.5 rerankers (1.5B and 3B) do not beat LightGBM.
+Every number is read from files the pipeline writes; none are targets.
 \end{abstract}
 
 % ---------------------------------------------------------------------------
@@ -45,15 +53,16 @@ The shopper has already chosen a basket; the store may show one or two more prod
 Showing the product the shopper is most likely to add maximises conversions, but that product may carry a thin margin, may be out of stock, or may compete with stock the store needs to clear.
 Price- and profit-aware recommendation is a long-standing topic~\citep{jannach2017price,abdollahpouri2020multistakeholder}, yet most open recommender benchmarks report only accuracy, and many published accuracy gains do not survive strong, well-tuned baselines~\citep{dacrema2019progress}.
 
-This paper makes four contributions.
+This paper makes five contributions.
 \begin{enumerate}
 \item \textbf{A leakage-free checkout add-on benchmark} on UCI Online Retail II~\citep{chen2019onlineretail}: one product hidden per invoice, one global temporal cutoff per split, and full-catalog ranking (no sampled negatives~\citep{krichene2020sampled}).
-\item \textbf{A strong Stage~1}: a baseline ladder of eleven candidate sources, a 150-item candidate pool, and a calibrated LightGBM reranker, each step measured with bootstrap confidence intervals.
-\item \textbf{A Stage~2 optimizer} that turns calibrated probabilities into an add-on choice under hard business rules, checked against exact enumeration on 600 problems, evaluated by replaying real purchases, and stress-tested across simulated cost and stock scenarios.
-\item \textbf{A documented negative result} for small open LLMs as rerankers on this task, including a blend and a stacker, run on the same slates as LightGBM.
+\item \textbf{A strong Stage~1}: a baseline ladder of eleven candidate sources, a 150-item candidate pool, and a calibrated LightGBM reranker, each step measured with paired bootstrap confidence intervals.
+\item \textbf{A Stage~2 optimizer} that turns calibrated probabilities into an add-on choice under hard business rules, checked against exact enumeration, evaluated by replaying real purchases, stress-tested across simulated cost scenarios, and run day by day in a 30-day store simulation.
+\item \textbf{An external-validity study} on four further public datasets (Ta Feng, Dunnhumby, Instacart, Olist) against a success criterion fixed in advance, including a failure, its diagnosis, and a one-line fix.
+\item \textbf{A documented negative result} for small open LLMs as rerankers, zero-shot, blended, stacked and LoRA-tuned, on the same slates as LightGBM.
 \end{enumerate}
 
-The dataset has prices but no cost or stock, so every profit number depends on a simulation that we state in full (Section~\ref{sec:erp}).
+None of the five datasets has a verified unit cost, so every profit number depends on a simulation that we state in full (Section~\ref{sec:erp}).
 We treat this as the main limitation of the study rather than a footnote.
 
 % ---------------------------------------------------------------------------
@@ -63,6 +72,8 @@ We treat this as the main limitation of the study rather than a footnote.
 Item-based collaborative filtering~\citep{sarwar2001itemcf}, implicit-feedback matrix factorization (ALS)~\citep{hu2008implicit} and the closed-form linear autoencoder EASE~\citep{steck2019ease} remain strong on sparse purchase data.
 \citet{dacrema2019progress} showed that simple, tuned neighbourhood methods often match or beat recent neural models, which is why our ladder includes them and why the reranker must beat the best of them on paired tests.
 \citet{krichene2020sampled} showed that sampled ranking metrics can reorder models; we therefore rank against the full catalog.
+In grocery next-basket recommendation, a large share of items are repeat purchases, and simple personal-frequency models are hard to beat~\citep{hu2020tifuknn}; \citet{li2023nbrreality} show that much of the reported progress in that area comes from repeat items.
+Our Instacart result (Section~\ref{sec:pool}) is a direct instance of this effect.
 
 \paragraph{Learning to rank and calibration.}
 We rerank with LambdaRank-style gradient boosting~\citep{burges2010lambdamart} as implemented in LightGBM~\citep{ke2017lightgbm}.
@@ -72,7 +83,7 @@ Stage~2 needs probabilities, not scores, so we fit an isotonic map from score to
 \citet{jannach2017price} survey price and profit awareness in recommenders, and \citet{abdollahpouri2020multistakeholder} frame the store as one of several stakeholders whose utility a recommender should account for.
 \citet{louca2019profit} jointly optimise profit and relevance in e-commerce ranking at Etsy; \citet{pei2019value} maximise expected profit with reinforcement learning at Taobao; \citet{agarwal2011clickshaping} optimise one objective under constraints on others for content recommendation.
 MarginGraph is closest to the constrained view: it keeps relevance in the objective and puts the store's rules (margin floor, item limit, stock) in hard constraints, solved exactly per basket with an open-source MILP stack~\citep{mitchell2011pulp,huangfu2018highs}.
-Unlike the industrial studies above, every component and result here is public and reproducible on a free dataset and a CPU.
+Unlike the industrial studies above, every component and result here is public and reproducible on free datasets and a CPU.
 
 \paragraph{LLMs as recommenders.}
 \citet{hou2024zeroshot} show that LLMs can rank candidates zero-shot but are sensitive to order and history length and trail trained recommenders on several benchmarks.
@@ -82,10 +93,37 @@ We test the cheapest version of this idea a student can run for free: Qwen2.5~\c
 % ---------------------------------------------------------------------------
 \section{Data and task}
 
-\paragraph{Data.}
+\paragraph{Primary dataset.}
 UCI Online Retail II~\citep{chen2019onlineretail,chen2012rfm} contains the transactions of a UK online gift and homeware wholesaler from December 2009 to December 2011.
 From 1,067,371 raw rows we drop cancellations and adjustments (19,500), non-positive quantity or price (6,202), non-product codes such as postage and fees (4,792), and exact duplicates (33,663), leaving 991,910 invoice lines over 39,516 invoices, 4,707 products and 5,852 known customers.
 The data has a unit price but no unit cost and no stock level.
+
+\paragraph{Additional datasets.}
+To test whether the result transfers, we ran the same pipeline on four public datasets that differ in country, sector and basket shape (Table~\ref{tab:data}).
+Each is converted to the same invoice-line schema and restricted to its 5,000 most-ordered products.
+\emph{Ta Feng}~\citep{tafeng2001} is a Taiwanese warehouse grocer; it has no basket id, so one customer on one day is one basket, and it has an \texttt{ASSET} field that we test as a unit cost (Section~\ref{sec:s2public}).
+\emph{Dunnhumby}~\citep{dunnhumby2014journey} is two years of a US supermarket's household baskets; real dates are hidden, so \texttt{DAY 1} is mapped to 2018-01-01, and price is sales value over quantity after discounts.
+\emph{Instacart}~\citep{instacart2017} is US online grocery delivery; it has no prices (so Stage~2 is not run) and no dates (we rebuild them from \texttt{days\_since\_prior\_order}); we sample 20,000 customers, and 62\% of its lines are re-buys.
+\emph{Olist}~\citep{olist2018} is a Brazilian marketplace; 98\% of its orders hold one product, so only 169 test baskets qualify.
+
+\begin{table}[t]
+\centering
+\caption{Datasets after cleaning, restricted to the 5,000 most-ordered products (UCI: full catalog). Test baskets are invoices with at least two products in the test window, capped at 20,000.}
+\label{tab:data}
+\small
+\begin{tabular}{llrrrrl}
+\toprule
+Dataset & Sector & Lines & Baskets & Customers & Test baskets & Price / cost \\
+\midrule
+UCI Online Retail II & UK gift wholesaler & 991,910 & 39,516 & 5,852 & 4,480 & price / -- \\
+Ta Feng & Taiwan grocery & 656,360 & 114,483 & 31,700 & 14,346 & price / \texttt{ASSET}$^\dagger$ \\
+Dunnhumby & US supermarket & 1,654,347 & 243,257 & 2,487 & 20,000 & price / -- \\
+Instacart & US grocery delivery & 2,721,735 & 322,215 & 19,981 & 20,000 & -- / -- \\
+Olist & Brazil marketplace & 62,626 & 61,294 & 60,000 & 169 & price / -- \\
+\bottomrule
+\multicolumn{7}{l}{\footnotesize $^\dagger$ Undocumented field; read as unit cost in one run, not verified.}
+\end{tabular}
+\end{table}
 
 \paragraph{Task.}
 For each evaluation invoice with 2--50 distinct products we hide one product at random; the model sees the remaining basket (and the customer's earlier history, if known) and must rank the full catalog.
@@ -93,14 +131,17 @@ The hidden product is the single relevant item.
 We report Hit@$K$, NDCG@10 and MRR.
 
 \paragraph{Split.}
-One global cutoff per boundary: train up to 2011-06-30 (709,574 lines), validation July--September 2011 (3,822 events), test 2011-10-02 to 2011-12-09 (4,480 events), with no invoice in two splits.
+One global cutoff per boundary, with no invoice in two splits.
+On UCI: train up to 2011-06-30 (709,574 lines), validation July--September 2011 (3,822 events), test 2011-10-02 to 2011-12-09 (4,480 events).
 Test candidates come from models refit on train+validation, which ends before the test window starts.
-7.1\% of test targets never appear before the test window, so no model can exceed 92.9\% Hit@$K$ on test.
+7.1\% of UCI test targets never appear before the test window, so no model can exceed 92.9\% Hit@$K$ there.
+The other datasets use the same split logic with cutoffs at the same relative positions.
 
 \paragraph{Signal audit (E1).}
 Before modelling we checked that baskets carry a learnable signal.
-On validation, a co-purchase model fit on real baskets reaches Hit@10 of 16.1\%, against 4.4\% when the same model is fit on baskets whose items were shuffled across invoices, and 0.23\% for chance.
+On UCI validation, a co-purchase model fit on real baskets reaches Hit@10 of 16.1\%, against 4.4\% when the same model is fit on baskets whose items were shuffled across invoices, and 0.23\% for chance.
 The highest-lift pairs are recognisable complements (matching paper cups and plates; egg cosies in two colours).
+The same audit on Dunnhumby gives a weaker signal (1.7$\times$ over shuffled baskets).
 
 % ---------------------------------------------------------------------------
 \section{Method}
@@ -112,11 +153,13 @@ Seven classical scorers are fit on the training period: global popularity, 90-da
 Four further sources were added after a validation-only selection (Section~\ref{sec:accuracy}): EASE on recency-weighted baskets (half-life 120 days), EASE applied to the customer's own past items, TF-IDF similarity of product descriptions (word 1--2 and character 3--4 grams, maximum over the basket), and a \emph{fresh} signal that, like a nightly job, sees only invoices from days before the event: 14-day trending items and co-purchase over that stream.
 The item index covers the whole catalog, so products first sold after the fit cutoff can be recommended once the fresh source sees them sell; a product with no earlier sales gets zero from every source.
 The candidate pool unions the top lists of each source in a fixed order (EASE 90, decayed EASE 60, customer EASE 30, text 30, trending 22, fresh co-purchase 30, ItemKNN 45, ALS 45, repeat 45, co-purchase 30, the two popularity scorers 15 each), deduplicated and capped at 150 items, with basket items removed.
+Because the cap is applied after the union, \emph{the order of sources matters}: a source late in the list contributes only the items that still fit.
+Section~\ref{sec:pool} shows that this order, tuned on UCI, is wrong for repeat-heavy grocery data, and evaluates a \emph{repeat-first} order that puts the customer's past purchases (60 items) at the front.
 
 \paragraph{Reranker.}
 A LightGBM LambdaRank model~\citep{ke2017lightgbm,burges2010lambdamart} (31 leaves, learning rate 0.05, up to 500 trees with early stopping) scores each candidate from 35 features: the score and rank from every source, price, price relative to the basket, item age and recency, basket size, share of basket items in the same category, and whether the customer is known.
 It is trained on validation events whose candidates were produced by train-only models, so the reranker never sees test-period data; each validation invoice contributes three events, each hiding a different product (early stopping and calibration use only the original one).
-The most important features by gain are the decayed-EASE and EASE ranks, the repeat-purchase score and the text similarity.
+On UCI, the most important features by gain are the decayed-EASE and EASE ranks, the repeat-purchase score and the text similarity.
 
 \paragraph{Calibration.}
 An isotonic regression~\citep{zadrozny2002calibration}, fit on a held-out, later slice of validation events, maps the reranker score to $p_i$, the probability that candidate $i$ is the product the shopper adds.
@@ -124,7 +167,7 @@ An isotonic regression~\citep{zadrozny2002calibration}, fit on a held-out, later
 \subsection{Stage 2: constrained add-on selection}
 
 For a basket, take the top $N{=}20$ reranked candidates.
-Let $x_{i,d}\in\{0,1\}$ mean ``offer item $i$ at discount $d$'', with price $r_i$, simulated unit cost $c_i$, revenue $r_{i,d}=r_i(1-d)$ and unit profit $\pi_{i,d}=r_{i,d}-c_i$.
+Let $x_{i,d}\in\{0,1\}$ mean ``offer item $i$ at discount $d$'', with price $r_i$, unit cost $c_i$, revenue $r_{i,d}=r_i(1-d)$ and unit profit $\pi_{i,d}=r_{i,d}-c_i$.
 The optimizer solves
 \begin{align}
 \max_{x}\;& \sum_{i,d} x_{i,d}\; p_{i,d}\,\Big[(1-\lambda)\,\bar{\pi} + \lambda\, w_i\, \pi_{i,d}\Big] \label{eq:obj}\\
@@ -133,7 +176,7 @@ The optimizer solves
 \end{align}
 Here $\bar\pi$ is the catalog's mean unit gross profit, which puts the relevance term on the same scale as profit, so $\lambda{=}0$ ranks by probability alone and $\lambda{=}1$ maximises overstock-weighted expected profit.
 $w_i\in[1,2]$ up-weights items flagged as overstock.
-We also test a bundle-level margin floor in place of the per-item floor.
+The \emph{bundle floor} variant replaces the per-item floor with $\sum \pi_{i,d} x_{i,d} \ge 0.15 \sum r_{i,d} x_{i,d}$, so one thin-margin item can be offered if its partner carries it.
 Discounts use an \emph{assumed} response $p_{i,d}=\min(1,\,p_i(1+1.5d))$ for $d\in\{0,0.1,0.2\}$; this elasticity is not estimated from data.
 The program is built in PuLP~\citep{mitchell2011pulp} and solved with HiGHS~\citep{huangfu2018highs}; because at most two items are chosen, exact enumeration of all singles and pairs gives the same optimum and is used for the bulk offline sweeps.
 
@@ -141,22 +184,44 @@ The program is built in PuLP~\citep{mitchell2011pulp} and solved with HiGHS~\cit
 Unit cost is $c_i=r_i(1-m_i)$ with gross margin $m_i\sim\text{Beta}(4,6)$ (mean 40\%).
 Base stock is six weeks of the item's mean weekly training demand; 15\% of items are flagged overstock and given 3--6$\times$ that stock.
 Section~\ref{sec:sens} repeats the main comparison under margins drawn from Beta(2,8) (mean 20\%) and Beta(6,4) (mean 60\%), each with three random seeds.
+The same simulator is used on Ta Feng and Dunnhumby; on Ta Feng we also run once with \texttt{ASSET} as $c_i$.
 
-\subsection{Evaluation of Stage 2}
+% ---------------------------------------------------------------------------
+\section{Experimental protocol}
+
+\paragraph{Offline replay.}
 \emph{Replay} scoring counts an offer as accepted only if it is the product the shopper actually added (the hidden item); this is grounded in real behaviour and conservative.
 \emph{Realized profit} is the unit gross profit of an accepted offer, averaged over all test baskets.
 \emph{Expected profit} instead sums $p_{i,d}\,\pi_{i,d}$ over the offered items and so depends on calibration.
-For stock, a sequential simulation replays test baskets in time order against shared, decrementing stock.
+
+\paragraph{Store simulation.}
+To see the system run as a store would, we replay the 4,480 UCI test checkouts in time order, cut into 30 equal ``days''.
+Each policy shows up to two add-ons per checkout from the same top-20 slate; accepted add-ons decrement a shared stock, out-of-stock items are blocked, and stock is reset to its starting level every seven days.
+Acceptance is either \emph{replay} (as above) or \emph{stochastic}, where each offer is accepted with its calibrated $p_i$ (five seeds).
+Each day's revenue, cost, profit, overstock units sold, stockout blocks and margin-floor breaks are written to a ledger.
+The replay totals reproduce our earlier sequential stock replay (E10); the simulation adds the daily ledger, the weekly restock and stochastic acceptance.
+
+\paragraph{External validity and its success criterion.}
+On the four additional datasets we change nothing in the pipeline: same sources, same pool order, same features and LightGBM settings.
+The best baseline is chosen on each dataset's validation split and then scored on test.
+The success criterion was fixed before any run: \emph{LightGBM's Hit@10 exceeds the best baseline's, with the paired 95\% CI above zero, on most datasets that have at least 1,000 test baskets.}
+The repeat-first runs in Section~\ref{sec:pool} were designed after the diagnosis and are reported separately; the criterion counts only the unchanged runs.
+
+\paragraph{Statistics.}
 All confidence intervals are 95\% bootstrap intervals over test baskets with 2,000 resamples~\citep{efron1993bootstrap}; differences between systems are paired over the same baskets.
+
+\paragraph{Compute.}
+All non-LLM experiments ran on CPU: UCI on a laptop-class machine, the additional datasets in a 4-core, 15\,GB cloud container (the largest, Ta Feng, took 24 minutes at 5.2\,GB peak memory).
+The LLM experiments ran on one free Kaggle T4 GPU.
 
 % ---------------------------------------------------------------------------
 \section{Results}
 
-\subsection{Stage 1}
+\subsection{Stage 1 on UCI Online Retail II}
 
 \begin{table}[t]
 \centering
-\caption{Full-catalog ranking on 4,480 test baskets. Best baseline in italics. LightGBM minus EASE, paired: Hit@10 +7.0\pts\ [6.0, 8.0], NDCG@10 +0.049 [0.043, 0.055].}
+\caption{Full-catalog ranking on 4,480 UCI test baskets. Best baseline in italics. LightGBM minus EASE, paired: Hit@10 +7.0\pts\ [6.0, 8.0], NDCG@10 +0.049 [0.043, 0.055].}
 \label{tab:stage1}
 \begin{tabular}{lrrrrr}
 \toprule
@@ -190,7 +255,7 @@ LightGBM rerank, first run (pool 100) & 26.1 & 35.6 & 54.6 & 0.217 & 0.184 \\
 \includegraphics[width=\linewidth]{figures/fig5_reliability.pdf}
 \caption{Reliability of calibrated $p_i$ on test (log scale; lowest bin omitted).}\label{fig:rel}
 \end{subfigure}
-\caption{Stage~1 results.}
+\caption{Stage~1 results on UCI Online Retail II.}
 \end{figure}
 
 Table~\ref{tab:stage1} and Figure~\ref{fig:ladder} show the ladder.
@@ -214,11 +279,11 @@ Together, with the pool enlarged to 150 (chosen over 100 and 200 on validation),
 Against the first run on the same test baskets, Hit@10 rose by 2.5 points [1.6, 3.4] and NDCG@10 by 0.020 [0.015, 0.025].
 An item2vec source and four LightGBM parameter sets lost on validation and were dropped.
 
-\subsection{Stage 2}
+\subsection{Stage 2 on UCI Online Retail II}
 
 \begin{table}[t]
 \centering
-\caption{Stage~2 on 4,480 test baskets, \textbf{simulated cost and stock}. Profit is \pounds\ gross profit per basket. Baselines run without the floor; the last column counts how often they would break the 15\% per-item floor.}
+\caption{Stage~2 on 4,480 UCI test baskets, \textbf{simulated cost and stock}. Profit is \pounds\ gross profit per basket. Baselines run without the floor; the last column counts how often they would break the 15\% per-item floor.}
 \label{tab:stage2}
 \small
 \begin{tabular}{lrrrr}
@@ -248,7 +313,7 @@ MILP $\lambda{=}1$, discounts 0/10/20\% & 14.9 & 0.255 & 0.223 & 0 \\
 \includegraphics[width=\linewidth]{figures/fig3_sensitivity.pdf}
 \caption{Gain of MILP $\lambda{=}1$ over ranker top-2 under nine cost/stock scenarios.}\label{fig:sens}
 \end{subfigure}
-\caption{Stage~2 results (simulated cost and stock; 95\% bootstrap CIs).}
+\caption{Stage~2 results on UCI (simulated cost and stock; 95\% bootstrap CIs).}
 \end{figure}
 
 Table~\ref{tab:stage2} and Figure~\ref{fig:frontier} give the trade-off.
@@ -263,22 +328,129 @@ Three further observations.
 (ii) With discounts allowed, the optimizer almost never discounts (mean discount 0.07\%): under the assumed elasticity, giving away margin rarely pays.
 (iii) The solver is not a bottleneck: PuLP with HiGHS and exact enumeration agree on all 600 checked problems (maximum objective gap 0), with a mean MILP solve time of 2.7\,ms per basket on a CPU.
 
-\paragraph{Overstock (E10).}
-In the sequential replay with shared stock, MILP $\lambda{=}1$ earns \pounds1,141 over the test period against \pounds920 for the ranker's top-2.
-Raising the overstock weight from 1.0 to 2.0 increases overstock units sold from 78 to 116, at a 3.7\% profit cost (\pounds1,099).
-The plain profit objective ($w{=}1$) sells fewer overstock units than the ranker (114); the weight is what moves stock, and at $w{=}2$ the optimizer roughly matches the ranker on overstock while earning 19\% more.
-Over 20 stochastic acceptance seeds the ordering is the same (ranker \pounds829, MILP $\lambda{=}1$ \pounds993, $w{=}2$ \pounds976 on average).
-
 \subsection{Sensitivity to the simulated cost}\label{sec:sens}
 Figure~\ref{fig:sens} repeats the MILP $\lambda{=}1$ versus ranker comparison for three margin distributions and three random seeds each.
 The realized-profit gain stays positive in all nine scenarios (from \pounds0.024 to \pounds0.071 per basket) with every confidence interval above zero; the Hit@2 cost ranges from 2.3 to 6.6 points and is largest when margins are low, where the floor removes more candidates.
 This shows the direction of the result is not an artefact of one cost draw; it does not show its size on a real store's costs.
 
+\subsection{A 30-day store simulation}\label{sec:sim}
+
+\begin{table}[t]
+\centering
+\caption{30-day store simulation: 4,480 real UCI test checkouts (2 October -- 9 December 2011), 8,959 add-on offers per policy, weekly restock. \textbf{Simulated cost and stock.} Stochastic: mean $\pm$ s.d.\ over five seeds. Floor breaks count offers below a 15\% item margin.}
+\label{tab:sim}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{2}{c}{Add-on profit (\pounds)} & Accept & Add-on & Overstock & Floor \\
+\cmidrule(lr){2-3}
+Policy & Replay & Stochastic & rate & margin & units & breaks \\
+\midrule
+Ranker top-2 (no floor) & 920 & 842 $\pm$ 55 & 8.9\% & 40.3\% & 114 & 164 \\
+MarginGraph, item floor & \textbf{1,141} (+24\%) & 1,004 $\pm$ 60 (+19\%) & 7.5\% & 44.5\% & 78 & \textbf{0} \\
+MarginGraph, bundle floor & 1,145 (+24\%) & 1,005 $\pm$ 61 (+19\%) & 7.5\% & 44.2\% & 79 & 21$^\ast$ \\
+MarginGraph, overstock $w{=}2$ & 1,099 (+19\%) & 985 $\pm$ 57 (+17\%) & 7.3\% & 44.3\% & 116 & 0 \\
+\bottomrule
+\multicolumn{7}{l}{\footnotesize $^\ast$ Item-level breaks allowed by design; every bundle stays at or above 15\%.}
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{figures/fig7_retail_sim.pdf}
+\caption{Cumulative add-on profit over the 30 simulated days, replay acceptance (simulated cost and stock).}\label{fig:sim}
+\end{figure}
+
+Table~\ref{tab:sim} and Figure~\ref{fig:sim} show the store-level picture.
+MarginGraph ($\lambda{=}1$, item floor) is accepted less often than the ranker (7.5\% against 8.9\%) but each accepted add-on earns more (44.5\% against 40.3\% margin), so add-on profit over the month is 24\% higher under replay and 19\% higher under stochastic acceptance.
+The gap opens steadily rather than on a few days (Figure~\ref{fig:sim}).
+The ranker would have offered 164 items below the 15\% floor; MarginGraph offered none.
+On its own, the profit objective clears less overstock than the ranker (78 against 114 units); an overstock weight of 2 restores it (116 units) while keeping a 19\% profit gain.
+Stockouts blocked 223 top-2 slots for every policy.
+Stochastic acceptance trusts the calibrated probabilities, whose limits are noted above, and all money in this section rests on simulated cost and stock.
+
+\subsection{External validity on four further datasets}\label{sec:ext}
+
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{The unchanged pipeline on five datasets: Hit@10 on test, best baseline chosen on validation, paired 95\% bootstrap CI of the difference. Only the first five rows count toward the pre-registered criterion.}
+\label{tab:ext}
+\small
+\begin{tabular}{llrrrrl}
+\toprule
+Dataset & Best baseline & Pool recall & Baseline & LightGBM & Difference [95\% CI] & Verdict \\
+\midrule
+UCI Online Retail II & EASE & 65.3 & 31.1 & 38.1 & +7.0 [+6.0, +8.0] & win \\
+Ta Feng & ItemKNN & 40.4 & 14.3 & 22.6 & +8.3 [+7.7, +8.8] & win \\
+Dunnhumby & Repeat & 46.9 & 19.6 & 27.4 & +7.8 [+7.2, +8.4] & win \\
+Instacart & Repeat & 51.7 & 37.5 & 34.5 & $-3.0$ [$-3.6$, $-2.4$] & loss \\
+Olist & Decayed EASE & 36.1 & 17.2 & 20.7 & +3.6 [$-1.2$, +8.9] & tie (n=169) \\
+\midrule
+\multicolumn{7}{l}{\emph{Repeat-first candidate pool (designed after the diagnosis; Section~\ref{sec:pool})}} \\
+Dunnhumby & Repeat & 56.7 & 19.6 & 29.4 & +9.8 [+9.3, +10.3] & win \\
+Instacart & Repeat & 70.1 & 37.5 & 41.6 & +4.1 [+3.7, +4.5] & win \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig6_multidataset.pdf}
+\caption{LightGBM minus the best validation-selected baseline, Hit@10 points with paired 95\% CIs. Filled: unchanged pipeline. Hollow: repeat-first pool.}\label{fig:ext}
+\end{figure}
+
+Table~\ref{tab:ext} and Figure~\ref{fig:ext} report the unchanged pipeline.
+LightGBM wins on Ta Feng and Dunnhumby by margins similar to UCI, even though the best baseline differs (ItemKNN on Ta Feng, the customer's own repeat purchases on Dunnhumby) and pool recall is much lower (40--47\% against 65\%).
+Olist is too sparse to decide (169 baskets; CI includes zero) and was excluded from the criterion by its 1,000-basket threshold.
+On Instacart the reranker \emph{loses} to the simple repeat-purchase baseline by 3.0 points.
+Of the three public datasets that meet the size threshold, two are wins, so the pre-registered criterion is met (three of four counting UCI); we keep the Instacart loss as the official result.
+
+\subsection{Why Instacart lost: the order of the candidate pool}\label{sec:pool}
+In Instacart 62\% of lines are re-buys, and the best single model is the customer's own purchase history.
+Yet the pool is filled in the UCI-tuned order, where EASE and decayed EASE take the first 150 slots before \texttt{repeat} is reached: pool recall is 51.7\%, below the 59.5\% that \texttt{repeat} alone reaches at depth 100.
+A reranker cannot rank an item that never enters the pool, so this is a retrieval failure, not a ranking failure, and it matches the repeat-item effect reported for next-basket recommendation~\citep{hu2020tifuknn,li2023nbrreality}.
+We changed one thing, moving \texttt{repeat} (60 items) to the front of the source order.
+The change was chosen from the diagnosis and checked on validation (pool recall 51.5\% $\to$ 68.0\%) before test was looked at.
+On test, pool recall rises to 70.1\% and LightGBM beats \texttt{repeat} by +4.1 points [3.7, 4.5].
+Dunnhumby, which showed the same pattern (pool 46.9\% against 45.0\% for \texttt{repeat} alone), gains as well: pool recall 56.7\%, and the win grows from +7.8 to +9.8 points [9.3, 10.3].
+We have not yet rerun UCI with the repeat-first order, so we do not make it the default; a practical rule is to choose the order per store from the share of repeat purchases, on validation.
+
+\subsection{Stage 2 beyond UCI, and a first look at real cost}\label{sec:s2public}
+
+\begin{table}[t]
+\centering
+\caption{Optimizer (MILP) against the ranker's top-2 on other datasets: realized gross profit per basket (dataset currency), paired 95\% CI, and change in Hit@2 (points). Instacart has no prices.}
+\label{tab:s2public}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrlr}
+\toprule
+Dataset & Unit cost & Ranker top-2 & MILP & Profit gain [95\% CI] & $\Delta$Hit@2 \\
+\midrule
+Ta Feng & simulated & 2.67 & 3.12 & +17\% (+0.45 [+0.31, +0.61]) & $-1.0$ \\
+Dunnhumby & simulated & 0.089 & 0.101 & +13\% (+0.012 [+0.009, +0.015]) & $-1.1$ \\
+Dunnhumby, repeat-first & simulated & 0.094 & 0.110 & +16\% (+0.015 [+0.012, +0.019]) & $-0.9$ \\
+Ta Feng & \texttt{ASSET}$^\dagger$ & 0.61 & 0.76 & +25\% (+0.15 [+0.07, +0.24]) & $-5.0$ \\
+Ta Feng, bundle floor$^\ddagger$ & \texttt{ASSET}$^\dagger$ & 0.61 & 0.84 & +38\% & $-4.3$ \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize $^\dagger$ Undocumented field read as cost; unverified. $^\ddagger$ $\lambda{=}1$; all other rows $\lambda{=}0.5$ with the item floor.}
+\end{tabular}
+\end{table}
+
+With simulated cost, the Stage~2 result transfers: the optimizer adds 13--17\% gross profit per basket on Ta Feng and Dunnhumby for about one point of Hit@2 (Table~\ref{tab:s2public}), close to the 14\% on UCI.
+
+Ta Feng's undocumented \texttt{ASSET} field gives a first, unverified look at real grocery margins.
+Read as unit cost, it implies that only 76\% of products clear a 15\% gross margin.
+The optimizer still raises profit per basket by 25\%, but Hit@2 halves (10.1\% $\to$ 5.2\%), and the drop is already there at $\lambda{=}0$ (5.3\%): it is the floor, not the profit weight, that removes the items shoppers buy.
+Replacing the item floor with a bundle floor recovers part of the hit rate (5.8\%) and gives the largest profit gain, +38\%.
+The lesson is that a fixed 15\% per-item floor, harmless with 40\% simulated margins, is too strict for a low-margin grocer; the floor should be set per store, or applied to the bundle.
+
 \subsection{Small LLMs as rerankers: a negative result}
 
 \begin{table}[t]
 \centering
-\caption{LLM reranking on the top-20 LightGBM slate, 1,000 random test baskets, same slates for all rows. Differences are paired against LightGBM with 95\% bootstrap CIs, in points. Kaggle T4 GPU.}
+\caption{LLM reranking on the top-20 LightGBM slate, 1,000 random UCI test baskets, same slates for all rows. Differences are paired against LightGBM with 95\% bootstrap CIs, in points. Kaggle T4 GPU.}
 \label{tab:llm}
 \begin{tabular}{lrrl}
 \toprule
@@ -300,7 +472,7 @@ Random order of the slate & 11.6 & 23.2 & --- \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.55\linewidth]{figures/fig4_llm.pdf}
-\caption{Hit@5 of LLM-based rerankers on the same 1,000 test slates.}\label{fig:llm}
+\caption{Hit@5 of LLM-based rerankers on the same 1,000 UCI test slates.}\label{fig:llm}
 \end{figure}
 
 We asked Qwen2.5-Instruct~\citep{qwen2025qwen25} a yes/no question for each (basket, candidate) pair (``Would this customer also add \emph{X} to the same order?'', with the basket's product descriptions) and ranked by the probability of ``Yes''.
@@ -315,33 +487,54 @@ We then fine-tuned the 1.5B model with LoRA~\citep{hu2022lora,bao2023tallrec} on
 The weighted loss fell to about $\ln 2$ within 300 steps and stayed there, and the fine-tuned model is worse than zero-shot: Hit@5 7.8\%, below the 11.6\% of a random order of the same slate (the target is in the slate for 46.3\% of baskets).
 Its blend with LightGBM also loses at Hit@10 ($-5.7$ [$-7.7$, $-3.6$]).
 A likely cause, which we did not test, is that LightGBM's near-misses are often the same product in another colour or size, which terse product names cannot separate.
-We therefore keep LightGBM as MarginGraph's ranker and limit the LLM to explanations and to products with no purchase history (7.1\% of test targets); neither use is evaluated here.
+We therefore keep LightGBM as MarginGraph's ranker and limit the LLM to explanations and to products with no purchase history (7.1\% of UCI test targets); neither use is evaluated here.
+
+% ---------------------------------------------------------------------------
+\section{Discussion}
+
+\paragraph{What transfers.}
+The two-stage design transfers across a gift wholesaler, two supermarkets and a grocery delivery service: a trained reranker on top of a union of classical sources beats the best single source by 7--10 Hit@10 points wherever the candidate pool contains what the customer buys, and the optimizer converts that ranking into 13--17\% more simulated gross profit per basket at a cost of about one point of hit rate.
+
+\paragraph{What has to be tuned per store.}
+Two settings did not transfer and should be set per store on validation data.
+The \emph{source order} of the candidate pool must favour repeat purchases where re-buying dominates (Instacart, Dunnhumby).
+The \emph{margin floor} must match the store's real margin structure: a 15\% item floor is invisible at 40\% margins and halves the hit rate at grocery margins, where a bundle floor works better.
+
+\paragraph{Practical reading of the simulation.}
+The store simulation shows the mechanism a merchant would see: fewer, better add-ons, no offer below the floor, and an overstock lever that trades a little profit for stock clearance.
+It does not show what a real store would earn, which needs real cost data and an online test~\citep{kohavi2009controlled}.
 
 % ---------------------------------------------------------------------------
 \section{Limitations}
 \begin{itemize}
-\item \textbf{Simulated economics.} Unit cost, stock and the overstock flag are simulated, and the discount response is assumed. All Stage~2 profit numbers, including the 14\% and 24\% gains, are conditional on these assumptions. Section~\ref{sec:sens} varies the cost distribution, not its structure (for example, costs correlated with popularity).
-\item \textbf{Offline replay.} Replay credits an offer only if the shopper bought it without being shown it. It cannot see purchases an offer would have caused, so it likely understates any recommender, and it cannot measure how shoppers react to being shown higher-margin items. Only an online A/B test can.
-\item \textbf{One store, one task.} One UK wholesaler, mostly business buyers, 2009--2011. Hiding one item per invoice is a proxy for a real checkout widget.
-\item \textbf{Retrieval ceiling.} 35\% of test targets are outside the candidate pool, which bounds every Stage~1 and Stage~2 result.
-\item \textbf{LLM scope.} We tested two small instruction-tuned models zero-shot, one prompt and one scoring method, on the slates of the first ranker (Hit@10 35.6\%). One LoRA fine-tune of the 1.5B model with hard negatives also failed. Larger models, other prompts, richer product text, or easier negatives may behave differently.
+\item \textbf{Simulated economics.} Unit cost, stock and the overstock flag are simulated on every dataset, and the discount response is assumed. All profit numbers, including the 13--24\% gains and the store simulation, are conditional on these assumptions. Section~\ref{sec:sens} varies the cost distribution, not its structure (for example, costs correlated with popularity). Ta Feng's \texttt{ASSET} field is undocumented; reading it as cost is our assumption.
+\item \textbf{Offline replay.} Replay credits an offer only if the shopper bought it without being shown it. It cannot see purchases an offer would have caused, so it likely understates any recommender, and it cannot measure how shoppers react to being shown higher-margin items. Stochastic acceptance instead trusts calibrated probabilities. Only an online A/B test can settle this.
+\item \textbf{Simulation scope.} The store simulation uses one dataset, time-ordered checkouts cut into equal ``days'', and a fixed weekly restock; it has no demand response to stock levels and no supplier lead times.
+\item \textbf{Data quirks.} Dunnhumby's dates are synthetic, Instacart's are rebuilt from gaps between orders and it has no prices, Ta Feng has no basket id, and Olist is too sparse to test. Each additional dataset is cut to its 5,000 most-ordered products.
+\item \textbf{Post-hoc fix.} The repeat-first pool was designed after seeing the Instacart failure. It was checked on validation before test, but it is not part of the pre-registered result, and it has not been rerun on UCI.
+\item \textbf{Retrieval ceiling.} Between 35\% and 64\% of test targets fall outside the candidate pool, depending on the dataset, which bounds every Stage~1 and Stage~2 result.
+\item \textbf{LLM scope.} We tested two small instruction-tuned models zero-shot, one prompt and one scoring method, on the slates of the first UCI ranker (Hit@10 35.6\%), and one LoRA fine-tune of the 1.5B model. Larger models, other prompts, richer product text, or easier negatives may behave differently.
 \item \textbf{Latency.} Solver time is 2.7\,ms. The serving latency in the repository (p50 22\,ms for the research API, p95 88\,ms end to end for the multi-store service) was measured in a container, not in a store's production setting.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
 \section{Conclusion}
-On a public retail dataset and a CPU, a calibrated gradient-boosted reranker beats a strong classical ladder for checkout add-ons, and a tiny per-basket MILP converts its probabilities into choices that respect hard margin and stock rules while raising (simulated) profit at a small, tunable cost in hit rate.
+On five public retail datasets and a CPU, a calibrated gradient-boosted reranker beats a strong classical ladder for checkout add-ons wherever its candidate pool reaches the customer's purchases, and a tiny per-basket MILP converts its probabilities into choices that respect hard margin and stock rules while raising simulated profit at a small, tunable cost in hit rate.
+The one loss, on Instacart, came from the candidate pool rather than the ranker and was fixed by retrieving past purchases first.
 Small open LLMs did not help, either zero-shot or after a LoRA fine-tune.
-The next steps are to replace simulated costs with a real store's data, to run an online test, and to measure the LLM where it is still used: cold-start products and explanations.
+The next steps are to replace simulated costs with a real store's data, to set the margin floor and pool order per store, and to run an online A/B test.
 
 \section*{Reproducibility}
 \sloppy
 Code, configuration and every result file are in the repository.
-\texttt{margingraph run} rebuilds experiments E1--E11 on a CPU (seed 42) and writes them to \texttt{results/}; \texttt{paper/figures/make\_figures.py} rebuilds the figures from those files.
+\texttt{margingraph run} rebuilds experiments E1--E11 on UCI on a CPU (seed 42) and writes them to \texttt{results/}.
+\texttt{scripts/public\_datasets.py} downloads, converts and runs the four additional datasets, writing to \texttt{results/public/}; \texttt{notebooks/multi\_dataset\_validation.ipynb} shows each run with its outputs.
+\texttt{python -m margingraph.sim --days 30 --seeds 5} runs the store simulation and writes \texttt{results/retail\_sim/}; \texttt{notebooks/retail\_sim.ipynb} is the executed walk-through.
+\texttt{paper/figures/make\_figures.py} rebuilds every figure.
 The LLM experiments use \texttt{notebooks/llm\_rerank\_gpu.ipynb} and \texttt{notebooks/llm\_finetune\_gpu.ipynb} on a free Kaggle T4 GPU; their numbers are recorded in \texttt{docs/RESULTS.md}.
 
 \section*{Use of AI tools}
-The software, experiments and this manuscript were developed with the help of an AI coding assistant (Claude Code). All reported numbers come from the pipeline's output files or from logged Kaggle runs, and were checked against them.
+The software, experiments and this manuscript were developed with the help of an AI coding assistant (Claude Code). All reported numbers come from the pipeline's output files or from logged runs, and were checked against them.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

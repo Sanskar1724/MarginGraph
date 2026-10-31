@@ -3,6 +3,8 @@
 Run from the repo root:  python paper/figures/make_figures.py
 The LLM numbers (Kaggle runs) are not in results/; they are copied from
 docs/RESULTS.md, section "E5 LLM rerank".
+Figures 6 and 7 read paper/figures/figdata/*.csv, small extracts of the PR #17
+(results/public/) and PR #18 (results/retail_sim/) result files.
 """
 from pathlib import Path
 
@@ -143,6 +145,49 @@ def fig_reliability():
     save(fig, "fig5_reliability")
 
 
+DATA = OUT / "figdata"
+
+
+# Fig 6: LightGBM minus best baseline, Hit@10 with paired 95% CI, per dataset (PR #17 runs)
+def fig_multidataset():
+    d = pd.read_csv(DATA / "multi_dataset.csv", comment="#")
+    d["label"] = d.dataset + d.run.map({"default": "", "repeat-first": " (repeat-first pool)"})
+    d = d.iloc[::-1].reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(4.6, 2.6))
+    for i, r in d.iterrows():
+        c = AQUA if r.run == "repeat-first" else (ORANGE if r.ci_low > 0 else (GREY if r.ci_high > 0 else "#c8553d"))
+        ax.errorbar(r["diff"], i, xerr=[[r["diff"] - r.ci_low], [r.ci_high - r["diff"]]], fmt="o", color=c,
+                    ecolor=c, elinewidth=1.2, capsize=2.5, ms=4.5, mfc="white" if r.run == "repeat-first" else c)
+        ax.text(11.3, i, f"{r['diff']:+.1f} [{r.ci_low:+.1f}, {r.ci_high:+.1f}]  n={r.test_baskets:,}",
+                va="center", fontsize=6.8, color=INK)
+    ax.axvline(0, color=INK2, lw=0.8)
+    ax.set_yticks(range(len(d)))
+    ax.set_yticklabels(d.label, fontsize=7.5)
+    ax.set_xlim(-5, 11)
+    ax.set_xlabel("Hit@10 gain over best baseline (points)")
+    ax.grid(axis="y", visible=False)
+    save(fig, "fig6_multidataset")
+
+
+# Fig 7: cumulative add-on profit in the 30-day store simulation, replay acceptance (PR #18)
+def fig_retail_sim():
+    d = pd.read_csv(DATA / "retail_sim_daily_replay.csv", comment="#")
+    names = {"ranker_top2": ("Ranker top-2 (no floor)", GREY, "-"),
+             "margingraph_item_floor": ("MarginGraph, item floor", ORANGE, "-"),
+             "margingraph_bundle_floor": ("MarginGraph, bundle floor", BLUE, "--"),
+             "margingraph_overstock_w2": ("MarginGraph, overstock $w{=}2$", AQUA, ":")}
+    fig, ax = plt.subplots(figsize=(3.6, 2.6))
+    for k, (lab, c, ls) in names.items():
+        g = d[d.policy == k].sort_values("day")
+        ax.plot(g.day + 1, g.profit.cumsum(), label=lab, color=c, ls=ls, lw=1.4)
+    ax.set_xlabel("Simulated day")
+    ax.set_ylabel("Cumulative add-on profit (GBP)")
+    ax.set_xlim(1, 30)
+    ax.legend(frameon=False, fontsize=6.8, loc="upper left")
+    save(fig, "fig7_retail_sim")
+
+
 if __name__ == "__main__":
     fig_ladder(); fig_frontier(); fig_sensitivity(); fig_llm(); fig_reliability()
+    fig_multidataset(); fig_retail_sim()
     print("figures written to", OUT)
