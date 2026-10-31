@@ -1,0 +1,9 @@
+# Source: results/public/<run>/e5_paired.csv and summary.json (PR #17); UCI from results/ (PR #14). Hit@10, test split, paired bootstrap 95% CI.
+dataset,run,test_baskets,pool_recall,baseline,baseline_hit10,lgbm_hit10,diff,ci_low,ci_high
+UCI Online Retail II,default,4480,65.3,EASE,31.1,38.1,7.0,6.0,8.0
+Ta Feng,default,14346,40.4,ItemKNN,14.3,22.6,8.26,7.74,8.80
+Dunnhumby,default,20000,46.9,Repeat,19.6,27.4,7.83,7.25,8.41
+Dunnhumby,repeat-first,20000,56.7,Repeat,19.6,29.4,9.81,9.28,10.34
+Instacart,default,20000,51.7,Repeat,37.5,34.5,-3.02,-3.65,-2.41
+Instacart,repeat-first,20000,70.1,Repeat,37.5,41.6,4.08,3.68,4.48
+Olist,default,169,36.1,Decayed EASE,17.2,20.7,3.5503,-1.18,8.88

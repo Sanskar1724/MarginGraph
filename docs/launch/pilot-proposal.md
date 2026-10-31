@@ -25,6 +25,8 @@ Most "customers also bought" boxes push whatever sells most, which is often your
 
 So far I have tested it on two years of real sales from a UK online gift shop. It found the item shoppers actually bought in its top 10 suggestions for 38.1% of orders, against 31.1% for the best standard method. With simulated costs, choosing for profit raised the profit from the add-on by about 14%, for a small drop in hits. I want to be clear that those costs were simulated, because the public data has none. That is why I am looking for a real store to test it with.
 
+I have since run the same system on four more public store datasets. It beat the best standard method on a Taiwanese grocer and a US supermarket, lost on a US grocery app until I put shoppers' past purchases first, and was too close to call on a small Brazilian sample. In a 30-day replay of real checkouts it never offered an item below the margin floor.
+
 **What I am offering:**
 
 - A free pilot of about [8] weeks, with no fee now and no obligation afterwards.

@@ -38,6 +38,22 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 
 <p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 38.1%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
 
+
+### Beyond one store, and inside a simulated one
+
+The unchanged pipeline was also run on four public datasets against a pass/fail rule fixed in advance (details in the [paper](paper/main.pdf), Section 6.5-6.7):
+
+| Dataset | Test baskets | Hit@10 gain over best simple method [95% CI] |
+| --- | --- | --- |
+| Ta Feng (Taiwan grocery) | 14,346 | **+8.3** [+7.7, +8.8] |
+| Dunnhumby (US supermarket) | 20,000 | **+7.8** [+7.2, +8.4]; +9.8 [+9.3, +10.3] with past purchases first in the pool |
+| Instacart (US grocery app) | 20,000 | **−3.0** [−3.6, −2.4] (official); +4.1 [+3.7, +4.5] with past purchases first in the pool (pool recall 51.7% → 70.1%) |
+| Olist (Brazil marketplace) | 169 | +3.6 [−1.2, +8.9], tie (too few baskets) |
+
+- **30-day store simulation** (4,480 real UCI checkouts, simulated cost and stock, weekly restock): £1,141 add-on profit vs £920 for the ranker alone (+24%; +19% over 5 seeds), accept rate 7.5% vs 8.9%, **0** offers under the 15% floor vs 164.
+- **Profit per basket** (simulated cost): +17% on Ta Feng, +13% on Dunnhumby, for about 1 pt of hit rate.
+- **Real-ish cost:** with Ta Feng's undocumented `ASSET` field as cost, a fixed 15% item floor halves the hit rate; a bundle floor gave +38% profit. Set the floor per store.
+
 ---
 
 ## Why
@@ -146,7 +162,7 @@ MarginGraph/
 ├── notebooks/              full run and LLM notebooks for free Kaggle / Colab GPUs
 │   └── exploration/        early V1/V2 prototypes (history only, not results)
 ├── space/                  Hugging Face Space demo (Gradio)
-├── paper/                  arXiv-style paper: LaTeX, PDF, figures
+├── paper/                  research paper (15 pp): LaTeX, PDF, Markdown copy, figures
 ├── docs/                   report, results, roadmap, guides, work log, deck, launch kit
 │   └── assets/             SVG diagrams
 └── .github/                PR template, workflows

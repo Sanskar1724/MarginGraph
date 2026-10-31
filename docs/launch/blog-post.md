@@ -93,6 +93,8 @@ The dataset has real prices but **no unit cost and no stock**. I simulated them,
 
 At λ=0.5, profit is up 14% (CI +£0.014 to +£0.044 per basket) for −1.1 points Hit@2 (CI [−1.7, −0.6]). At λ=1.0 it is +24% for −2.9 points. (Against the weaker first ranker these were +17% and +22%: a better ranker raises the baseline the optimizer has to beat.) That is the trade-off a store owner would actually choose on, so the product exposes λ as a single dial.
 
+**Update, 31 Oct 2026.** The same pipeline, unchanged, now runs on four more public datasets. It wins on Ta Feng (+8.3 points Hit@10, CI [+7.7, +8.8]) and Dunnhumby (+7.8), ties on Olist (169 baskets) and loses on Instacart (−3.0). The loss came from the candidate pool, not the ranker: past purchases entered too late. Putting them first raises pool recall from 51.7% to 70.1% and gives +4.1 [+3.7, +4.5]. A 30-day store simulation on real checkouts (simulated cost) gives £1,141 vs £920 add-on profit with 0 floor breaks vs 164. Full write-up: [the paper](../../paper/main.pdf).
+
 Does the result survive different cost assumptions? I reran it with 3 margin distributions × 3 random seeds. The gain at λ=1 stayed positive in all nine, from +£0.024 to +£0.071 per basket, every CI above zero. That is reassuring, but it is still simulation. Only real costs settle it.
 
 The solver itself is not the bottleneck. PuLP with HiGHS matched brute-force enumeration on 600 of 600 problems, with a mean solve time of 2.7 ms. (I have not benchmarked end-to-end API latency yet, so I will not quote one.)
