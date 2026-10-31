@@ -1,0 +1,16 @@
+{
+  "train_max_ts": "2001-01-25 00:00:00",
+  "val_min_ts": "2001-01-26 00:00:00",
+  "val_max_ts": "2001-02-12 00:00:00",
+  "test_min_ts": "2001-02-13 00:00:00",
+  "test_max_ts": "2001-02-28 00:00:00",
+  "invoice_overlap": 0,
+  "train_lines": 471427,
+  "val_lines": 92112,
+  "test_lines": 92821,
+  "val_events": 13675,
+  "test_events": 14346,
+  "val_target_seen_in_train": 0.9837659963436929,
+  "test_target_seen_in_train": 0.9822250104558762,
+  "test_target_seen_in_train_or_val": 0.9959570612017287
+}
