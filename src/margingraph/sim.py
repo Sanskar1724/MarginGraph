@@ -13,6 +13,7 @@ Acceptance: "replay" = the shopper takes an add-on only if it is the item they
 really bought; "stochastic" = each add-on is taken with its calibrated p.
 Restock every `restock_every` days back to the starting level.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,8 +32,14 @@ POLICIES = {
 }
 
 
-def run_store(slates: pd.DataFrame, erp: pd.DataFrame, policy: str, days: int = 30,
-              restock_every: int = 7, seed: int | None = None) -> pd.DataFrame:
+def run_store(
+    slates: pd.DataFrame,
+    erp: pd.DataFrame,
+    policy: str,
+    days: int = 30,
+    restock_every: int = 7,
+    seed: int | None = None,
+) -> pd.DataFrame:
     kind, pol = POLICIES[policy]
     price, cost = erp["price"].to_numpy(float), erp["unit_cost"].to_numpy(float)
     over = erp["overstock"].to_numpy(bool)
@@ -41,8 +48,8 @@ def run_store(slates: pd.DataFrame, erp: pd.DataFrame, policy: str, days: int = 
     p_bar = float((price - cost).clip(min=0).mean())
     rng = None if seed is None else np.random.default_rng(seed)
     events = slates["event_id"].unique()
-    day_of = dict(zip(events, np.arange(len(events)) * days // len(events)))
-    rows, cur = [], None
+    day_of = dict(zip(events, np.arange(len(events)) * days // len(events), strict=True))
+    rows, cur, led = [], None, {}
     for eid, g in slates.groupby("event_id", sort=False):
         d = day_of[eid]
         if d != cur:
@@ -51,14 +58,24 @@ def run_store(slates: pd.DataFrame, erp: pd.DataFrame, policy: str, days: int = 
             if d > 0 and d % restock_every == 0:
                 stock = np.maximum(stock, start)
             cur = d
-            led = dict(day=d, checkouts=0, offers=0, accepts=0, revenue=0.0, cost=0.0,
-                       profit=0.0, overstock_units=0, stockout_blocks=0, floor_breaks=0)
+            led = dict(
+                day=d,
+                checkouts=0,
+                offers=0,
+                accepts=0,
+                revenue=0.0,
+                cost=0.0,
+                profit=0.0,
+                overstock_units=0,
+                stockout_blocks=0,
+                floor_breaks=0,
+            )
         items = g["item_idx"].to_numpy()
         p, lab, sc = g["p"].to_numpy(), g["label"].to_numpy(), g["score"].to_numpy()
         led["checkouts"] += 1
         led["stockout_blocks"] += int((stock[items[np.argsort(-sc)[:2]]] <= 0).sum())
         if kind == "topk":
-            order = [j for j in np.argsort(-sc, kind="stable") if stock[items[j]] > 0][:pol.max_addons]
+            order = [j for j in np.argsort(-sc, kind="stable") if stock[items[j]] > 0][: pol.max_addons]
             chosen = [(int(j), 0.0) for j in order]
         else:
             chosen = solve_enum(p, price[items], cost[items], over[items], stock[items], pol, p_bar)
@@ -103,11 +120,20 @@ def main(argv=None) -> None:
     daily.to_csv(out / "daily_ledger.csv", index=False)
     tot = daily.groupby(["policy", "seed"]).sum(numeric_only=True).drop(columns="day").reset_index()
     tot["mode"] = np.where(tot["seed"] < 0, "replay", "stochastic")
-    summ = tot.groupby(["mode", "policy"]).agg(
-        profit=("profit", "mean"), profit_sd=("profit", "std"), revenue=("revenue", "mean"),
-        accepts=("accepts", "mean"), offers=("offers", "mean"), overstock_units=("overstock_units", "mean"),
-        stockout_blocks=("stockout_blocks", "mean"), floor_breaks=("floor_breaks", "mean"),
-    ).reset_index()
+    summ = (
+        tot.groupby(["mode", "policy"])
+        .agg(
+            profit=("profit", "mean"),
+            profit_sd=("profit", "std"),
+            revenue=("revenue", "mean"),
+            accepts=("accepts", "mean"),
+            offers=("offers", "mean"),
+            overstock_units=("overstock_units", "mean"),
+            stockout_blocks=("stockout_blocks", "mean"),
+            floor_breaks=("floor_breaks", "mean"),
+        )
+        .reset_index()
+    )
     summ["accept_rate"] = summ["accepts"] / summ["offers"]
     summ["margin"] = summ["profit"] / summ["revenue"]
     summ.to_csv(out / "summary.csv", index=False)
