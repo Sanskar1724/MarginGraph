@@ -22,7 +22,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 12 | Create MarginGraph pitch deck | 2026-10-26 11:50 | [#7](https://github.com/Sanskar1724/MarginGraph/pull/7) 15-slide pitch deck | `claude/project-thread-42h21l` → `docs/pitch-deck` | Merged into `main` 2026-10-26 | [deck.md](worklog/deck.md) |
 | 13 | Prepare launch and promotion kit | 2026-10-26 11:50 | [#8](https://github.com/Sanskar1724/MarginGraph/pull/8) Launch kit for stores, press and developers | `claude/project-thread-80g63p` → `docs/launch-kit` | Merged into `main` 2026-10-26 | [launch.md](worklog/launch.md) |
 | 14 | Plan path to industry-ready product | 2026-10-26 12:38 | this PR | `docs/industry-roadmap` | Open | [industry-plan.md](worklog/industry-plan.md) |
-| 18 | Build retail simulation environment | 2026-10-31 11:31 | Simulator + flow (PR pending) | `claude/project-thread-f783mi` | Code done, real-data run pending | [retail-sim.md](worklog/retail-sim.md) |
+| 18 | Build retail simulation environment | 2026-10-31 11:31 | Simulator, flow diagram, 30-day results | `claude/project-thread-f783mi` | MarginGraph +24% add-on profit vs ranker (replay, simulated cost), 0 floor breaks | [retail-sim.md](worklog/retail-sim.md) |
 
 PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed directly, so GitHub shows them as closed). The cleanup itself is logged in [repo-cleanup.md](worklog/repo-cleanup.md): merge order, the two conflicts and how they were resolved, the test run (59 passed, 1 skipped), the restructure, and the new branches.
 
