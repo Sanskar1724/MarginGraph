@@ -33,6 +33,8 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 * E1 audit: median basket 1 item, repeat-customer rate 2%. Co-purchase still has real signal: Hit@10 20.7% on real validation baskets vs 0.5% on shuffled ones.
 * Pool recall (test) 36.1%: the hidden product is in the 150 candidates only about a third of the time, which caps any reranker.
 * LightGBM was trained on 193 validation events, too few to learn much. This is the "sparse basket" case the plan predicted.
+| 10-31 09:41 | Ta Feng, `ASSET` as cost | `--top-items 5000 --asset-as-cost`, no `simulate-erp` | 14,346 | 1,430 s | 5.0 GB | Stage 1 identical to the run above (same data, same seed). Stage 2 below |
+| 10-31 09:52 | Dunnhumby | `--top-items 5000`, simulated ERP | | running | | |
 
 ### Ta Feng details (from `results/public/tafeng/`)
 
@@ -42,6 +44,7 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 * Pool recall (test) 40.4%.
 * Top LightGBM features by gain: `s_itemknn_max`, `r_itemknn_max`, `s_repeat` (the customer bought it before), `r_fresh_co`, `r_itemknn`, `r_ease`.
 * Stage 2, **simulated cost and stock**: ranker top-2 realized profit 2.67 per basket; MILP λ=0.5 3.12 (+0.45, 95% CI [+0.31, +0.61], about +17%) for -1.0 pt hit rate (9.2% vs 10.1%).
+* Stage 2 with **`ASSET / AMOUNT` read as unit cost (unverified meaning; stock still simulated)**: median product margin is 20.5% (simulated ERP: 39.4%), and only 75.8% of products clear the 15% margin floor (simulated: 96.6%); 2.5% have cost above price. Ranker top-2 realized profit 0.61 per basket; MILP λ=0.5 0.76 (+0.15, 95% CI [+0.07, +0.24], about +25%) but its hit rate halves (5.2% vs 10.1%, -5.0 pts) because the floor removes many of the products shoppers actually add. With thin grocery margins the MILP trade-off is much steeper than on simulated cost. File: `results/public/tafeng_asset_cost/e8_strategies_store_erp.csv`.
 * Peak RAM 5.2 GB: on an 8 GB laptop this is tight; use a Kaggle CPU notebook or `--top-items 3000`.
 
 ## Code changes
