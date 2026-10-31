@@ -2,7 +2,7 @@
 
 # MarginGraph · Research paper
 
-**A 15-page research paper on margin-aware checkout add-on recommendation: five public retail datasets, a 30-day store simulation, and a negative result for small LLM rerankers.**
+**A 17-page research paper on margin-aware checkout add-on recommendation: five public retail datasets, a 30-day store simulation, and a negative result for small LLM rerankers.**
 
 ![license](https://img.shields.io/badge/license-MIT-green) ![paper](https://img.shields.io/badge/paper-PDF-b31b1b) ![LaTeX](https://img.shields.io/badge/LaTeX-source-008080?logo=latex&logoColor=white) ![citations](https://img.shields.io/badge/citations-29-brightgreen)
 
@@ -32,7 +32,7 @@
 | `paper/main.tex` | LaTeX source |
 | `paper/references.bib` | Bibliography |
 | `paper/PAPER.md` | Markdown copy |
-| `paper/figures/` | Figures 1-7, the script that makes them, and `figdata/` extracts for figs 6-7 |
+| `paper/figures/` | 10 figures (system diagram and 9 result charts), the script that makes them, and `figdata/` extracts |
 | `docs/worklog/paper.md`, `docs/worklog/paper-deck-update.md` | Work logs |
 
 ## Build it
