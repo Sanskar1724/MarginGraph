@@ -1,0 +1,13 @@
+{
+  "dataset": "tafeng",
+  "order_lines": 656360,
+  "orders": 114483,
+  "orders_with_2plus_products": 93724,
+  "products": 5000,
+  "customers": 31700,
+  "first": "2000-11-01 00:00:00",
+  "last": "2001-02-28 00:00:00",
+  "has_cost": false,
+  "max_customers": null,
+  "top_items": 5000
+}

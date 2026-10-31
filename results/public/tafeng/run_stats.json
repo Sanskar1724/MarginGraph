@@ -1,0 +1,1 @@
+{"seconds": 1414, "peak_rss_mb_upper_bound": 5181, "cpus": 4, "convert_options": ["--top-items", "5000"], "simulated_erp": true, "note": "first run from the terminal; the notebook rerun overwrites this"}
