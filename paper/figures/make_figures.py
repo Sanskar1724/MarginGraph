@@ -187,7 +187,68 @@ def fig_retail_sim():
     save(fig, "fig7_retail_sim")
 
 
+# Fig 0: system overview diagram
+def fig_architecture():
+    from matplotlib.patches import FancyBboxPatch
+    fig, ax = plt.subplots(figsize=(7.0, 2.3))
+    ax.set_xlim(0, 100); ax.set_ylim(0, 32); ax.axis("off")
+    boxes = [
+        (1, "Basket +\ncustomer\nhistory", "input", "#eef2f7"),
+        (21, "Retrieval\n11 sources\n150 candidates", "Stage 1a", "#e3eefb"),
+        (41, "LightGBM\nLambdaRank\n35 features", "Stage 1b", "#e3eefb"),
+        (61, "Isotonic\ncalibration\n$p_i$ for top 20", "Stage 1c", "#e3eefb"),
+        (81, "MILP optimizer\nmax value\n$\\leq$ 2 add-ons", "Stage 2", "#fdebe2"),
+    ]
+    for x, t, lab, c in boxes:
+        ax.add_patch(FancyBboxPatch((x, 9), 17, 15, boxstyle="round,pad=0.4,rounding_size=1.5", fc=c, ec=INK2, lw=0.8))
+        ax.text(x + 8.5, 16.5, t, ha="center", va="center", fontsize=7.6, color=INK)
+        ax.text(x + 8.5, 26.3, lab, ha="center", va="center", fontsize=7.2, color=INK2, style="italic")
+    for x in (18.6, 38.6, 58.6, 78.6):
+        ax.annotate("", xy=(x + 2.2, 16.5), xytext=(x, 16.5), arrowprops=dict(arrowstyle="-|>", color=INK2, lw=0.9))
+    ax.text(89.5, 4.2, "hard rules: margin $\\geq$ 15%, in stock,\noverstock weight $w_i\\in[1,2]$", ha="center", va="center", fontsize=6.8, color=ORANGE)
+    ax.text(30, 4.2, "store data: invoices, prices, product text; cost and stock from the ERP (simulated here)", ha="center", va="center", fontsize=6.8, color=INK2)
+    save(fig, "fig0_architecture")
+
+
+# Fig 8: candidate-pool recall, UCI-tuned order vs repeat-first order (PR #17)
+def fig_pool():
+    d = pd.read_csv(DATA / "multi_dataset.csv", comment="#")
+    ds = ["Dunnhumby", "Instacart"]
+    fig, axes = plt.subplots(1, 2, figsize=(5.6, 2.3))
+    for ax, col, lab in [(axes[0], "pool_recall", "Pool recall (%)"), (axes[1], "diff", "Hit@10 gain vs repeat (pts)")]:
+        for k, (run, c) in enumerate([("default", GREY), ("repeat-first", AQUA)]):
+            v = [float(d[(d.dataset == x) & (d.run == run)][col].iloc[0]) for x in ds]
+            xs = [i + (k - 0.5) * 0.36 for i in range(len(ds))]
+            ax.bar(xs, v, width=0.34, color=c, label="UCI-tuned order" if run == "default" else "repeat-first order")
+            for xi, vi in zip(xs, v):
+                ax.text(xi, vi + (1 if vi >= 0 else -1), f"{vi:+.1f}" if col == "diff" else f"{vi:.1f}",
+                        ha="center", va="bottom" if vi >= 0 else "top", fontsize=7)
+        ax.set_xticks(range(len(ds))); ax.set_xticklabels(ds); ax.set_ylabel(lab)
+        ax.axhline(0, color=INK2, lw=0.7); ax.grid(axis="x", visible=False)
+    axes[0].set_ylim(0, 85); axes[1].set_ylim(-6, 13)
+    axes[0].legend(frameon=False, fontsize=6.8, loc="upper left")
+    fig.tight_layout()
+    save(fig, "fig8_pool_order")
+
+
+# Fig 9: Ta Feng with ASSET read as unit cost: hit rate and profit per policy (PR #17)
+def fig_tafeng_floor():
+    pol = ["Ranker top-2\n(no floor)", "MILP $\\lambda$=0\nitem floor", "MILP $\\lambda$=0.5\nitem floor", "MILP $\\lambda$=1\nbundle floor"]
+    hit = [10.1, 5.3, 5.2, 5.8]
+    prof = [0.61, 0.69, 0.76, 0.84]
+    fig, axes = plt.subplots(1, 2, figsize=(5.8, 2.3))
+    for ax, v, lab, fmt in [(axes[0], hit, "Hit@2 (%)", "{:.1f}"), (axes[1], prof, "Realized profit / basket", "{:.2f}")]:
+        ax.bar(range(4), v, color=[GREY, ORANGE, ORANGE, BLUE], width=0.6)
+        for i, x in enumerate(v):
+            ax.text(i, x * 1.02, fmt.format(x), ha="center", va="bottom", fontsize=7)
+        ax.set_xticks(range(4)); ax.set_xticklabels(pol, fontsize=6.3); ax.set_ylabel(lab)
+        ax.grid(axis="x", visible=False); ax.set_ylim(0, max(v) * 1.2)
+    fig.tight_layout()
+    save(fig, "fig9_tafeng_floor")
+
+
 if __name__ == "__main__":
     fig_ladder(); fig_frontier(); fig_sensitivity(); fig_llm(); fig_reliability()
     fig_multidataset(); fig_retail_sim()
+    fig_architecture(); fig_pool(); fig_tafeng_floor()
     print("figures written to", OUT)

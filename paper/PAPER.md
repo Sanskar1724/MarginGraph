@@ -30,6 +30,24 @@ This paper makes five contributions.
 
 None of the five datasets has a verified unit cost, so every profit number depends on a simulation that we state in full (Section 4.3). We treat this as the main limitation of the study rather than a footnote.
 
+![MarginGraph at a glance. Stage 1 decides what the shopper is likely to add; Stage 2 decides what to show, trading relevance against profit under hard business rules that no model can override.](figures/fig0_architecture.png)
+
+*Figure 1. MarginGraph at a glance. Stage 1 decides what the shopper is likely to add; Stage 2 decides what to show, trading relevance against profit under hard business rules that no model can override.*
+
+**Table 1.** Main results at a glance. Hit@10: the item the shopper actually added is among the top 10 suggestions. All intervals are paired 95% bootstrap CIs. *Profit rests on simulated unit cost and stock.
+
+| Question                                     | Answer (section)                                                                                                                                                                                                                                                  |
+|:---------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Does the reranker beat strong baselines?     | Yes on UCI: Hit@10 38.1% vs 31.1% for EASE, +7.0 [6.0, 8.0] (6.1)                                                                                                                       |
+| Does it transfer to other stores?            | Ta Feng +8.3 [7.7, 8.8], Dunnhumby +7.8 [7.2, 8.4], Olist tie, Instacart −3.0 [−3.6, −2.4] (6.5)                                                                            |
+| Why did Instacart lose, and can it be fixed? | Past purchases entered the pool too late; repeat-first pool: +4.1 [3.7, 4.5] (6.6)                                                                                                  |
+| Does the optimizer add profit?*        | +14% (UCI), +17% (Ta Feng), +13% (Dunnhumby) per basket for ≈1 pt of Hit@2 (6.2, 6.7) |
+| What happens over a month in a store?* | £1,141 vs £920 add-on profit (+24%), 0 vs 164 offers under the margin floor (6.4)                                                                                                       |
+| Is a 15% floor always right?                 | No: with Ta Feng’s cost-like field, it halves Hit@2; a bundle floor works better (6.7)                                                                                        |
+| Do small LLMs help ranking?                  | No: zero-shot, blended, stacked and LoRA-tuned Qwen2.5 all lose or tie (6.8)                                                                                                            |
+
+Figure 1 shows the system and Table 1 summarises the answers this paper gives. Section 2 reviews related work, Section 3 describes the data and the task, Section 4 the method, Section 5 the experimental protocol, and Section 6 the results; Sections 7–9 discuss what transfers, the limitations, and next steps.
+
 ## 2. Related work
 
 **Classical next-item and basket recommenders.** Item-based collaborative filtering (Sarwar et al. 2001), implicit-feedback matrix factorization (ALS) (Y. Hu, Koren, and Volinsky 2008) and the closed-form linear autoencoder EASE (Steck 2019) remain strong on sparse purchase data. Ferrari Dacrema, Cremonesi, and Jannach (2019) showed that simple, tuned neighbourhood methods often match or beat recent neural models, which is why our ladder includes them and why the reranker must beat the best of them on paired tests. Krichene and Rendle (2020) showed that sampled ranking metrics can reorder models; we therefore rank against the full catalog. In grocery next-basket recommendation, a large share of items are repeat purchases, and simple personal-frequency models are hard to beat (H. Hu et al. 2020); Li et al. (2023) show that much of the reported progress in that area comes from repeat items. Our Instacart result (Section 6.6) is a direct instance of this effect.
@@ -44,9 +62,9 @@ None of the five datasets has a verified unit cost, so every profit number depen
 
 **Primary dataset.** UCI Online Retail II (Chen 2019; Chen, Sain, and Guo 2012) contains the transactions of a UK online gift and homeware wholesaler from December 2009 to December 2011. From 1,067,371 raw rows we drop cancellations and adjustments (19,500), non-positive quantity or price (6,202), non-product codes such as postage and fees (4,792), and exact duplicates (33,663), leaving 991,910 invoice lines over 39,516 invoices, 4,707 products and 5,852 known customers. The data has a unit price but no unit cost and no stock level.
 
-**Additional datasets.** To test whether the result transfers, we ran the same pipeline on four public datasets that differ in country, sector and basket shape (Table 1). Each is converted to the same invoice-line schema and restricted to its 5,000 most-ordered products. *Ta Feng* (Ta Feng Grocery 2001) is a Taiwanese warehouse grocer; it has no basket id, so one customer on one day is one basket, and it has an `ASSET` field that we test as a unit cost (Section 6.7). *Dunnhumby* (dunnhumby 2014) is two years of a US supermarket’s household baskets; real dates are hidden, so `DAY 1` is mapped to 2018-01-01, and price is sales value over quantity after discounts. *Instacart* (Instacart 2017) is US online grocery delivery; it has no prices (so Stage 2 is not run) and no dates (we rebuild them from `days_since_prior_order`); we sample 20,000 customers, and 62% of its lines are re-buys. *Olist* (Olist 2018) is a Brazilian marketplace; 98% of its orders hold one product, so only 169 test baskets qualify.
+**Additional datasets.** To test whether the result transfers, we ran the same pipeline on four public datasets that differ in country, sector and basket shape (Table 2). Each is converted to the same invoice-line schema and restricted to its 5,000 most-ordered products. *Ta Feng* (Ta Feng Grocery 2001) is a Taiwanese warehouse grocer; it has no basket id, so one customer on one day is one basket, and it has an `ASSET` field that we test as a unit cost (Section 6.7). *Dunnhumby* (dunnhumby 2014) is two years of a US supermarket’s household baskets; real dates are hidden, so `DAY 1` is mapped to 2018-01-01, and price is sales value over quantity after discounts. *Instacart* (Instacart 2017) is US online grocery delivery; it has no prices (so Stage 2 is not run) and no dates (we rebuild them from `days_since_prior_order`); we sample 20,000 customers, and 62% of its lines are re-buys. *Olist* (Olist 2018) is a Brazilian marketplace; 98% of its orders hold one product, so only 169 test baskets qualify.
 
-**Table 1.** Datasets after cleaning, restricted to the 5,000 most-ordered products (UCI: full catalog). Test baskets are invoices with at least two products in the test window, capped at 20,000.
+**Table 2.** Datasets after cleaning, restricted to the 5,000 most-ordered products (UCI: full catalog). Test baskets are invoices with at least two products in the test window, capped at 20,000.
 
 | Dataset                                                                    | Sector              |     Lines | Baskets | Customers | Test baskets | Price / cost              |
 |:---------------------------------------------------------------------------|:--------------------|----------:|--------:|----------:|-------------:|:--------------------------|
@@ -58,7 +76,11 @@ None of the five datasets has a verified unit cost, so every profit number depen
 
 <sub>† Undocumented field; read as unit cost in one run, not verified.</sub>
 
-**Task.** For each evaluation invoice with 2–50 distinct products we hide one product at random; the model sees the remaining basket (and the customer’s earlier history, if known) and must rank the full catalog. The hidden product is the single relevant item. We report Hit@$K$, NDCG@10 and MRR.
+**Task.** For each evaluation invoice with 2–50 distinct products we hide one product at random; the model sees the remaining basket (and the customer’s earlier history, if known) and must rank the full catalog. The hidden product is the single relevant item. We report three standard ranking metrics. With $\mathrm{rank}_b$ the position of the hidden item in the ranked list for basket $b$ and $B$ the set of test baskets,
+
+$$\text{Hit@}K=\frac{1}{|B|}\sum_{b\in B}\mathbb{1}[\mathrm{rank}_b\le K],\qquad \text{NDCG@10}=\frac{1}{|B|}\sum_{b\in B}\frac{\mathbb{1}[\mathrm{rank}_b\le 10]}{\log_2(\mathrm{rank}_b+1)},\qquad \text{MRR}=\frac{1}{|B|}\sum_{b\in B}\frac{1}{\mathrm{rank}_b}.$$
+
+ Hit@10 is the headline metric: it is the share of baskets in which the product the shopper really added appears among ten suggestions. For Stage 2, where only two items are shown, we report Hit@2.
 
 **Split.** One global cutoff per boundary, with no invoice in two splits. On UCI: train up to 2011-06-30 (709,574 lines), validation July–September 2011 (3,822 events), test 2011-10-02 to 2011-12-09 (4,480 events). Test candidates come from models refit on train+validation, which ends before the test window starts. 7.1% of UCI test targets never appear before the test window, so no model can exceed 92.9% Hit@$K$ there. The other datasets use the same split logic with cutoffs at the same relative positions.
 
@@ -67,6 +89,8 @@ None of the five datasets has a verified unit cost, so every profit number depen
 ## 4. Method
 
 ### 4.1 Stage 1: retrieval, reranking and calibration
+
+Stage 1 follows the retrieve-then-rerank pattern of Figure 1: cheap scorers each propose candidates, a learned model orders the union, and a calibration step turns its scores into probabilities that Stage 2 can multiply by money.
 
 **Baselines and candidate pool.** Seven classical scorers are fit on the training period: global popularity, 90-day popularity, the customer’s repeat purchases, co-purchase counts, ItemKNN (Sarwar et al. 2001), EASE (λ=250, chosen on validation) (Steck 2019) and ALS (64 factors) (Y. Hu, Koren, and Volinsky 2008). Four further sources were added after a validation-only selection (Section 6.1): EASE on recency-weighted baskets (half-life 120 days), EASE applied to the customer’s own past items, TF-IDF similarity of product descriptions (word 1–2 and character 3–4 grams, maximum over the basket), and a *fresh* signal that, like a nightly job, sees only invoices from days before the event: 14-day trending items and co-purchase over that stream. The item index covers the whole catalog, so products first sold after the fit cutoff can be recommended once the fresh source sees them sell; a product with no earlier sales gets zero from every source. The candidate pool unions the top lists of each source in a fixed order (EASE 90, decayed EASE 60, customer EASE 30, text 30, trending 22, fresh co-purchase 30, ItemKNN 45, ALS 45, repeat 45, co-purchase 30, the two popularity scorers 15 each), deduplicated and capped at 150 items, with basket items removed. Because the cap is applied after the union, *the order of sources matters*: a source late in the list contributes only the items that still fit. Section 6.6 shows that this order, tuned on UCI, is wrong for repeat-heavy grocery data, and evaluates a *repeat-first* order that puts the customer’s past purchases (60 items) at the front.
 
@@ -85,6 +109,8 @@ $$\begin{aligned}
 \end{aligned}$$
 
 Here $\bar\pi$ is the catalog’s mean unit gross profit, which puts the relevance term on the same scale as profit, so λ=0 ranks by probability alone and λ=1 maximises overstock-weighted expected profit. $w_i\in[1,2]$ up-weights items flagged as overstock. The *bundle floor* variant replaces the per-item floor with $\sum \pi_{i,d} x_{i,d} \ge 0.15 \sum r_{i,d} x_{i,d}$, so one thin-margin item can be offered if its partner carries it. Discounts use an *assumed* response $p_{i,d}=\min(1,\,p_i(1+1.5d))$ for $d\in\{0,0.1,0.2\}$; this elasticity is not estimated from data. The program is built in PuLP (Mitchell, O’Sullivan, and Dunning 2011) and solved with HiGHS (Huangfu and Hall 2018); because at most two items are chosen, exact enumeration of all singles and pairs gives the same optimum and is used for the bulk offline sweeps.
+
+**Illustrative example (hypothetical numbers).** Suppose the reranker gives candidate A a probability of 10% at a price of £2.00 and a 10% margin, and candidate B 8% at £3.00 and a 45% margin. A plain ranker shows A first. At λ=1 the optimizer compares expected profit, $0.10\times\pounds0.20=\pounds0.020$ for A against $0.08\times\pounds1.35=\pounds0.108$ for B, and prefers B; in any case A is excluded by the 15% floor. The example shows the trade-off the rest of the paper measures: a slightly lower chance of acceptance, a much higher value when accepted.
 
 ### 4.3 Simulated cost and stock
 
@@ -106,7 +132,7 @@ Unit cost is $c_i=r_i(1-m_i)$ with gross margin $m_i\sim\text{Beta}(4,6)$ (mean 
 
 ### 6.1 Stage 1 on UCI Online Retail II
 
-**Table 2.** Full-catalog ranking on 4,480 UCI test baskets. Best baseline in italics. LightGBM minus EASE, paired: Hit@10 +7.0 pts [6.0, 8.0], NDCG@10 +0.049 [0.043, 0.055].
+**Table 3.** Full-catalog ranking on 4,480 UCI test baskets. Best baseline in italics. LightGBM minus EASE, paired: Hit@10 +7.0 pts [6.0, 8.0], NDCG@10 +0.049 [0.043, 0.055].
 
 | Model                                 |    Hit@5 |   Hit@10 |   Hit@50 |   NDCG@10 |       MRR |
 |:--------------------------------------|---------:|---------:|---------:|----------:|----------:|
@@ -129,19 +155,19 @@ Unit cost is $c_i=r_i(1-m_i)$ with gross margin $m_i\sim\text{Beta}(4,6)$ (mean 
 
 ![Reliability of calibrated p(i) on test (log scale; lowest bin omitted).](figures/fig5_reliability.png)
 
-*Figure 1. (a) Baseline ladder and reranker, Hit@10 on test. (b) Reliability of calibrated p(i) on test (log scale; lowest bin omitted). Stage 1 results on UCI Online Retail II.*
+*Figure 2. (a) Baseline ladder and reranker, Hit@10 on test. (b) Reliability of calibrated p(i) on test (log scale; lowest bin omitted). Stage 1 results on UCI Online Retail II.*
 
-Table 2 and Figure 1a show the ladder. EASE is the strongest single model by a wide margin, consistent with Steck (2019) and Ferrari Dacrema, Cremonesi, and Jannach (2019). The reranker improves on it on every metric, and the paired intervals exclude zero.
+Table 3 and Figure 2a show the ladder. EASE is the strongest single model by a wide margin, consistent with Steck (2019) and Ferrari Dacrema, Cremonesi, and Jannach (2019). The reranker improves on it on every metric, and the paired intervals exclude zero.
 
 **Retrieval ceiling.** The 150-item pool contains the hidden product for 65.3% of test baskets [63.9, 66.7]; EASE alone reaches 55.7% at depth 100, decayed EASE 56.3%, text 48.7%, ItemKNN 43.4%. This recall caps every reranker, including an LLM: 35% of test baskets cannot be answered by any choice of Stage 1 order. Earlier configurations reached 43.5% (50 items, no EASE) and 58.0% (100 items, seven sources).
 
-**Calibration.** On test, the calibrated probabilities have a Brier score of 0.00417 against 0.00435 for a constant base-rate guess (first run: 0.00560 against 0.00568). They track observed rates across bins (Figure 1b) and are sharper than in the first run, but still modest, which limits how much Stage 2 can separate good from bad offers.
+**Calibration.** On test, the calibrated probabilities have a Brier score of 0.00417 against 0.00435 for a constant base-rate guess (first run: 0.00560 against 0.00568). They track observed rates across bins (Figure 2b) and are sharper than in the first run, but still modest, which limits how much Stage 2 can separate good from bad offers.
 
 **What raised Stage 1 (validation-only selection).** The first run used seven sources, a 100-item pool and one event per validation invoice (Hit@10 35.6%). Each change was kept only if it won on the last 30% of validation events (1,147 events never used to fit trees); test results were recorded for all 19 variants, winners and losers. Added one at a time to the 100-item pool, each new source was within noise, because it displaced EASE and ItemKNN candidates. Together, with the pool enlarged to 150 (chosen over 100 and 200 on validation), they raised pool recall by 7.3 points [6.2, 8.3]; training on three events per validation invoice added the rest. Against the first run on the same test baskets, Hit@10 rose by 2.5 points [1.6, 3.4] and NDCG@10 by 0.020 [0.015, 0.025]. An item2vec source and four LightGBM parameter sets lost on validation and were dropped.
 
 ### 6.2 Stage 2 on UCI Online Retail II
 
-**Table 3.** Stage 2 on 4,480 UCI test baskets, **simulated cost and stock**. Profit is £ gross profit per basket. Baselines run without the floor; the last column counts how often they would break the 15% per-item floor.
+**Table 4.** Stage 2 on 4,480 UCI test baskets, **simulated cost and stock**. Profit is £ gross profit per basket. Baselines run without the floor; the last column counts how often they would break the 15% per-item floor.
 
 | Strategy                               | Hit@2 (%) | Realized profit | Expected profit | Floor breaks / basket |
 |:---------------------------------------|----------:|----------------:|----------------:|----------------------:|
@@ -159,19 +185,19 @@ Table 2 and Figure 1a show the ladder. EASE is the strongest single model by a
 
 ![Gain of MILP λ = 1 over ranker top-2 under nine cost/stock scenarios.](figures/fig3_sensitivity.png)
 
-*Figure 2. (a) Relevance–profit frontier as λ varies. (b) Gain of MILP λ = 1 over ranker top-2 under nine cost/stock scenarios. Stage 2 results on UCI (simulated cost and stock; 95% bootstrap CIs).*
+*Figure 3. (a) Relevance–profit frontier as λ varies. (b) Gain of MILP λ = 1 over ranker top-2 under nine cost/stock scenarios. Stage 2 results on UCI (simulated cost and stock; 95% bootstrap CIs).*
 
-Table 3 and Figure 2a give the trade-off. Paired against the ranker’s top-2 on the same baskets, MILP λ=0.5 raises realized profit by £0.028 per basket [0.014, 0.044], or 14%, while Hit@2 falls by 1.1 points [−1.7, −0.6]. At λ=1 the gain is £0.049 [0.031, 0.069] (24%) for −2.9 points of Hit@2 [−3.7, −2.0]. At λ=0 the optimizer is, as intended, almost identical to the ranker (−0.25 points Hit@2 and $-$£0.001 profit), the small gap coming from the margin floor removing some candidates. Every MILP solution satisfies every hard rule, while the unconstrained ranker top-2 would break the margin floor 0.037 times per basket. The stronger ranker also lifted the ranker’s own top-2, from Hit@2 16.7% and £0.184 in the first run to 17.8% and £0.205, so the optimizer’s relative gain is measured against a harder reference (first run: +17%).
+Table 4 and Figure 3a give the trade-off. Paired against the ranker’s top-2 on the same baskets, MILP λ=0.5 raises realized profit by £0.028 per basket [0.014, 0.044], or 14%, while Hit@2 falls by 1.1 points [−1.7, −0.6]. At λ=1 the gain is £0.049 [0.031, 0.069] (24%) for −2.9 points of Hit@2 [−3.7, −2.0]. At λ=0 the optimizer is, as intended, almost identical to the ranker (−0.25 points Hit@2 and $-$£0.001 profit), the small gap coming from the margin floor removing some candidates. Every MILP solution satisfies every hard rule, while the unconstrained ranker top-2 would break the margin floor 0.037 times per basket. The stronger ranker also lifted the ranker’s own top-2, from Hit@2 16.7% and £0.184 in the first run to 17.8% and £0.205, so the optimizer’s relative gain is measured against a harder reference (first run: +17%).
 
 Three further observations. (i) A bundle-level floor behaves like the per-item floor here. (ii) With discounts allowed, the optimizer almost never discounts (mean discount 0.07%): under the assumed elasticity, giving away margin rarely pays. (iii) The solver is not a bottleneck: PuLP with HiGHS and exact enumeration agree on all 600 checked problems (maximum objective gap 0), with a mean MILP solve time of 2.7 ms per basket on a CPU.
 
 ### 6.3 Sensitivity to the simulated cost
 
-Figure 2b repeats the MILP λ=1 versus ranker comparison for three margin distributions and three random seeds each. The realized-profit gain stays positive in all nine scenarios (from £0.024 to £0.071 per basket) with every confidence interval above zero; the Hit@2 cost ranges from 2.3 to 6.6 points and is largest when margins are low, where the floor removes more candidates. This shows the direction of the result is not an artefact of one cost draw; it does not show its size on a real store’s costs.
+Figure 3b repeats the MILP λ=1 versus ranker comparison for three margin distributions and three random seeds each. The realized-profit gain stays positive in all nine scenarios (from £0.024 to £0.071 per basket) with every confidence interval above zero; the Hit@2 cost ranges from 2.3 to 6.6 points and is largest when margins are low, where the floor removes more candidates. This shows the direction of the result is not an artefact of one cost draw; it does not show its size on a real store’s costs.
 
 ### 6.4 A 30-day store simulation
 
-**Table 4.** 30-day store simulation: 4,480 real UCI test checkouts (2 October – 9 December 2011), 8,959 add-on offers per policy, weekly restock. **Simulated cost and stock.** Stochastic: mean ± s.d. over five seeds. Floor breaks count offers below a 15% item margin.
+**Table 5.** 30-day store simulation: 4,480 real UCI test checkouts (2 October – 9 December 2011), 8,959 add-on offers per policy, weekly restock. **Simulated cost and stock.** Stochastic: mean ± s.d. over five seeds. Floor breaks count offers below a 15% item margin.
 
 |                                                                                  | Add-on profit (£) |                       | Accept | Add-on | Overstock |     Floor |
 |:---------------------------------------------------------------------------------|------------------:|----------------------:|-------:|-------:|----------:|----------:|
@@ -185,13 +211,13 @@ Figure 2b repeats the MILP λ=1 versus ranker comparison for three margin distr
 
 ![Cumulative add-on profit over the 30 simulated days, replay acceptance (simulated cost and stock).](figures/fig7_retail_sim.png)
 
-*Figure 3. Cumulative add-on profit over the 30 simulated days, replay acceptance (simulated cost and stock).*
+*Figure 4. Cumulative add-on profit over the 30 simulated days, replay acceptance (simulated cost and stock).*
 
-Table 4 and Figure 3 show the store-level picture. MarginGraph (λ=1, item floor) is accepted less often than the ranker (7.5% against 8.9%) but each accepted add-on earns more (44.5% against 40.3% margin), so add-on profit over the month is 24% higher under replay and 19% higher under stochastic acceptance. The gap opens steadily rather than on a few days (Figure 3). The ranker would have offered 164 items below the 15% floor; MarginGraph offered none. On its own, the profit objective clears less overstock than the ranker (78 against 114 units); an overstock weight of 2 restores it (116 units) while keeping a 19% profit gain. Stockouts blocked 223 top-2 slots for every policy. Stochastic acceptance trusts the calibrated probabilities, whose limits are noted above, and all money in this section rests on simulated cost and stock.
+Table 5 and Figure 4 show the store-level picture. MarginGraph (λ=1, item floor) is accepted less often than the ranker (7.5% against 8.9%) but each accepted add-on earns more (44.5% against 40.3% margin), so add-on profit over the month is 24% higher under replay and 19% higher under stochastic acceptance. The gap opens steadily rather than on a few days (Figure 4). The ranker would have offered 164 items below the 15% floor; MarginGraph offered none. On its own, the profit objective clears less overstock than the ranker (78 against 114 units); an overstock weight of 2 restores it (116 units) while keeping a 19% profit gain. Stockouts blocked 223 top-2 slots for every policy. Stochastic acceptance trusts the calibrated probabilities, whose limits are noted above, and all money in this section rests on simulated cost and stock.
 
 ### 6.5 External validity on four further datasets
 
-**Table 5.** The unchanged pipeline on five datasets: Hit@10 on test, best baseline chosen on validation, paired 95% bootstrap CI of the difference. Only the first five rows count toward the pre-registered criterion.
+**Table 6.** The unchanged pipeline on five datasets: Hit@10 on test, best baseline chosen on validation, paired 95% bootstrap CI of the difference. Only the first five rows count toward the pre-registered criterion.
 
 | Dataset                                                                                                                                               | Best baseline | Pool recall | Baseline | LightGBM |     Difference [95% CI] | Verdict     |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|------------:|---------:|---------:|--------------------------:|:------------|
@@ -206,17 +232,23 @@ Table 4 and Figure 3 show the store-level picture. MarginGraph (λ=1, item flo
 
 ![LightGBM minus the best validation-selected baseline, Hit@10 points with paired 95% CIs. Filled: unchanged pipeline. Hollow: repeat-first pool.](figures/fig6_multidataset.png)
 
-*Figure 4. LightGBM minus the best validation-selected baseline, Hit@10 points with paired 95% CIs. Filled: unchanged pipeline. Hollow: repeat-first pool.*
+*Figure 5. LightGBM minus the best validation-selected baseline, Hit@10 points with paired 95% CIs. Filled: unchanged pipeline. Hollow: repeat-first pool.*
 
-Table 5 and Figure 4 report the unchanged pipeline. LightGBM wins on Ta Feng and Dunnhumby by margins similar to UCI, even though the best baseline differs (ItemKNN on Ta Feng, the customer’s own repeat purchases on Dunnhumby) and pool recall is much lower (40–47% against 65%). Olist is too sparse to decide (169 baskets; CI includes zero) and was excluded from the criterion by its 1,000-basket threshold. On Instacart the reranker *loses* to the simple repeat-purchase baseline by 3.0 points. Of the three public datasets that meet the size threshold, two are wins, so the pre-registered criterion is met (three of four counting UCI); we keep the Instacart loss as the official result.
+Table 6 and Figure 5 report the unchanged pipeline. LightGBM wins on Ta Feng and Dunnhumby by margins similar to UCI, even though the best baseline differs (ItemKNN on Ta Feng, the customer’s own repeat purchases on Dunnhumby) and pool recall is much lower (40–47% against 65%). Olist is too sparse to decide (169 baskets; CI includes zero) and was excluded from the criterion by its 1,000-basket threshold. On Instacart the reranker *loses* to the simple repeat-purchase baseline by 3.0 points. Of the three public datasets that meet the size threshold, two are wins, so the pre-registered criterion is met (three of four counting UCI); we keep the Instacart loss as the official result.
 
 ### 6.6 Why Instacart lost: the order of the candidate pool
 
-In Instacart 62% of lines are re-buys, and the best single model is the customer’s own purchase history. Yet the pool is filled in the UCI-tuned order, where EASE and decayed EASE take the first 150 slots before `repeat` is reached: pool recall is 51.7%, below the 59.5% that `repeat` alone reaches at depth 100. A reranker cannot rank an item that never enters the pool, so this is a retrieval failure, not a ranking failure, and it matches the repeat-item effect reported for next-basket recommendation (H. Hu et al. 2020; Li et al. 2023). We changed one thing, moving `repeat` (60 items) to the front of the source order. The change was chosen from the diagnosis and checked on validation (pool recall 51.5% → 68.0%) before test was looked at. On test, pool recall rises to 70.1% and LightGBM beats `repeat` by +4.1 points [3.7, 4.5]. Dunnhumby, which showed the same pattern (pool 46.9% against 45.0% for `repeat` alone), gains as well: pool recall 56.7%, and the win grows from +7.8 to +9.8 points [9.3, 10.3]. We have not yet rerun UCI with the repeat-first order, so we do not make it the default; a practical rule is to choose the order per store from the share of repeat purchases, on validation.
+In Instacart 62% of lines are re-buys, and the best single model is the customer’s own purchase history. Yet the pool is filled in the UCI-tuned order, where EASE and decayed EASE take the first 150 slots before `repeat` is reached: pool recall is 51.7%, below the 59.5% that `repeat` alone reaches at depth 100. A reranker cannot rank an item that never enters the pool, so this is a retrieval failure, not a ranking failure, and it matches the repeat-item effect reported for next-basket recommendation (H. Hu et al. 2020; Li et al. 2023). We changed one thing, moving `repeat` (60 items) to the front of the source order. The change was chosen from the diagnosis and checked on validation (pool recall 51.5% → 68.0%) before test was looked at. On test, pool recall rises to 70.1% and LightGBM beats `repeat` by +4.1 points [3.7, 4.5]. Figure 6 shows both effects side by side.
+
+![Effect of the candidate-pool order on the two repeat-heavy datasets. Left: share of test baskets whose hidden item is in the 150-item pool. Right: LightGBM Hit@10 minus the repeat-purchase baseline (points). Grey: the UCI-tuned order (official result); green: repeat-first order.](figures/fig8_pool_order.png)
+
+*Figure 6. Effect of the candidate-pool order on the two repeat-heavy datasets. Left: share of test baskets whose hidden item is in the 150-item pool. Right: LightGBM Hit@10 minus the repeat-purchase baseline (points). Grey: the UCI-tuned order (official result); green: repeat-first order.*
+
+Dunnhumby, which showed the same pattern (pool 46.9% against 45.0% for `repeat` alone), gains as well: pool recall 56.7%, and the win grows from +7.8 to +9.8 points [9.3, 10.3]. We have not yet rerun UCI with the repeat-first order, so we do not make it the default; a practical rule is to choose the order per store from the share of repeat purchases, on validation.
 
 ### 6.7 Stage 2 beyond UCI, and a first look at real cost
 
-**Table 6.** Optimizer (MILP) against the ranker’s top-2 on other datasets: realized gross profit per basket (dataset currency), paired 95% CI, and change in Hit@2 (points). Instacart has no prices.
+**Table 7.** Optimizer (MILP) against the ranker’s top-2 on other datasets: realized gross profit per basket (dataset currency), paired 95% CI, and change in Hit@2 (points). Instacart has no prices.
 
 | Dataset                                                                                                                                | Unit cost         | Ranker top-2 |  MILP | Profit gain [95% CI]           | ΔHit@2 |
 |:---------------------------------------------------------------------------------------------------------------------------------------|:------------------|-------------:|------:|:---------------------------------|--------------:|
@@ -228,13 +260,19 @@ In Instacart 62% of lines are re-buys, and the best single model is the customer
 
 <sub>† Undocumented field read as cost; unverified. ‡ λ=1; all other rows λ=0.5 with the item floor.</sub>
 
-With simulated cost, the Stage 2 result transfers: the optimizer adds 13–17% gross profit per basket on Ta Feng and Dunnhumby for about one point of Hit@2 (Table 6), close to the 14% on UCI.
+With simulated cost, the Stage 2 result transfers: the optimizer adds 13–17% gross profit per basket on Ta Feng and Dunnhumby for about one point of Hit@2 (Table 7), close to the 14% on UCI.
 
-Ta Feng’s undocumented `ASSET` field gives a first, unverified look at real grocery margins. Read as unit cost, it implies that only 76% of products clear a 15% gross margin. The optimizer still raises profit per basket by 25%, but Hit@2 halves (10.1% → 5.2%), and the drop is already there at λ=0 (5.3%): it is the floor, not the profit weight, that removes the items shoppers buy. Replacing the item floor with a bundle floor recovers part of the hit rate (5.8%) and gives the largest profit gain, +38%. The lesson is that a fixed 15% per-item floor, harmless with 40% simulated margins, is too strict for a low-margin grocer; the floor should be set per store, or applied to the bundle.
+Ta Feng’s undocumented `ASSET` field gives a first, unverified look at real grocery margins. Read as unit cost, it implies that only 76% of products clear a 15% gross margin. The optimizer still raises profit per basket by 25%, but Hit@2 halves (10.1% → 5.2%), and the drop is already there at λ=0 (5.3%): it is the floor, not the profit weight, that removes the items shoppers buy. Replacing the item floor with a bundle floor recovers part of the hit rate (5.8%) and gives the largest profit gain, +38% (Figure 7).
+
+![Ta Feng with the undocumented ASSET field read as unit cost. Left: Hit@2. Right: realized gross profit per basket (dataset currency). The drop in hit rate appears already at λ = 0, so it is caused by the 15% item floor, not by the profit weight.](figures/fig9_tafeng_floor.png)
+
+*Figure 7. Ta Feng with the undocumented ASSET field read as unit cost. Left: Hit@2. Right: realized gross profit per basket (dataset currency). The drop in hit rate appears already at λ = 0, so it is caused by the 15% item floor, not by the profit weight.*
+
+The lesson is that a fixed 15% per-item floor, harmless with 40% simulated margins, is too strict for a low-margin grocer; the floor should be set per store, or applied to the bundle.
 
 ### 6.8 Small LLMs as rerankers: a negative result
 
-**Table 7.** LLM reranking on the top-20 LightGBM slate, 1,000 random UCI test baskets, same slates for all rows. Differences are paired against LightGBM with 95% bootstrap CIs, in points. Kaggle T4 GPU.
+**Table 8.** LLM reranking on the top-20 LightGBM slate, 1,000 random UCI test baskets, same slates for all rows. Differences are paired against LightGBM with 95% bootstrap CIs, in points. Kaggle T4 GPU.
 
 | System                           | Hit@5 | Hit@10 | Hit@5 $-$ LightGBM           |
 |:---------------------------------|------:|-------:|:-----------------------------|
@@ -250,9 +288,9 @@ Ta Feng’s undocumented `ASSET` field gives a first, unverified look at real gr
 
 ![Hit@5 of LLM-based rerankers on the same 1,000 UCI test slates.](figures/fig4_llm.png)
 
-*Figure 5. Hit@5 of LLM-based rerankers on the same 1,000 UCI test slates.*
+*Figure 8. Hit@5 of LLM-based rerankers on the same 1,000 UCI test slates.*
 
-We asked Qwen2.5-Instruct (Qwen Team 2024) a yes/no question for each (basket, candidate) pair (“Would this customer also add *X* to the same order?”, with the basket’s product descriptions) and ranked by the probability of “Yes”. Table 7 and Figure 5 report the results. Both model sizes are far behind LightGBM, and the 3B model is no better than the 1.5B model. Averaging LLM and LightGBM ranks still loses at Hit@5, and at Hit@10 the 1.5B blend is not significantly different (−1.3 [−3.0, $+0.4$]) while the 3B blend loses (−2.2 [−4.0, −0.4]). A logistic stacker fit on 1,147 held-out validation baskets, with LightGBM and 3B scores as inputs, ties LightGBM (−0.1 points at both Hit@5 and Hit@10) and gives the LLM features near-zero weight (0.015 and 0.055 against 0.736 for LightGBM, on standardised inputs). In short, zero-shot Qwen adds no measurable signal beyond the trained reranker on this task.
+We asked Qwen2.5-Instruct (Qwen Team 2024) a yes/no question for each (basket, candidate) pair (“Would this customer also add *X* to the same order?”, with the basket’s product descriptions) and ranked by the probability of “Yes”. Table 8 and Figure 8 report the results. Both model sizes are far behind LightGBM, and the 3B model is no better than the 1.5B model. Averaging LLM and LightGBM ranks still loses at Hit@5, and at Hit@10 the 1.5B blend is not significantly different (−1.3 [−3.0, $+0.4$]) while the 3B blend loses (−2.2 [−4.0, −0.4]). A logistic stacker fit on 1,147 held-out validation baskets, with LightGBM and 3B scores as inputs, ties LightGBM (−0.1 points at both Hit@5 and Hit@10) and gives the LLM features near-zero weight (0.015 and 0.055 against 0.736 for LightGBM, on standardised inputs). In short, zero-shot Qwen adds no measurable signal beyond the trained reranker on this task.
 
 This agrees with Hou et al. (2024), who find zero-shot LLM rankers trail trained models, and suggests the gap is larger for wholesale baskets described only by terse product names. We then fine-tuned the 1.5B model with LoRA (E. J. Hu et al. 2022; Bao et al. 2023) on 10,772 training-period pairs (each hidden item with three LightGBM hard negatives from the same slate; two epochs, class-weighted yes/no loss). The weighted loss fell to about $\ln 2$ within 300 steps and stayed there, and the fine-tuned model is worse than zero-shot: Hit@5 7.8%, below the 11.6% of a random order of the same slate (the target is in the slate for 46.3% of baskets). Its blend with LightGBM also loses at Hit@10 (−5.7 [−7.7, −3.6]). A likely cause, which we did not test, is that LightGBM’s near-misses are often the same product in another colour or size, which terse product names cannot separate. We therefore keep LightGBM as MarginGraph’s ranker and limit the LLM to explanations and to products with no purchase history (7.1% of UCI test targets); neither use is evaluated here.
 
