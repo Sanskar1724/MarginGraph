@@ -65,6 +65,35 @@ This paper makes five contributions.
 None of the five datasets has a verified unit cost, so every profit number depends on a simulation that we state in full (Section~\ref{sec:erp}).
 We treat this as the main limitation of the study rather than a footnote.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig0_architecture.pdf}
+\caption{MarginGraph at a glance. Stage~1 decides \emph{what the shopper is likely to add}; Stage~2 decides \emph{what to show}, trading relevance against profit under hard business rules that no model can override.}\label{fig:arch}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Main results at a glance. Hit@10: the item the shopper actually added is among the top 10 suggestions. All intervals are paired 95\% bootstrap CIs. $^\ast$Profit rests on simulated unit cost and stock.}
+\label{tab:glance}
+\small
+\begin{tabular}{p{0.36\linewidth}p{0.56\linewidth}}
+\toprule
+Question & Answer (section) \\
+\midrule
+Does the reranker beat strong baselines? & Yes on UCI: Hit@10 38.1\% vs 31.1\% for EASE, +7.0 [6.0, 8.0] (\ref{sec:s1}) \\
+Does it transfer to other stores? & Ta Feng +8.3 [7.7, 8.8], Dunnhumby +7.8 [7.2, 8.4], Olist tie, Instacart $-3.0$ [$-3.6$, $-2.4$] (\ref{sec:ext}) \\
+Why did Instacart lose, and can it be fixed? & Past purchases entered the pool too late; repeat-first pool: +4.1 [3.7, 4.5] (\ref{sec:pool}) \\
+Does the optimizer add profit?$^\ast$ & +14\% (UCI), +17\% (Ta Feng), +13\% (Dunnhumby) per basket for $\approx$1 pt of Hit@2 (\ref{sec:s2}, \ref{sec:s2public}) \\
+What happens over a month in a store?$^\ast$ & \pounds1,141 vs \pounds920 add-on profit (+24\%), 0 vs 164 offers under the margin floor (\ref{sec:sim}) \\
+Is a 15\% floor always right? & No: with Ta Feng's cost-like field, it halves Hit@2; a bundle floor works better (\ref{sec:s2public}) \\
+Do small LLMs help ranking? & No: zero-shot, blended, stacked and LoRA-tuned Qwen2.5 all lose or tie (\ref{sec:llm}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:arch} shows the system and Table~\ref{tab:glance} summarises the answers this paper gives.
+Section~2 reviews related work, Section~3 describes the data and the task, Section~4 the method, Section~5 the experimental protocol, and Section~6 the results; Sections~7--9 discuss what transfers, the limitations, and next steps.
+
 % ---------------------------------------------------------------------------
 \section{Related work}
 
@@ -128,7 +157,15 @@ Olist & Brazil marketplace & 62,626 & 61,294 & 60,000 & 169 & price / -- \\
 \paragraph{Task.}
 For each evaluation invoice with 2--50 distinct products we hide one product at random; the model sees the remaining basket (and the customer's earlier history, if known) and must rank the full catalog.
 The hidden product is the single relevant item.
-We report Hit@$K$, NDCG@10 and MRR.
+We report three standard ranking metrics.
+With $\mathrm{rank}_b$ the position of the hidden item in the ranked list for basket $b$ and $B$ the set of test baskets,
+\begin{equation*}
+\text{Hit@}K=\frac{1}{|B|}\sum_{b\in B}\mathbb{1}[\mathrm{rank}_b\le K],\qquad
+\text{NDCG@10}=\frac{1}{|B|}\sum_{b\in B}\frac{\mathbb{1}[\mathrm{rank}_b\le 10]}{\log_2(\mathrm{rank}_b+1)},\qquad
+\text{MRR}=\frac{1}{|B|}\sum_{b\in B}\frac{1}{\mathrm{rank}_b}.
+\end{equation*}
+Hit@10 is the headline metric: it is the share of baskets in which the product the shopper really added appears among ten suggestions.
+For Stage~2, where only two items are shown, we report Hit@2.
 
 \paragraph{Split.}
 One global cutoff per boundary, with no invoice in two splits.
@@ -147,6 +184,7 @@ The same audit on Dunnhumby gives a weaker signal (1.7$\times$ over shuffled bas
 \section{Method}
 
 \subsection{Stage 1: retrieval, reranking and calibration}
+Stage~1 follows the retrieve-then-rerank pattern of Figure~\ref{fig:arch}: cheap scorers each propose candidates, a learned model orders the union, and a calibration step turns its scores into probabilities that Stage~2 can multiply by money.
 
 \paragraph{Baselines and candidate pool.}
 Seven classical scorers are fit on the training period: global popularity, 90-day popularity, the customer's repeat purchases, co-purchase counts, ItemKNN~\citep{sarwar2001itemcf}, EASE ($\lambda{=}250$, chosen on validation)~\citep{steck2019ease} and ALS (64 factors)~\citep{hu2008implicit}.
@@ -179,6 +217,12 @@ $w_i\in[1,2]$ up-weights items flagged as overstock.
 The \emph{bundle floor} variant replaces the per-item floor with $\sum \pi_{i,d} x_{i,d} \ge 0.15 \sum r_{i,d} x_{i,d}$, so one thin-margin item can be offered if its partner carries it.
 Discounts use an \emph{assumed} response $p_{i,d}=\min(1,\,p_i(1+1.5d))$ for $d\in\{0,0.1,0.2\}$; this elasticity is not estimated from data.
 The program is built in PuLP~\citep{mitchell2011pulp} and solved with HiGHS~\citep{huangfu2018highs}; because at most two items are chosen, exact enumeration of all singles and pairs gives the same optimum and is used for the bulk offline sweeps.
+
+\paragraph{Illustrative example (hypothetical numbers).}
+Suppose the reranker gives candidate A a probability of 10\% at a price of \pounds2.00 and a 10\% margin, and candidate B 8\% at \pounds3.00 and a 45\% margin.
+A plain ranker shows A first.
+At $\lambda{=}1$ the optimizer compares expected profit, $0.10\times\pounds0.20=\pounds0.020$ for A against $0.08\times\pounds1.35=\pounds0.108$ for B, and prefers B; in any case A is excluded by the 15\% floor.
+The example shows the trade-off the rest of the paper measures: a slightly lower chance of acceptance, a much higher value when accepted.
 
 \subsection{Simulated cost and stock}\label{sec:erp}
 Unit cost is $c_i=r_i(1-m_i)$ with gross margin $m_i\sim\text{Beta}(4,6)$ (mean 40\%).
@@ -217,7 +261,7 @@ The LLM experiments ran on one free Kaggle T4 GPU.
 % ---------------------------------------------------------------------------
 \section{Results}
 
-\subsection{Stage 1 on UCI Online Retail II}
+\subsection{Stage 1 on UCI Online Retail II}\label{sec:s1}
 
 \begin{table}[t]
 \centering
@@ -279,7 +323,7 @@ Together, with the pool enlarged to 150 (chosen over 100 and 200 on validation),
 Against the first run on the same test baskets, Hit@10 rose by 2.5 points [1.6, 3.4] and NDCG@10 by 0.020 [0.015, 0.025].
 An item2vec source and four LightGBM parameter sets lost on validation and were dropped.
 
-\subsection{Stage 2 on UCI Online Retail II}
+\subsection{Stage 2 on UCI Online Retail II}\label{sec:s2}
 
 \begin{table}[t]
 \centering
@@ -413,6 +457,14 @@ A reranker cannot rank an item that never enters the pool, so this is a retrieva
 We changed one thing, moving \texttt{repeat} (60 items) to the front of the source order.
 The change was chosen from the diagnosis and checked on validation (pool recall 51.5\% $\to$ 68.0\%) before test was looked at.
 On test, pool recall rises to 70.1\% and LightGBM beats \texttt{repeat} by +4.1 points [3.7, 4.5].
+Figure~\ref{fig:pool} shows both effects side by side.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{figures/fig8_pool_order.pdf}
+\caption{Effect of the candidate-pool order on the two repeat-heavy datasets. Left: share of test baskets whose hidden item is in the 150-item pool. Right: LightGBM Hit@10 minus the repeat-purchase baseline (points). Grey: the UCI-tuned order (official result); green: repeat-first order.}\label{fig:pool}
+\end{figure}
+
 Dunnhumby, which showed the same pattern (pool 46.9\% against 45.0\% for \texttt{repeat} alone), gains as well: pool recall 56.7\%, and the win grows from +7.8 to +9.8 points [9.3, 10.3].
 We have not yet rerun UCI with the repeat-first order, so we do not make it the default; a practical rule is to choose the order per store from the share of repeat purchases, on validation.
 
@@ -443,10 +495,16 @@ With simulated cost, the Stage~2 result transfers: the optimizer adds 13--17\% g
 Ta Feng's undocumented \texttt{ASSET} field gives a first, unverified look at real grocery margins.
 Read as unit cost, it implies that only 76\% of products clear a 15\% gross margin.
 The optimizer still raises profit per basket by 25\%, but Hit@2 halves (10.1\% $\to$ 5.2\%), and the drop is already there at $\lambda{=}0$ (5.3\%): it is the floor, not the profit weight, that removes the items shoppers buy.
-Replacing the item floor with a bundle floor recovers part of the hit rate (5.8\%) and gives the largest profit gain, +38\%.
+Replacing the item floor with a bundle floor recovers part of the hit rate (5.8\%) and gives the largest profit gain, +38\% (Figure~\ref{fig:tafeng}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/fig9_tafeng_floor.pdf}
+\caption{Ta Feng with the undocumented \texttt{ASSET} field read as unit cost. Left: Hit@2. Right: realized gross profit per basket (dataset currency). The drop in hit rate appears already at $\lambda{=}0$, so it is caused by the 15\% item floor, not by the profit weight.}\label{fig:tafeng}
+\end{figure}
 The lesson is that a fixed 15\% per-item floor, harmless with 40\% simulated margins, is too strict for a low-margin grocer; the floor should be set per store, or applied to the bundle.
 
-\subsection{Small LLMs as rerankers: a negative result}
+\subsection{Small LLMs as rerankers: a negative result}\label{sec:llm}
 
 \begin{table}[t]
 \centering
