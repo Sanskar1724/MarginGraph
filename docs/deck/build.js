@@ -1,4 +1,5 @@
-// MarginGraph pitch deck. Every number comes from docs/RESULTS.md (run of 2026-10-26).
+// MarginGraph pitch deck (14 slides). Numbers: docs/RESULTS.md (UCI, 2026-10-26),
+// docs/RESULTS_PUBLIC.md (PR #17, five datasets) and results/retail_sim/ (PR #18), as in paper/main.tex.
 const pptxgen = require("pptxgenjs");
 const React = require("react");
 const ReactDOMServer = require("react-dom/server");
@@ -25,7 +26,7 @@ const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 pres.title = "MarginGraph: checkout add-ons that sell and protect margin";
-pres.author = "San (MarginGraph)";
+pres.author = "Sanskar Chandawar";
 const C = pres.SchemeColor;
 
 // ---------- layouts ----------
@@ -83,6 +84,17 @@ function stat(slide, big, label, x, y, w, { dark = false, bigColor, size = 54 } 
 const source = (slide, t, dark = false) =>
   txt(slide, t, { x: 0.6, y: 6.55, w: 12.1, h: 0.35, fontSize: 10, italic: true, color: dark ? C.accent6 : C.accent5 });
 
+
+// Shared chart styling, so every chart's labels look the same.
+const chartBase = (extra) => ({
+  showTitle: false,
+  showValue: true, dataLabelFontSize: 13, dataLabelColor: H.dk1, dataLabelFontFace: "+mn-lt",
+  catAxisLabelColor: H.accent5, catAxisLabelFontSize: 13, catAxisLabelFontFace: "+mn-lt",
+  valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" },
+  showLegend: false, ...extra,
+});
+const chartTitle = (s, t, x, y, w) => txt(s, t, { x, y, w, h: 0.4, fontSize: 14, bold: true, color: C.accent5 });
+
 (async () => {
   // ===== 1. Title =====
   pres.addSection({ title: "Opening" });
@@ -90,305 +102,225 @@ const source = (slide, t, dark = false) =>
   s.addText("MarginGraph", { placeholder: "title" });
   s.addText("Checkout add-ons that shoppers buy and that keep the store's margin safe", { placeholder: "body" });
   await iconCircle(s, fa.FaBasketShopping, 0.8, 1.05, 1.0, C.accent1, "basket icon");
-  txt(s, "Recommendation + margin optimization for online retail  ·  Pitch deck, October 2026", { x: 0.8, y: 6.3, w: 11.5, h: 0.4, fontSize: 14, color: C.accent6 });
-  s.addNotes("MarginGraph picks up to two add-on products at checkout. It chooses items the shopper is likely to buy and that earn the store money, and it never suggests anything below a 15% margin. Everything in this deck comes from experiments on real store data; where something is simulated or a target, the slide says so.");
+  txt(s, "Sanskar Chandawar  ·  github.com/Sanskar1724/MarginGraph  ·  October 2026", { x: 0.8, y: 6.3, w: 11.5, h: 0.4, fontSize: 14, color: C.accent6 });
+  s.addNotes("MarginGraph picks up to two add-on products at checkout: items the shopper is likely to buy that also earn the store money, never below a 15% margin. Everything in this deck is measured on public store data. Where cost or stock is simulated, the slide says so.");
 
   // ===== 2. Problem =====
   pres.addSection({ title: "Problem and solution" });
   s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Problem and solution" });
-  s.addText("“Customers also bought” optimizes clicks, not profit", { placeholder: "title" });
+  s.addText("Recommenders chase clicks. Stores live on margin", { placeholder: "title" });
   const probs = [
-    [fa.FaCoins, "Low-profit suggestions", "Cheap best sellers get clicked, but they earn the store very little."],
-    [fa.FaArrowTrendDown, "Margin leaks", "Suggested items can sit below a healthy margin, especially after discounts."],
-    [fa.FaBoxesStacked, "Overstock", "Slow items tie up cash in the warehouse until a heavy markdown."],
-    [fa.FaUsers, "Generic for everyone", "Every shopper sees the same items, so relevance and clicks stay low."],
-  ];
-  for (let i = 0; i < 4; i++) {
-    const x = 0.6 + i * 3.08;
-    card(s, x, 1.75, 2.82, 4.3, C.background2, "problem card " + (i + 1));
-    await iconCircle(s, probs[i][0], x + 0.3, 2.05, 0.85, i === 1 ? C.accent4 : C.accent1, probs[i][1] + " icon");
-    txt(s, probs[i][1], { x: x + 0.3, y: 3.15, w: 2.3, h: 0.8, fontSize: 20, bold: true, color: C.text2, fontFace: "Cambria" });
-    txt(s, probs[i][2], { x: x + 0.3, y: 4.0, w: 2.3, h: 1.9, fontSize: 15, color: C.text1 });
-  }
-  txt(s, "A relevant item can still be a bad suggestion if its margin is thin or its stock is already low.", { x: 0.6, y: 6.25, w: 12.1, h: 0.4, fontSize: 15, italic: true, color: C.accent1 });
-  s.addNotes("Most recommenders are built to maximize clicks. That pushes cheap popular items, ignores margin, and does nothing about overstock. The store pays for that in profit.");
-
-  // ===== 3. Solution =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Problem and solution" });
-  s.addText("A ranker for relevance, an optimizer for profit", { placeholder: "title" });
-  const sol = [
-    [fa.FaMagnifyingGlassChart, "1. Ranker decides what is relevant", "LightGBM learns from the store's own baskets which products go together, and gives each candidate a calibrated chance of purchase."],
-    [fa.FaScaleBalanced, "2. Optimizer decides what to show", "A small integer program picks the 2 add-ons with the most expected profit, with an overstock push the store controls."],
-    [fa.FaShieldHalved, "3. Hard rules live in code", "15% margin floor, at most 2 add-ons, no out-of-stock items. No model ever sets a price or overrides the floor."],
-  ];
-  for (let i = 0; i < 3; i++) {
-    const y = 1.7 + i * 1.6;
-    await iconCircle(s, sol[i][0], 0.6, y, 1.0, i === 2 ? C.accent2 : C.accent1, "solution icon " + (i + 1));
-    txt(s, sol[i][1], { x: 1.9, y: y - 0.02, w: 6.0, h: 0.45, fontSize: 20, bold: true, color: C.text2, fontFace: "Cambria" });
-    txt(s, sol[i][2], { x: 1.9, y: y + 0.45, w: 6.0, h: 1.0, fontSize: 15 });
-  }
-  card(s, 8.4, 1.7, 4.3, 4.6, C.text2, "promise card");
-  txt(s, "The promise", { x: 8.75, y: 2.0, w: 3.6, h: 0.4, fontSize: 16, bold: true, color: C.accent2 });
-  txt(s, "Suggestions that sell and keep your margin, with a hard floor you control.", { x: 8.75, y: 2.5, w: 3.6, h: 2.0, fontSize: 24, fontFace: "Cambria", color: C.background1 });
-  txt(s, "One slider (λ) sets the balance between pure relevance (0) and expected profit (1).", { x: 8.75, y: 4.75, w: 3.6, h: 1.3, fontSize: 15, color: C.accent6 });
-  s.addNotes("The design choice is to let each part do what it is good at. The ranker never sees money; the optimizer never guesses relevance. Business rules are enforced by plain code, so they hold even if a model is wrong.");
-
-  // ===== 4. How it works =====
-  pres.addSection({ title: "How it works" });
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "How it works" });
-  s.addText("From basket to two margin-safe add-ons", { placeholder: "title" });
-  const steps = [
-    [fa.FaCartShopping, "Basket", "Items in the cart, plus history if the customer is known"],
-    [fa.FaFilter, "Shortlist", "EASE (3 variants), text, fresh sales, ItemKNN, ALS, repeat, co-purchase, popularity: up to 150 items"],
-    [fa.FaRankingStar, "LightGBM ranker", "~20 features, LambdaRank, isotonic calibration: top 20"],
-    [fa.FaCalculator, "PuLP optimizer", "Max expected profit, 15% floor, max 2, stock rules"],
-    [fa.FaGift, "Add-ons", "Up to 2 suggestions, with a best-seller fallback"],
-  ];
-  for (let i = 0; i < 5; i++) {
-    const x = 0.6 + i * 2.5;
-    card(s, x, 1.9, 2.15, 3.6, i === 3 ? C.text2 : C.background2, "step card " + (i + 1));
-    await iconCircle(s, steps[i][0], x + 0.62, 2.15, 0.9, i === 3 ? C.accent2 : C.accent1, steps[i][1] + " icon");
-    txt(s, steps[i][1], { x: x + 0.15, y: 3.2, w: 1.85, h: 0.5, fontSize: 18, bold: true, align: "center", fontFace: "Cambria", color: i === 3 ? C.background1 : C.text2 });
-    txt(s, steps[i][2], { x: x + 0.15, y: 3.75, w: 1.85, h: 1.65, fontSize: 14, align: "center", color: i === 3 ? C.accent6 : C.text1 });
-    if (i < 4) s.addShape(pres.shapes.CHEVRON, { x: x + 2.2, y: 3.52, w: 0.26, h: 0.36, fill: { color: C.accent3 }, line: { type: "none" }, flipH: false, objectName: "arrow " + (i + 1) });
-  }
-  txt(s, "maximize  Σ x·p·[(1−λ)·P̄ + λ·w·(price − cost)]   subject to  ≤ 2 add-ons,  margin ≥ 15%,  in stock", { x: 0.6, y: 5.85, w: 12.1, h: 0.45, fontSize: 15, fontFace: "Cambria", italic: true, color: C.accent1, align: "center" });
-  source(s, "p = calibrated purchase chance, w = overstock weight 1.0–2.0, P̄ = mean unit profit. Full model in optimize.py.");
-  s.addNotes("Stage 1a builds a shortlist of up to 100 products from six standard methods. Stage 1b, a LightGBM LambdaRank model, sorts it and calibrates scores into purchase probabilities. Stage 2 solves a tiny integer program over the top 20 in about 3 milliseconds.");
-
-  // ===== 5. Real data =====
-  pres.addSection({ title: "Results" });
-  s = pres.addSlide({ masterName: "MG_DARK", sectionTitle: "Results" });
-  s.addText("Tested on two years of real UK store sales", { placeholder: "title" });
-  const st = [["1.07M", "raw invoice lines\n(UCI Online Retail II, 2009–2011)"], ["39,516", "invoices after cleaning"], ["4,707", "products in the catalog"], ["4,480", "real test baskets\n(Oct–Dec 2011)"]];
-  st.forEach((v, i) => stat(s, v[0], v[1], 0.6 + i * 3.1, 1.85, 2.9, { dark: true }));
-  card(s, 0.6, 4.3, 12.1, 1.9, "1C4A3C", "method card");
-  txt(s, [
-    { text: "How we test: ", options: { bold: true, color: C.accent2 } },
-    { text: "split by date so the model never sees the future. In each test basket one item is hidden; the system sees the rest and must suggest it. Every comparison is paired on the same baskets with a 95% bootstrap confidence interval.", options: { color: C.background1 } },
-  ], { x: 0.95, y: 4.55, w: 11.4, h: 1.4, fontSize: 17 });
-  source(s, "Before building anything we checked the signal: co-purchase finds the hidden item 16.1% of the time on real baskets vs 4.4% on shuffled ones.", true);
-  s.addNotes("The data is real: real baskets and real prices from a UK gift store. The test is honest: a time split, a hidden item per basket, and confidence intervals on every comparison. 7.1% of test items never appeared before, so no model can exceed 92.9%.");
-
-  // ===== 6. Relevance =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
-  s.addText("The ranker beats every standard method", { placeholder: "title" });
-  const models = ["Popularity", "Co-purchase", "Repeat purchase", "ALS", "ItemKNN", "EASE", "MarginGraph ranker"];
-  const hit10 = [3.1, 13.0, 13.4, 17.3, 22.7, 31.1, 38.1];
-  s.addChart(pres.charts.BAR, [{ name: "Hit@10 (%)", labels: models, values: hit10 }], {
-    x: 0.6, y: 1.6, w: 7.6, h: 4.8, barDir: "bar",
-    chartColors: [H.accent6, H.accent6, H.accent6, H.accent6, H.accent6, H.accent3, H.accent1],
-    showTitle: true, title: "Hidden item in top 10 suggestions (%), test set", titleFontSize: 14, titleColor: H.dk2, titleFontFace: "+mn-lt",
-    showValue: true, dataLabelPosition: "outEnd", dataLabelFontSize: 12, dataLabelColor: H.dk1, dataLabelFontFace: "+mn-lt", dataLabelFormatCode: "0.0",
-    catAxisLabelColor: H.accent5, catAxisLabelFontSize: 12, catAxisLabelFontFace: "+mn-lt",
-    valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" }, valAxisMaxVal: 42,
-    showLegend: false, barGapWidthPct: 45, objectName: "Hit@10 chart",
-  });
-  stat(s, "+7.0 pts", "Hit@10 over EASE, the best standard method\n95% CI [6.0, 8.0]", 8.8, 1.7, 3.9, { size: 48 });
-  stat(s, "0.237", "NDCG@10 vs 0.188 for EASE\n95% CI of the gain [0.043, 0.055]", 8.8, 3.75, 3.9, { size: 48 });
-  source(s, "Measured, real baskets. Shortlist recall@150 = 65.3% (was 58.0% at 100), which caps any ranker.");
-  s.addNotes("On 4,480 real test baskets the LightGBM ranker puts the hidden item in its top 10 38.1% of the time, against 31.1% for EASE, the strongest standard method. The gain of 7.0 points has a confidence interval well above zero.");
-
-  // ===== 7. Profit =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
-  s.addText("More profit per basket, zero floor breaks", { placeholder: "title" });
-  const strat = ["Popularity top 2", "Co-purchase top 2", "Ranker top 2", "Optimizer λ=0.5", "Optimizer λ=1.0"];
-  const prof = [0.013, 0.072, 0.205, 0.234, 0.255];
-  s.addChart(pres.charts.BAR, [{ name: "Realized profit (£ per basket)", labels: strat, values: prof }], {
-    x: 0.6, y: 1.6, w: 7.6, h: 4.7, barDir: "col",
-    chartColors: [H.accent6, H.accent6, H.accent3, H.accent1, H.accent1],
-    showTitle: true, title: "Realized gross profit, £ per basket (simulated cost)", titleFontSize: 14, titleColor: H.dk2, titleFontFace: "+mn-lt",
-    showValue: true, dataLabelPosition: "outEnd", dataLabelFontSize: 12, dataLabelColor: H.dk1, dataLabelFontFace: "+mn-lt", dataLabelFormatCode: "0.000",
-    catAxisLabelColor: H.accent5, catAxisLabelFontSize: 12, catAxisLabelFontFace: "+mn-lt",
-    valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" }, valAxisMaxVal: 0.26,
-    showLegend: false, barGapWidthPct: 50, objectName: "profit chart",
-  });
-  stat(s, "+14%", "profit per basket at λ=0.5 vs the ranker's top 2,\nfor 1.1 pts fewer hits", 8.8, 1.55, 3.9, { size: 48 });
-  stat(s, "+24%", "profit at λ=1.0, for 2.9 pts fewer hits", 8.8, 3.25, 3.9, { size: 48 });
-  stat(s, "0", "margin-floor breaks, vs 0.037 per basket\nfor the ranker's top 2", 8.8, 4.75, 3.9, { size: 48, bigColor: C.accent2 });
-  source(s, "Simulated: the dataset has real prices but no unit cost or stock, so cost and stock are simulated. Profit claims need a real store to confirm.");
-  s.addNotes("Realized profit only counts the item the customer really bought. At lambda 0.5 the optimizer earns 14% more per basket than showing the ranker's top two, for about one point fewer hits, and with zero margin-floor breaks. Be clear: unit cost and stock were simulated because the public dataset does not include them.");
-
-  // ===== 8. Robustness =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
-  s.addText("The result holds when we change the assumptions", { placeholder: "title" });
-  const rob = [
-    [fa.FaFlask, "9 of 9", "cost scenarios keep a positive profit gain", "3 margin distributions × 3 seeds; gain +£0.024 to +£0.071 per basket, every CI above zero"],
-    [fa.FaCircleCheck, "600 / 600", "problems solved exactly", "PuLP (HiGHS) matches brute-force enumeration on every test problem"],
-    [fa.FaStopwatch, "2.7 ms", "mean optimizer solve time", "Solver step; the API measured p50 22 ms in a container"],
-    [fa.FaBoxOpen, "116 vs 78", "overstock units cleared", "Overstock weight 2.0 vs 1.0 in a stock replay, for 3.7% less profit"],
-  ];
-  for (let i = 0; i < 4; i++) {
-    const x = 0.6 + (i % 2) * 6.15, y = 1.65 + Math.floor(i / 2) * 2.45;
-    card(s, x, y, 5.95, 2.2, C.background2, "robustness card " + (i + 1));
-    await iconCircle(s, rob[i][0], x + 0.3, y + 0.3, 0.8, C.accent1, rob[i][2] + " icon");
-    txt(s, rob[i][1], { x: x + 1.35, y: y + 0.22, w: 4.4, h: 0.6, fontSize: 30, bold: true, fontFace: "Cambria", color: C.accent1 });
-    txt(s, rob[i][2], { x: x + 1.35, y: y + 0.82, w: 4.4, h: 0.35, fontSize: 16, bold: true, color: C.text2 });
-    txt(s, rob[i][3], { x: x + 1.35, y: y + 1.2, w: 4.4, h: 0.85, fontSize: 14, color: C.accent5 });
-  }
-  s.addNotes("Because cost is simulated we stress-tested it: nine combinations of margin distribution and random seed, and the gain stayed positive in all of them. The solver is exact and fast. The overstock weight is a single store setting that trades a little profit for faster clearance.");
-
-  // ===== 9. LLM honesty =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
-  s.addText("An LLM ranker lost to the trained model", { placeholder: "title" });
-  const hdr = (t) => ({ text: t, options: { bold: true, color: C.background1, fill: { color: C.text2 } } });
-  const rows = [
-    [hdr("Test (1,000 paired baskets)"), hdr("Hit@5"), hdr("vs LightGBM 27.6%"), hdr("Verdict")],
-    ["Qwen2.5-1.5B, zero-shot", "16.8%", "−10.8 [−13.7, −7.9]", "NO-GO"],
-    ["Qwen2.5-1.5B blended with LightGBM", "23.2%", "−4.4 [−6.5, −2.4]", "NO-GO"],
-    ["Qwen2.5-3B, zero-shot", "16.6%", "−11.0 [−13.7, −8.4]", "NO-GO"],
-    ["Qwen2.5-3B as an extra feature", "27.5%", "−0.1 [−0.6, +0.3]", "NO-GO"],
-  ];
-  s.addTable(rows, {
-    x: 0.6, y: 1.65, w: 7.9, colW: [3.5, 1.1, 2.2, 1.1], fontSize: 14, fontFace: "Calibri", color: C.text1,
-    border: { type: "solid", pt: 0.75, color: H.accent6 }, rowH: 0.55, valign: "middle", objectName: "LLM results table",
-  });
-  card(s, 8.9, 1.65, 3.8, 4.6, C.background2, "lesson card");
-  await iconCircle(s, fa.FaLightbulb, 9.2, 1.95, 0.8, C.accent2, "lesson icon");
-  txt(s, "What it tells us", { x: 9.2, y: 2.95, w: 3.3, h: 0.4, fontSize: 18, bold: true, fontFace: "Cambria", color: C.text2 });
-  txt(s, "A general LLM reading product names knows less about this store's buying patterns than a model trained on its baskets. A bigger model did not help.", { x: 9.2, y: 3.4, w: 3.3, h: 1.7, fontSize: 14 });
-  txt(s, "A LoRA fine-tune also lost (Hit@5 7.8%, below random order). The LLM's role is new products and plain-language explanations, not ranking.", { x: 9.2, y: 5.05, w: 3.3, h: 1.1, fontSize: 13, color: C.accent1 });
-  txt(s, "We publish failures too. A feature only ships when it beats the current model with a confidence interval above zero.", { x: 0.6, y: 4.75, w: 7.9, h: 0.8, fontSize: 15, italic: true, color: C.accent1 });
-  source(s, "Run on a free Kaggle T4 GPU, 2026-10-26, on the same top-20 shortlists as LightGBM.");
-  s.addNotes("The original idea was LLM personalization. We tested it properly and it did not win, so LightGBM stays the ranker. This is a strength of the project: every claim has to pass a gate.");
-
-  // ===== 10. Demo =====
-  pres.addSection({ title: "Product" });
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Product" });
-  s.addText("A free web demo a store owner can try", { placeholder: "title" });
-  const demo = [
-    [fa.FaStore, "Demo store", "Build a basket, see the 2 add-ons and why each was picked, with its margin."],
-    [fa.FaFileCsv, "Your own data", "Upload an order CSV, train on it, and score baskets in batch."],
-    [fa.FaChartLine, "Backtest", "Replay past baskets and compare profit against plain top-2 suggestions."],
-    [fa.FaCode, "API", "POST /recommend returns add-ons as JSON for a shop to call."],
-  ];
-  for (let i = 0; i < 4; i++) {
-    const y = 1.65 + i * 1.18;
-    await iconCircle(s, demo[i][0], 0.6, y, 0.8, C.accent1, demo[i][1] + " icon");
-    txt(s, demo[i][1], { x: 1.65, y: y + 0.0, w: 5.2, h: 0.4, fontSize: 18, bold: true, color: C.text2, fontFace: "Cambria" });
-    txt(s, demo[i][2], { x: 1.65, y: y + 0.4, w: 5.2, h: 0.6, fontSize: 14 });
-  }
-  // mock of the demo output
-  card(s, 7.3, 1.65, 5.4, 4.7, C.background2, "demo mock card");
-  txt(s, "Your basket", { x: 7.65, y: 1.9, w: 4.7, h: 0.35, fontSize: 14, bold: true, color: C.accent5 });
-  txt(s, "Woodland party paper cups  ·  Woodland napkins", { x: 7.65, y: 2.25, w: 4.7, h: 0.4, fontSize: 15 });
-  txt(s, "Suggested add-ons", { x: 7.65, y: 2.9, w: 4.7, h: 0.35, fontSize: 14, bold: true, color: C.accent5 });
-  for (let j = 0; j < 2; j++) {
-    const y = 3.3 + j * 1.15;
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 7.65, y, w: 4.7, h: 0.95, rectRadius: 0.08, fill: { color: C.background1 }, line: { color: H.accent6, width: 0.75 }, objectName: "mock add-on " + (j + 1) });
-    txt(s, j === 0 ? "Woodland paper plates" : "Party bunting", { x: 7.85, y: y + 0.12, w: 3.0, h: 0.35, fontSize: 15, bold: true, color: C.text2 });
-    txt(s, j === 0 ? "Bought together often" : "Overstock push", { x: 7.85, y: y + 0.5, w: 3.0, h: 0.35, fontSize: 13, color: C.accent5 });
-    txt(s, "margin ≥ 15% ✓", { x: 10.6, y: y + 0.3, w: 1.6, h: 0.35, fontSize: 13, bold: true, color: C.accent1, align: "right" });
-  }
-  txt(s, "Illustration of the demo screen", { x: 7.65, y: 5.85, w: 4.7, h: 0.3, fontSize: 11, italic: true, color: C.accent5 });
-  source(s, "Built as a Gradio app for Hugging Face Spaces (free CPU). The public link goes live once the Space is deployed.");
-  s.addNotes("The demo is a self-contained Gradio app that runs on a free Hugging Face Space. It has four tabs: a demo store, merchant CSV upload and training, a backtest, and the API. It is built; the public link is pending deployment.");
-
-  // ===== 11. Architecture =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Product" });
-  s.addText("Runs on one CPU and free hosting", { placeholder: "title" });
-  const arch = [
-    [fa.FaPlug, "Store connector", "Shopify or WooCommerce webhooks: products, prices, orders, stock"],
-    [fa.FaServer, "FastAPI service", "Docker, stateless, POST /recommend, fallback to margin-safe best sellers"],
-    [fa.FaDatabase, "Data", "Postgres for catalog, cost, stock and logs; Redis for candidate lists"],
-    [fa.FaRotate, "Nightly retrain", "GitHub Actions cron retrains EASE + LightGBM, writes a model bundle"],
-  ];
-  for (let i = 0; i < 4; i++) {
-    const x = 0.6 + i * 3.08;
-    card(s, x, 1.7, 2.82, 3.3, C.background2, "architecture card " + (i + 1));
-    await iconCircle(s, arch[i][0], x + 0.3, 1.95, 0.8, C.accent1, arch[i][1] + " icon");
-    txt(s, arch[i][1], { x: x + 0.3, y: 2.95, w: 2.3, h: 0.45, fontSize: 18, bold: true, color: C.text2, fontFace: "Cambria" });
-    txt(s, arch[i][2], { x: x + 0.3, y: 3.45, w: 2.3, h: 1.45, fontSize: 14 });
-  }
-  card(s, 0.6, 5.3, 12.1, 1.05, C.text2, "free stack card");
-  txt(s, [
-    { text: "Free stack:  ", options: { bold: true, color: C.accent2 } },
-    { text: "Hugging Face Spaces or Render · Supabase or Neon Postgres · Upstash Redis · GitHub Actions · Grafana Cloud free tier. LLM steps, if any, run offline on Kaggle or Colab, never on the live path.", options: { color: C.background1 } },
-  ], { x: 0.9, y: 5.45, w: 11.5, h: 0.8, fontSize: 15, valign: "middle" });
-  source(s, "Plan from ROADMAP.md. The production API and store connectors are in progress.");
-  s.addNotes("LightGBM and PuLP both run on a single CPU, so serving costs nothing on free tiers. A fallback means the shop page never breaks even if the model or solver fails.");
-
-  // ===== 12. Business model =====
-  pres.addSection({ title: "Business and plan" });
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Business and plan" });
-  s.addText("Business model: pay for proven gains", { placeholder: "title" });
-  const plans = [
-    ["Free", "Small shops", ["Fixed monthly request quota", "Margin-safe best-seller fallback", "Basic dashboard"]],
-    ["Pro", "Growing shops", ["Full optimizer and overstock push", "A/B test reports", "Flat monthly fee"]],
-    ["Performance", "Larger shops", ["Share of the extra profit measured by the store's own A/B test", "The store pays only for proven gains"]],
-  ];
-  for (let i = 0; i < 3; i++) {
-    const x = 0.6 + i * 4.1, dark = i === 2;
-    card(s, x, 1.7, 3.8, 4.3, dark ? C.text2 : C.background2, "plan card " + (i + 1));
-    txt(s, plans[i][0], { x: x + 0.35, y: 1.95, w: 3.1, h: 0.6, fontSize: 28, bold: true, fontFace: "Cambria", color: dark ? C.accent2 : C.accent1 });
-    txt(s, plans[i][1], { x: x + 0.35, y: 2.6, w: 3.1, h: 0.4, fontSize: 15, italic: true, color: dark ? C.accent6 : C.accent5 });
-    txt(s, plans[i][2].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
-      { x: x + 0.35, y: 3.2, w: 3.15, h: 2.6, fontSize: 15, paraSpaceAfter: 8, color: dark ? C.background1 : C.text1 });
-  }
-  txt(s, "To be tested with pilot stores. Pricing is not set and nothing here is proven yet.", { x: 0.6, y: 6.25, w: 12.1, h: 0.4, fontSize: 15, italic: true, color: C.accent4 });
-  s.addNotes("The plans are hypotheses to test with pilot stores. The performance plan is the strongest pitch: the store's own A/B test decides what it pays.");
-
-  // ===== 13. Roadmap =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Business and plan" });
-  s.addText("Roadmap: from target to measured result", { placeholder: "title" });
-  const ms = [
-    ["M1", "Research complete", "Fine-tune run (NO-GO), API latency benchmarked"],
-    ["M2", "Service live", "Production API, fallback, logging, public demo"],
-    ["M3", "First store", "Real cost and stock imported, offline gate passed"],
-    ["M4", "Pilot result", "2+ week A/B test on profit per visitor, written up win or lose"],
-    ["M5", "More stores", "Multi-store settings, first paid plan tested"],
-  ];
-  s.addShape(pres.shapes.LINE, { x: 1.0, y: 2.55, w: 11.3, h: 0, line: { color: H.accent3, width: 2 }, objectName: "timeline" });
-  for (let i = 0; i < 5; i++) {
-    const x = 0.6 + i * 2.5;
-    s.addShape(pres.shapes.OVAL, { x: x + 0.6, y: 2.15, w: 0.8, h: 0.8, fill: { color: i === 0 ? C.accent2 : C.accent1 }, line: { color: H.lt1, width: 3 }, objectName: ms[i][0] + " marker" });
-    txt(s, ms[i][0], { x: x + 0.6, y: 2.15, w: 0.8, h: 0.8, fontSize: 16, bold: true, align: "center", valign: "middle", color: C.background1 });
-    txt(s, ms[i][1], { x, y: 3.2, w: 2.2, h: 0.45, fontSize: 18, bold: true, align: "center", fontFace: "Cambria", color: C.text2 });
-    txt(s, ms[i][2], { x, y: 3.7, w: 2.2, h: 1.3, fontSize: 14, align: "center" });
-  }
-  card(s, 0.6, 5.25, 12.1, 1.1, C.background2, "pilot rule card");
-  txt(s, [
-    { text: "Ship rule for a pilot: ", options: { bold: true, color: C.accent1 } },
-    { text: "roll out only if gross profit per visitor is higher with the 95% CI above zero, conversion is not clearly worse, and margin-floor breaks stay at 0.", options: { color: C.text1 } },
-  ], { x: 0.9, y: 5.4, w: 11.5, h: 0.8, fontSize: 15, valign: "middle" });
-  s.addNotes("M1 is underway now. The step that matters most for the business is M3: real unit cost and stock from a store turn the simulated profit result into a real one. M4 is the A/B test with a decision rule fixed in advance.");
-
-  // ===== 14. Honest limits =====
-  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Business and plan" });
-  s.addText("What is real today, and what still needs a real store", { placeholder: "title" });
-  const colw = 5.95;
-  card(s, 0.6, 1.65, colw, 3.7, C.background2, "real card");
-  await iconCircle(s, fa.FaCheck, 0.9, 1.9, 0.7, C.accent1, "measured icon");
-  txt(s, "Measured on real data", { x: 1.8, y: 1.98, w: 4.5, h: 0.5, fontSize: 20, bold: true, fontFace: "Cambria", color: C.text2 });
-  txt(s, ["Real baskets and real prices, 39,516 invoices", "Relevance gain over standard methods (+7.0 pts Hit@10)", "Optimizer is exact and fast (600/600, 2.7 ms)", "Margin floor holds in every test", "LLM ranker NO-GO, with numbers"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
-    { x: 0.95, y: 2.85, w: 5.3, h: 3.3, fontSize: 15, paraSpaceAfter: 8 });
-  card(s, 6.75, 1.65, colw, 3.7, C.background2, "assumed card");
-  await iconCircle(s, fa.FaTriangleExclamation, 7.05, 1.9, 0.7, C.accent2, "assumption icon");
-  txt(s, "Simulated or not yet tested", { x: 7.95, y: 1.98, w: 4.5, h: 0.5, fontSize: 20, bold: true, fontFace: "Cambria", color: C.text2 });
-  txt(s, ["Unit cost and stock are simulated, so the profit gain is not yet proven", "Discount response (elasticity 1.5) is an assumption", "Offline replay is not a live A/B test", "One UK gift store, one period", "End-to-end API latency not benchmarked"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
-    { x: 7.1, y: 2.85, w: 5.3, h: 3.3, fontSize: 15, paraSpaceAfter: 8 });
-  txt(s, "Relevance is proven offline. The profit gain becomes a real claim only after a pilot store shares unit cost and stock.", { x: 0.6, y: 5.7, w: 12.1, h: 0.6, fontSize: 17, italic: true, color: C.accent1 });
-  s.addNotes("Be upfront about this slide. It builds trust with store owners and reviewers: the relevance result is real, the profit result depends on cost and stock data that only a real store can provide.");
-
-  // ===== 15. Ask =====
-  pres.addSection({ title: "Close" });
-  s = pres.addSlide({ masterName: "MG_DARK", sectionTitle: "Close" });
-  s.addText("The ask: two or three pilot stores", { placeholder: "title" });
-  const ask = [
-    [fa.FaHandshake, "Free pilot", "MarginGraph at checkout, set up for you, at no cost during the pilot."],
-    [fa.FaFileInvoiceDollar, "In return", "Order history with unit cost and stock, so the profit result becomes real."],
-    [fa.FaBookOpen, "Shared result", "A written A/B test case study, published whether it wins or loses."],
+    [fa.FaCoins, "Thin-margin picks", "Cheap best sellers get clicked and earn little"],
+    [fa.FaArrowTrendDown, "Margin leaks", "Nothing stops an offer below a healthy margin"],
+    [fa.FaBoxesStacked, "Stuck stock", "Overstock waits for a heavy markdown"],
   ];
   for (let i = 0; i < 3; i++) {
     const x = 0.6 + i * 4.1;
-    card(s, x, 1.7, 3.8, 3.1, "1C4A3C", "ask card " + (i + 1));
-    await iconCircle(s, ask[i][0], x + 0.35, 1.95, 0.85, C.accent2, ask[i][1] + " icon");
-    txt(s, ask[i][1], { x: x + 0.35, y: 3.0, w: 3.1, h: 0.45, fontSize: 20, bold: true, fontFace: "Cambria", color: C.background1 });
-    txt(s, ask[i][2], { x: x + 0.35, y: 3.5, w: 3.1, h: 1.2, fontSize: 15, color: C.accent6 });
+    card(s, x, 1.9, 3.8, 3.6, C.background2, "problem card " + (i + 1));
+    await iconCircle(s, probs[i][0], x + 0.35, 2.25, 1.0, i === 1 ? C.accent4 : C.accent1, probs[i][1] + " icon");
+    txt(s, probs[i][1], { x: x + 0.35, y: 3.5, w: 3.1, h: 0.55, fontSize: 24, bold: true, color: C.text2, fontFace: "Cambria" });
+    txt(s, probs[i][2], { x: x + 0.35, y: 4.15, w: 3.1, h: 1.0, fontSize: 16 });
   }
-  txt(s, "Good fit: a small online shop with a few thousand orders a year, a few hundred products, and access to unit cost. Gift, home decor, stationery, beauty, specialty food.", { x: 0.6, y: 5.1, w: 12.1, h: 0.8, fontSize: 16, color: C.background1 });
-  txt(s, [{ text: "Code and full results: github.com/Sanskar1724/MarginGraph", options: { hyperlink: { url: "https://github.com/Sanskar1724/MarginGraph" }, color: C.accent2 } }], { x: 0.6, y: 6.05, w: 12.1, h: 0.4, fontSize: 16, bold: true });
-  s.addNotes("Close with a concrete ask. We want a few small online stores to run a free pilot. They give us real cost and stock data; we give them the system and an honest case study. Also welcome: feedback from retail and data-science reviewers.");
+  s.addNotes("Most recommenders are built to maximise clicks. That pushes cheap popular items, ignores margin, and does nothing about overstock. The store pays for it in profit.");
+
+  // ===== 3. How it works =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Problem and solution" });
+  s.addText("Rank for relevance, optimize for profit, guard the rules", { placeholder: "title" });
+  const steps = [
+    [fa.FaRankingStar, "Rank", "150 candidates from 11 sources, LightGBM scores each one's chance of purchase"],
+    [fa.FaCalculator, "Optimize", "A tiny integer program picks the 2 most valuable add-ons in ~3 ms"],
+    [fa.FaShieldHalved, "Guard", "Margin floor, max 2 add-ons, in stock only. Enforced in code, never by a model"],
+  ];
+  for (let i = 0; i < 3; i++) {
+    const x = 0.6 + i * 4.25;
+    card(s, x, 1.8, 3.7, 3.55, i === 2 ? C.text2 : C.background2, "step card " + (i + 1));
+    await iconCircle(s, steps[i][0], x + 0.35, 2.1, 1.0, i === 2 ? C.accent2 : C.accent1, steps[i][1] + " icon");
+    txt(s, steps[i][1], { x: x + 0.35, y: 3.3, w: 3.0, h: 0.55, fontSize: 26, bold: true, fontFace: "Cambria", color: i === 2 ? C.background1 : C.text2 });
+    txt(s, steps[i][2], { x: x + 0.35, y: 3.9, w: 3.0, h: 1.3, fontSize: 15, color: i === 2 ? C.accent6 : C.text1 });
+    if (i < 2) s.addShape(pres.shapes.CHEVRON, { x: x + 3.82, y: 3.35, w: 0.3, h: 0.45, fill: { color: C.accent3 }, line: { type: "none" }, objectName: "arrow " + (i + 1) });
+  }
+  txt(s, "One slider, λ, moves the balance from pure relevance (0) to expected profit (1)", { x: 0.6, y: 5.75, w: 12.1, h: 0.45, fontSize: 18, italic: true, color: C.accent1 });
+  s.addNotes("Each part does what it is good at. The ranker never sees money; the optimizer never guesses relevance. Business rules are plain code, so they hold even if a model is wrong. The objective is expected relevance blended with expected profit, under a 15% margin floor, at most two add-ons and stock limits.");
+
+  // ===== 4. Evidence at a glance =====
+  pres.addSection({ title: "Results" });
+  s = pres.addSlide({ masterName: "MG_DARK", sectionTitle: "Results" });
+  s.addText("Tested on five public store datasets", { placeholder: "title" });
+  const big = [
+    ["5", "datasets, 4 countries:\nUK, Taiwan, US, Brazil"],
+    ["+7 to +10", "Hit@10 points over the best\nstandard method"],
+    ["+24%", "add-on profit in a 30-day\nstore simulation*"],
+    ["0", "offers below the 15% margin\nfloor (ranker alone: 164)"],
+  ];
+  big.forEach((v, i) => stat(s, v[0], v[1], 0.6 + i * 3.1, 2.0, 2.9, { dark: true, size: i === 1 ? 44 : 60 }));
+  card(s, 0.6, 4.55, 12.1, 1.35, "1C4A3C", "method card");
+  txt(s, [
+    { text: "Honest test:  ", options: { bold: true, color: C.accent2 } },
+    { text: "split by date, one bought item hidden per basket, every comparison paired with a 95% confidence interval, success rule fixed before running.", options: { color: C.background1 } },
+  ], { x: 0.95, y: 4.7, w: 11.4, h: 1.05, fontSize: 17, valign: "middle" });
+  source(s, "* Cost and stock are simulated on every dataset: the data has prices but no unit cost.", true);
+  s.addNotes("Four headline numbers. The relevance gains are measured on real baskets. The profit numbers use simulated unit cost and stock because none of the public datasets has verified costs.");
+
+  // ===== 5. UCI ranker =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("The ranker beats every standard method", { placeholder: "title" });
+  chartTitle(s, "Hidden item in the top 10 (%), 4,480 real UK test baskets", 0.6, 1.5, 7.6);
+  s.addChart(pres.charts.BAR, [{ name: "Hit@10 (%)", labels: ["Popularity", "Co-purchase", "Repeat purchase", "ALS", "ItemKNN", "EASE", "MarginGraph ranker"], values: [3.1, 13.0, 13.4, 17.3, 22.7, 31.1, 38.1] }],
+    chartBase({ x: 0.6, y: 1.9, w: 7.6, h: 4.5, barDir: "bar", chartColors: [H.accent6, H.accent6, H.accent6, H.accent6, H.accent6, H.accent3, H.accent1],
+      dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisMaxVal: 44, barGapWidthPct: 45, objectName: "Hit@10 chart" }));
+  stat(s, "+7.0 pts", "over EASE, the best standard method\n95% CI [6.0, 8.0]", 8.8, 1.9, 3.9, { size: 54 });
+  stat(s, "38.1%", "of baskets: the item the shopper\nreally added is in our top 10", 8.8, 4.0, 3.9, { size: 54 });
+  source(s, "UCI Online Retail II, UK gift wholesaler, test Oct-Dec 2011.");
+  s.addNotes("On 4,480 real test baskets the LightGBM ranker puts the hidden item in its top 10 38.1% of the time, against 31.1% for EASE, the strongest standard method. The 7-point gain has a confidence interval well above zero.");
+
+  // ===== 6. Five datasets =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("It works beyond one store", { placeholder: "title" });
+  chartTitle(s, "Hit@10 gain over the best standard method (points), unchanged pipeline", 0.6, 1.5, 8.0);
+  s.addChart(pres.charts.BAR, [{ name: "Gain", labels: ["UK gifts (UCI)", "Taiwan grocery (Ta Feng)", "US supermarket (Dunnhumby)", "US grocery app (Instacart)", "Brazil marketplace (Olist)"], values: [7.0, 8.3, 7.8, -3.0, 3.6] }],
+    chartBase({ x: 0.6, y: 1.9, w: 8.0, h: 4.5, barDir: "col", chartColors: [H.accent1, H.accent1, H.accent1, H.accent4, H.accent6],
+      dataLabelPosition: "outEnd", dataLabelFormatCode: "+0.0;-0.0", valAxisMaxVal: 10, valAxisMinVal: -4, barGapWidthPct: 55, catAxisLabelFontSize: 12, objectName: "five datasets chart" }));
+  const verdict = [["3 wins", "UK, Taiwan, US supermarket\nevery CI above zero", C.accent1], ["1 loss", "Instacart: −3.0 pts\n(fixed on the next slide)", C.accent4], ["1 tie", "Olist: only 169 baskets,\ntoo few to call", C.accent5]];
+  verdict.forEach((v, i) => stat(s, v[0], v[1], 9.1, 1.8 + i * 1.55, 3.6, { size: 36, bigColor: v[2] }));
+  source(s, "Pre-set success rule: win on most datasets with 1,000+ test baskets. Passed (2 of 3 public, 3 of 4 with UCI).");
+  s.addNotes("Same code, same settings, four new datasets. LightGBM wins on Ta Feng by 8.3 points and on Dunnhumby by 7.8, both with tight intervals. Olist has only 169 usable baskets, so it is a tie. Instacart is a real loss, and the official result stays a loss.");
+
+  // ===== 7. Instacart fix =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("One loss, diagnosed and fixed", { placeholder: "title" });
+  txt(s, "Instacart shoppers mostly re-buy. Our shortlist filled up before their past purchases got in.", { x: 0.6, y: 1.5, w: 12.1, h: 0.5, fontSize: 18, color: C.text1 });
+  const fix = [["Shortlist contains the item", "51.7%", "70.1%"], ["Hit@10 vs repeat-purchase baseline", "−3.0", "+4.1"]];
+  for (let i = 0; i < 2; i++) {
+    const y = 2.3 + i * 1.85;
+    card(s, 0.6, y, 12.1, 1.6, C.background2, "fix card " + (i + 1));
+    txt(s, fix[i][0], { x: 0.95, y: y + 0.2, w: 4.2, h: 1.2, fontSize: 20, bold: true, fontFace: "Cambria", color: C.text2, valign: "middle" });
+    txt(s, fix[i][1], { x: 5.3, y: y + 0.2, w: 2.6, h: 1.2, fontSize: 48, bold: true, fontFace: "Cambria", color: C.accent4, valign: "middle", align: "center" });
+    s.addShape(pres.shapes.RIGHT_ARROW, { x: 8.05, y: y + 0.55, w: 1.0, h: 0.5, fill: { color: C.accent3 }, line: { type: "none" }, objectName: "arrow fix " + (i + 1) });
+    txt(s, fix[i][2], { x: 9.2, y: y + 0.2, w: 2.9, h: 1.2, fontSize: 48, bold: true, fontFace: "Cambria", color: C.accent1, valign: "middle", align: "center" });
+  }
+  txt(s, [{ text: "The fix: ", options: { bold: true, color: C.accent1 } }, { text: "put the shopper's past purchases first. Dunnhumby gains too: +7.8 → +9.8 pts.", options: { color: C.text1 } }], { x: 0.6, y: 6.0, w: 12.1, h: 0.45, fontSize: 17 });
+  source(s, "Fix chosen from the diagnosis and checked on validation first. The −3.0 stays the official result.");
+  s.addNotes("The ranker cannot rank what never reaches the shortlist. On Instacart the shortlist was filled by general models before the customer's own past items. Moving past purchases first raised shortlist recall from 51.7% to 70.1%, and the loss became a 4.1-point win, CI 3.7 to 4.5. We still report the loss as the official result because the rule was set before running.");
+
+  // ===== 8. Profit per basket =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("More profit per basket on every store with prices", { placeholder: "title" });
+  chartTitle(s, "Profit per basket vs the ranker's top 2 (%), λ = 0.5, simulated cost", 0.6, 1.5, 7.6);
+  s.addChart(pres.charts.BAR, [{ name: "Profit gain (%)", labels: ["UK gifts", "Taiwan grocery", "US supermarket"], values: [14, 17, 13] }],
+    chartBase({ x: 0.6, y: 1.9, w: 7.6, h: 4.5, barDir: "col", chartColors: [H.accent1, H.accent1, H.accent1],
+      dataLabelPosition: "outEnd", dataLabelFormatCode: "+0\"%\"", valAxisMaxVal: 20, valAxisMinVal: 0, barGapWidthPct: 70, objectName: "profit chart" }));
+  stat(s, "≈1 pt", "of hit rate traded for the gain\n(−1.1, −1.0, −1.1 pts)", 8.8, 1.9, 3.9, { size: 54 });
+  stat(s, "600/600", "optimizer answers match\nbrute force, ~3 ms each", 8.8, 4.0, 3.9, { size: 54, bigColor: C.accent2 });
+  source(s, "Simulated: the datasets have prices but no unit cost or stock. Instacart has no prices, so it has no profit result.");
+  s.addNotes("With the same simulated cost model on each store, the optimizer adds 13 to 17 percent gross profit per basket for about one point of hit rate. On UCI the gain stayed positive in all nine cost scenarios we tried.");
+
+  // ===== 9. Store simulation =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("30 days in a simulated store", { placeholder: "title" });
+  chartTitle(s, "Cumulative add-on profit (£), 4,480 real checkouts replayed", 0.6, 1.5, 7.8);
+  s.addChart(pres.charts.LINE, [
+    { name: "MarginGraph", labels: Array.from({ length: 30 }, (_, i) => String(i + 1)), values: [24, 61, 106, 158, 204, 231, 290, 328, 353, 403, 434, 501, 546, 564, 602, 629, 662, 679, 728, 791, 838, 868, 900, 923, 963, 993, 1054, 1092, 1120, 1141] },
+    { name: "Ranker alone", labels: Array.from({ length: 30 }, (_, i) => String(i + 1)), values: [22, 54, 86, 121, 163, 192, 234, 262, 285, 321, 353, 376, 413, 445, 475, 508, 535, 554, 590, 635, 668, 690, 716, 742, 776, 804, 839, 867, 890, 920] },
+  ], {
+    x: 0.6, y: 1.9, w: 7.8, h: 4.5, chartColors: [H.accent1, H.accent6], lineSize: 3, lineDataSymbol: "none",
+    showLegend: true, legendPos: "t", legendFontSize: 13, legendFontFace: "+mn-lt", legendColor: H.accent5,
+    catAxisLabelColor: H.accent5, catAxisLabelFontSize: 12, catAxisLabelFontFace: "+mn-lt", catLabelFormatCode: "0",
+    valAxisLabelColor: H.accent5, valAxisLabelFontSize: 12, valAxisLabelFontFace: "+mn-lt", valAxisLabelFormatCode: "£#,##0",
+    valGridLine: { color: "DDE7E1", size: 0.75 }, catGridLine: { style: "none" }, objectName: "store simulation chart",
+  });
+  stat(s, "£1,141", "vs £920 for the ranker alone\n+24% (+19% over 5 random seeds)", 8.9, 1.7, 3.8, { size: 50 });
+  stat(s, "0 vs 164", "offers below the 15% margin floor", 8.9, 3.45, 3.8, { size: 44, bigColor: C.accent2 });
+  stat(s, "7.5% vs 8.9%", "accept rate: fewer add-ons taken,\neach one earns more", 8.9, 4.95, 3.8, { size: 36, bigColor: C.accent5 });
+  source(s, "Real checkouts and real choices; unit cost and stock are simulated, weekly restock. Not a forecast of real-store profit.");
+  s.addNotes("We replayed 30 days of real UK checkouts through a simulated store with stock and weekly restock. MarginGraph earned 1,141 pounds of add-on profit against 920 for the ranker alone. Shoppers took slightly fewer add-ons, 7.5% against 8.9%, but each earned more. The ranker would have offered 164 items below the margin floor; MarginGraph offered none. An overstock weight of 2 clears as much overstock as the ranker and keeps a 19% gain.");
+
+  // ===== 10. Real cost lesson =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("Thin-margin grocers need their own floor", { placeholder: "title" });
+  txt(s, "Ta Feng ships a cost-like field. Read as real cost, only 76% of products clear a 15% margin.", { x: 0.6, y: 1.5, w: 12.1, h: 0.5, fontSize: 18 });
+  chartTitle(s, "Hit@2 (%), Taiwan grocery, cost-like field as cost", 0.6, 2.2, 6.6);
+  s.addChart(pres.charts.BAR, [{ name: "Hit@2", labels: ["Ranker top 2", "15% item floor", "15% bundle floor"], values: [10.1, 5.2, 5.8] }],
+    chartBase({ x: 0.6, y: 2.6, w: 6.6, h: 3.8, barDir: "col", chartColors: [H.accent6, H.accent4, H.accent1],
+      dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisMaxVal: 12, valAxisMinVal: 0, barGapWidthPct: 70, objectName: "Ta Feng floor chart" }));
+  stat(s, "+25%", "profit per basket with the item floor,\nbut the hit rate halves", 7.8, 2.2, 4.9, { size: 54, bigColor: C.accent4 });
+  stat(s, "+38%", "profit with a bundle floor,\nand more hits back", 7.8, 4.2, 4.9, { size: 54 });
+  source(s, "The field (ASSET) is undocumented; reading it as unit cost is our assumption. Lesson: set the floor per store, or on the bundle.");
+  s.addNotes("This is our first look at something like real grocery margins. With a fixed 15% item floor the optimizer still earns 25% more per basket, but it can no longer offer many of the items shoppers buy, so the hit rate halves. A bundle-level floor recovers some hits and gives the biggest profit gain. The floor should be a store setting.");
+
+  // ===== 11. LLM =====
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Results" });
+  s.addText("We tested LLM ranking. The trained model won", { placeholder: "title" });
+  chartTitle(s, "Hit@5 (%), same 1,000 baskets and shortlists", 0.6, 1.5, 7.6);
+  s.addChart(pres.charts.BAR, [{ name: "Hit@5", labels: ["LoRA fine-tuned 1.5B", "Random order", "Qwen2.5-3B zero-shot", "Qwen2.5-1.5B zero-shot", "1.5B blended with LightGBM", "LightGBM + 3B stacker", "LightGBM"], values: [7.8, 11.6, 16.6, 16.8, 23.2, 27.5, 27.6] }],
+    chartBase({ x: 0.6, y: 1.9, w: 7.6, h: 4.5, barDir: "bar", chartColors: [H.accent4, H.accent6, H.accent6, H.accent6, H.accent6, H.accent3, H.accent1],
+      dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisMaxVal: 32, barGapWidthPct: 45, objectName: "LLM chart" }));
+  card(s, 8.8, 1.9, 3.9, 4.5, C.text2, "LLM role card");
+  await iconCircle(s, fa.FaLightbulb, 9.15, 2.2, 0.85, C.accent2, "LLM role icon");
+  txt(s, "Where the LLM still helps", { x: 9.15, y: 3.25, w: 3.3, h: 0.5, fontSize: 18, bold: true, fontFace: "Cambria", color: C.background1 });
+  txt(s, ["New products with no sales history", "Plain-language reasons for each add-on"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
+    { x: 9.15, y: 3.85, w: 3.3, h: 2.2, fontSize: 16, color: C.accent6, paraSpaceAfter: 10 });
+  source(s, "Qwen2.5 1.5B and 3B on a free Kaggle T4 GPU. Every LLM variant lost or tied, so LightGBM ranks.");
+  s.addNotes("The first idea was LLM personalisation. We tested it properly: two model sizes, blends, a stacker and a LoRA fine-tune. None beat LightGBM; the fine-tune was worse than a random order. So the LLM is used only for cold-start products and explanations.");
+
+  // ===== 12. Product =====
+  pres.addSection({ title: "Product" });
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Product" });
+  s.addText("Live demo, free to run", { placeholder: "title" });
+  const prod = [
+    [fa.FaStore, "Try it", "Build a basket, see 2 add-ons and their margin"],
+    [fa.FaFileCsv, "Your data", "Upload an order CSV and train on it"],
+    [fa.FaCode, "API", "POST /recommend returns JSON"],
+    [fa.FaServer, "One CPU", "Free tiers: Spaces, Postgres, Redis"],
+  ];
+  for (let i = 0; i < 4; i++) {
+    const x = 0.6 + i * 3.08;
+    card(s, x, 1.8, 2.82, 3.1, C.background2, "product card " + (i + 1));
+    await iconCircle(s, prod[i][0], x + 0.3, 2.1, 0.9, C.accent1, prod[i][1] + " icon");
+    txt(s, prod[i][1], { x: x + 0.3, y: 3.2, w: 2.3, h: 0.5, fontSize: 22, bold: true, color: C.text2, fontFace: "Cambria" });
+    txt(s, prod[i][2], { x: x + 0.3, y: 3.75, w: 2.3, h: 1.0, fontSize: 15 });
+  }
+  card(s, 0.6, 5.25, 12.1, 1.0, C.text2, "demo link card");
+  txt(s, [
+    { text: "Demo:  ", options: { bold: true, color: C.accent2 } },
+    { text: "huggingface.co/spaces/EquilStable/MarginGraph", options: { color: C.background1, hyperlink: { url: "https://huggingface.co/spaces/EquilStable/MarginGraph" } } },
+  ], { x: 0.9, y: 5.35, w: 11.5, h: 0.8, fontSize: 20, valign: "middle" });
+  s.addNotes("The demo runs on a free Hugging Face Space. A shop can try the demo store, upload its own order history, or call the API. LightGBM and the optimizer both run on one CPU, so serving can stay on free tiers.");
+
+  // ===== 13. Real vs simulated =====
+  pres.addSection({ title: "Close" });
+  s = pres.addSlide({ masterName: "MG_LIGHT", sectionTitle: "Close" });
+  s.addText("What is proven, and what needs a real store", { placeholder: "title" });
+  card(s, 0.6, 1.65, 5.95, 4.2, C.background2, "proven card");
+  await iconCircle(s, fa.FaCheck, 0.9, 1.9, 0.75, C.accent1, "proven icon");
+  txt(s, "Measured on real baskets", { x: 1.85, y: 2.0, w: 4.5, h: 0.5, fontSize: 21, bold: true, fontFace: "Cambria", color: C.text2 });
+  txt(s, ["Relevance gain on 3 of 4 large datasets", "Instacart loss found and fixed", "Margin floor holds every time", "Optimizer exact and fast", "LLM ranking: NO-GO"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
+    { x: 0.95, y: 2.85, w: 5.3, h: 2.8, fontSize: 17, paraSpaceAfter: 8 });
+  card(s, 6.75, 1.65, 5.95, 4.2, C.background2, "open card");
+  await iconCircle(s, fa.FaTriangleExclamation, 7.05, 1.9, 0.75, C.accent2, "open icon");
+  txt(s, "Still needs a real store", { x: 8.0, y: 2.0, w: 4.5, h: 0.5, fontSize: 21, bold: true, fontFace: "Cambria", color: C.text2 });
+  txt(s, ["Unit cost and stock (simulated today)", "Profit gains: 13-24%, all simulated", "Shopper response: needs an A/B test", "Discount response is assumed"].map((t, j, a) => ({ text: t, options: { bullet: true, breakLine: j < a.length - 1 } })),
+    { x: 7.1, y: 2.85, w: 5.3, h: 2.8, fontSize: 17, paraSpaceAfter: 8 });
+  txt(s, "Relevance is proven offline. Profit becomes a real claim after one pilot store.", { x: 0.6, y: 6.05, w: 12.1, h: 0.45, fontSize: 18, italic: true, color: C.accent1 });
+  s.addNotes("Be upfront here. It builds trust: the relevance result is real on four stores; the profit result rests on simulated cost and stock that only a real store can replace.");
+
+  // ===== 14. Ask =====
+  s = pres.addSlide({ masterName: "MG_DARK", sectionTitle: "Close" });
+  s.addText("The ask: two or three pilot stores", { placeholder: "title" });
+  const ask = [
+    [fa.FaHandshake, "Free pilot", "MarginGraph at checkout, set up for you"],
+    [fa.FaFileInvoiceDollar, "Real cost data", "Order history with unit cost and stock"],
+    [fa.FaChartLine, "Shared result", "A/B test write-up, published win or lose"],
+  ];
+  for (let i = 0; i < 3; i++) {
+    const x = 0.6 + i * 4.1;
+    card(s, x, 1.75, 3.8, 3.2, "1C4A3C", "ask card " + (i + 1));
+    await iconCircle(s, ask[i][0], x + 0.35, 2.05, 0.95, C.accent2, ask[i][1] + " icon");
+    txt(s, ask[i][1], { x: x + 0.35, y: 3.2, w: 3.1, h: 0.5, fontSize: 24, bold: true, fontFace: "Cambria", color: C.background1 });
+    txt(s, ask[i][2], { x: x + 0.35, y: 3.8, w: 3.1, h: 1.0, fontSize: 16, color: C.accent6 });
+  }
+  txt(s, "Good fit: a small online shop with a few thousand orders a year and access to unit cost.", { x: 0.6, y: 5.25, w: 12.1, h: 0.5, fontSize: 17, color: C.background1 });
+  txt(s, [{ text: "github.com/Sanskar1724/MarginGraph", options: { hyperlink: { url: "https://github.com/Sanskar1724/MarginGraph" }, color: C.accent2 } }], { x: 0.6, y: 5.95, w: 12.1, h: 0.45, fontSize: 18, bold: true });
+  s.addNotes("Close with a concrete ask: a few small online stores for a free pilot. They share real cost and stock; we give them the system and an honest A/B test case study. Feedback from retail and data-science reviewers is also welcome.");
 
   await pres.writeFile({ fileName: OUT });
   await applyTheme(OUT, THEME);
