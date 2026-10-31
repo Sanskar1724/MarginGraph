@@ -28,6 +28,7 @@ Full write-up: [`docs/RESULTS_PUBLIC.md`](docs/RESULTS_PUBLIC.md). Gate (fixed b
 | --- | --- | --- | --- | --- | --- | --- |
 | Ta Feng (Taiwan grocery, customer-day baskets) | 14,346 | 40.4% | 14.3% (`itemknn`) | 22.6% | +8.3 [+7.7, +8.8] | **LightGBM wins** |
 | Dunnhumby (US supermarket, 2 years) | 20,000 | 46.9% | 19.6% (`repeat`) | 27.4% | +7.8 [+7.2, +8.4] | **LightGBM wins** |
+| Dunnhumby, repeat-first pool | 20,000 | 56.7% | 19.6% (`repeat`) | 29.4% | +9.8 [+9.3, +10.3] | **LightGBM wins** by more |
 | Instacart (US grocery delivery, 20k customers) | 20,000 | 51.7% | 37.5% (`repeat`) | 34.5% | -3.0 [-3.6, -2.4] | baseline wins (default pool drops repeat items) |
 | Instacart, repeat-first pool | 20,000 | 70.1% | 37.5% (`repeat`) | 41.6% | +4.1 [+3.7, +4.5] | **LightGBM wins** once past purchases enter the pool |
 | Olist (marketplace, 98% single-item orders) | 169 | 36.1% | 17.2% (`ease_decay`) | 20.7% | +3.6 [-1.2, +8.9] | tie, too few baskets for the gate |

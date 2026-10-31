@@ -32,7 +32,16 @@ The pool is filled in `retrieval.per_source` order and cut at 150; `ease` and `e
 | Default pool (official gate result) | 51.7% | 34.5% | -3.0 [-3.6, -2.4] | baseline wins |
 | Repeat-first pool | **70.1%** | **41.6%** | **+4.1 [+3.7, +4.5]** | LightGBM wins |
 
-So the loss came from the candidate pool, not the ranker. For stores with heavy re-buying, `repeat` should be filled first. The gate above still counts the default run, because the bar was fixed before running.
+Dunnhumby showed the same pattern (pool 46.9% vs `repeat` alone 45.0% at 100), so it got the same rerun:
+
+| Dunnhumby run | Pool recall (test) | LightGBM Hit@10 | vs `repeat` 19.6% | Verdict |
+| --- | --- | --- | --- | --- |
+| Default pool (official gate result) | 46.9% | 27.4% | +7.8 [+7.2, +8.4] | LightGBM wins |
+| Repeat-first pool | **56.7%** | **29.4%** | **+9.8 [+9.3, +10.3]** | LightGBM wins by more |
+
+Validation pool recall rose too (46.1% → 55.3%). Simulated Stage 2 with this pool: MILP λ=0.5 +16% profit per basket (+0.015 [+0.012, +0.019]) for -0.9 pts hit rate.
+
+So the Instacart loss came from the candidate pool, not the ranker. For stores with heavy re-buying, `repeat` should be filled first. The gate above still counts the default run, because the bar was fixed before running.
 
 ## Stage 2 (profit is not real)
 

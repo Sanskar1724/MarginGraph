@@ -38,7 +38,7 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 | 10-31 10:05 | Instacart | `--top-items 5000 --max-customers 20000`, simulated ERP | 20,000 (capped) | 2,402 s (in parallel) | 7.0 GB | LightGBM 34.5% vs `repeat` 37.5% Hit@10, diff -3.0 pts, 95% CI [-3.6, -2.4]: **baseline wins** |
 | 10-31 10:45 | Instacart, repeat-first pool | same data; `retrieval.per_source` puts `repeat: 60` first (diagnosis below) | 20,000 | lost: the container restarted at about 10:55 UTC and killed the run | | |
 | 10-31 11:16 | Instacart, repeat-first pool (restart) | same | 20,000 | 2,123 s | 7.8 GB | Pool recall 51.7% → 70.1% (val 51.5% → 68.0%). LightGBM 41.6% vs `repeat` 37.5% Hit@10, +4.1 pts [+3.7, +4.5]: **LightGBM wins** |
-| 10-31 11:52 | Dunnhumby, repeat-first pool | same data; `repeat: 60` first | 20,000 | running | | |
+| 10-31 11:52 | Dunnhumby, repeat-first pool | same data; `repeat: 60` first | 20,000 | 2,209 s | 7.2 GB | Pool recall 46.9% → 56.7% (val 46.1% → 55.3%). LightGBM 29.4% vs `repeat` 19.6%, +9.8 pts [+9.3, +10.3] (default pool: +7.8). MILP λ=0.5 simulated +16% profit, -0.9 pts hit |
 
 ### Ta Feng details (from `results/public/tafeng/`)
 
@@ -84,3 +84,11 @@ Fix tried (chosen from the diagnosis, not from test numbers): put `repeat: 60` f
 ## Branch layout
 
 San asked (09:23) for `feat/multi-dataset` to hold only this module's files and its own README, like the other module branches. Full-tree work moved to `claude/project-thread-xv99mf`, which is the PR into `main`. `feat/multi-dataset` is refreshed with a commit whose tree is only: `README.md` (module README), `LICENSE`, `.gitignore`, the notebook, `scripts/public_datasets.py`, `tests/test_public_datasets.py`, `results/public/`, `docs/RESULTS_PUBLIC.md`, `docs/industry-plan/01-multi-dataset-validation.md` and this log. Added the branch to the README branch table, CONTRIBUTING and the WORKLOG branch map.
+
+## Outcome
+
+* Gate (fixed before running) **passed**: LightGBM beats the best baseline with the CI above zero on Ta Feng and Dunnhumby, loses on Instacart (2 of 3 public datasets with 1,000+ test baskets; 3 of 4 with UCI). Olist (169 baskets) is a tie and does not count.
+* Putting the customer's past items first in the candidate pool turned the Instacart loss into a win (+4.1 pts) and widened the Dunnhumby win (+7.8 → +9.8). Recommended follow-up: make `repeat` the first `per_source` entry by default and rerun UCI to check it does not hurt there.
+* Ta Feng with `ASSET` as cost shows the fixed 15% margin floor is too strict for thin grocery margins.
+* PR #17 into `main`; module branch `feat/multi-dataset` rebuilt with only its own history (San deleted the old one at 11:19 so it could be pushed fresh).
+
