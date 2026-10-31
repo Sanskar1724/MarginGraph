@@ -1,0 +1,1 @@
+{"seconds": 2209, "peak_rss_mb_upper_bound": 7226, "cpus": 4, "convert_options": ["--top-items", "5000"], "simulated_erp": true, "per_source_change": "repeat: 60 moved to the front of retrieval.per_source; everything else as in results/public/dunnhumby"}
