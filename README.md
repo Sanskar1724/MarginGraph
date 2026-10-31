@@ -22,13 +22,14 @@ None of these datasets has real unit cost or stock, so this module validates **r
 
 ## Results so far
 
-See [`docs/RESULTS_PUBLIC.md`](docs/RESULTS_PUBLIC.md) once all runs are in. Measured so far:
+Full write-up: [`docs/RESULTS_PUBLIC.md`](docs/RESULTS_PUBLIC.md). Gate (fixed before running) passed: LightGBM wins on 2 of 3 public datasets with 1,000+ test baskets.
 
 | Dataset | Test baskets | Pool recall | Best baseline Hit@10 | LightGBM Hit@10 | Diff [95% CI] | Verdict |
 | --- | --- | --- | --- | --- | --- | --- |
 | Ta Feng (Taiwan grocery, customer-day baskets) | 14,346 | 40.4% | 14.3% (`itemknn`) | 22.6% | +8.3 [+7.7, +8.8] | **LightGBM wins** |
 | Dunnhumby (US supermarket, 2 years) | 20,000 | 46.9% | 19.6% (`repeat`) | 27.4% | +7.8 [+7.2, +8.4] | **LightGBM wins** |
-| Instacart (US grocery delivery, 20k customers) | 20,000 | 51.7% | 37.5% (`repeat`) | 34.5% | -3.0 [-3.6, -2.4] | baseline wins (pool drops repeat items; fix being tested) |
+| Instacart (US grocery delivery, 20k customers) | 20,000 | 51.7% | 37.5% (`repeat`) | 34.5% | -3.0 [-3.6, -2.4] | baseline wins (default pool drops repeat items) |
+| Instacart, repeat-first pool | 20,000 | 70.1% | 37.5% (`repeat`) | 41.6% | +4.1 [+3.7, +4.5] | **LightGBM wins** once past purchases enter the pool |
 | Olist (marketplace, 98% single-item orders) | 169 | 36.1% | 17.2% (`ease_decay`) | 20.7% | +3.6 [-1.2, +8.9] | tie, too few baskets for the gate |
 | *UCI Online Retail II (reference, `main`)* | 4,480 | 65.3% | 31.1% (`ease`) | 38.1% | +7.0 [+6.0, +8.0] | LightGBM wins |
 

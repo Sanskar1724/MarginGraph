@@ -36,7 +36,9 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 | 10-31 09:41 | Ta Feng, `ASSET` as cost | `--top-items 5000 --asset-as-cost`, no `simulate-erp` | 14,346 | 1,430 s | 5.0 GB | Stage 1 identical to the run above (same data, same seed). Stage 2 below |
 | 10-31 09:52 | Dunnhumby | `--top-items 5000`, simulated ERP | 20,000 (capped) | 2,491 s (in parallel with other runs) | 6.9 GB | LightGBM 27.4% vs `repeat` 19.6% Hit@10, diff +7.8 pts, 95% CI [+7.2, +8.4]: **LightGBM wins** |
 | 10-31 10:05 | Instacart | `--top-items 5000 --max-customers 20000`, simulated ERP | 20,000 (capped) | 2,402 s (in parallel) | 7.0 GB | LightGBM 34.5% vs `repeat` 37.5% Hit@10, diff -3.0 pts, 95% CI [-3.6, -2.4]: **baseline wins** |
-| 10-31 10:45 | Instacart, repeat-first pool | same data; `retrieval.per_source` puts `repeat: 60` first (diagnosis below) | 20,000 | running | | |
+| 10-31 10:45 | Instacart, repeat-first pool | same data; `retrieval.per_source` puts `repeat: 60` first (diagnosis below) | 20,000 | lost: the container restarted at about 10:55 UTC and killed the run | | |
+| 10-31 11:16 | Instacart, repeat-first pool (restart) | same | 20,000 | 2,123 s | 7.8 GB | Pool recall 51.7% → 70.1% (val 51.5% → 68.0%). LightGBM 41.6% vs `repeat` 37.5% Hit@10, +4.1 pts [+3.7, +4.5]: **LightGBM wins** |
+| 10-31 11:52 | Dunnhumby, repeat-first pool | same data; `repeat: 60` first | 20,000 | running | | |
 
 ### Ta Feng details (from `results/public/tafeng/`)
 
