@@ -1,0 +1,270 @@
+{
+  "e1": {
+    "events": 20000,
+    "chance_hit@5": 0.001,
+    "chance_hit@10": 0.002,
+    "real_hit@5": 0.08905,
+    "real_hit@10": 0.1254,
+    "shuffled_hit@5": 0.05225,
+    "shuffled_hit@10": 0.0724,
+    "lift_hit@10_vs_shuffled": 1.7320441988950277
+  },
+  "e4_test_pool_recall": 0.56685,
+  "best_baseline_on_val": "repeat",
+  "e5_paired": [
+    {
+      "a": "lightgbm",
+      "b": "repeat",
+      "metric": "hit@5",
+      "diff": 0.07435,
+      "ci_low": 0.06974875000000001,
+      "ci_high": 0.07885,
+      "p_boot": 0.0
+    },
+    {
+      "a": "lightgbm",
+      "b": "repeat",
+      "metric": "hit@10",
+      "diff": 0.09805,
+      "ci_low": 0.09275,
+      "ci_high": 0.10335,
+      "p_boot": 0.0
+    },
+    {
+      "a": "lightgbm",
+      "b": "repeat",
+      "metric": "ndcg@10",
+      "diff": 0.06291141776119501,
+      "ci_low": 0.05963911745190231,
+      "ci_high": 0.0661911773577093,
+      "p_boot": 0.0
+    }
+  ],
+  "erp": {
+    "source": "simulated"
+  },
+  "e3_test": [
+    {
+      "model": "popularity",
+      "metric": "hit@10",
+      "mean": 0.071,
+      "ci_low": 0.06735,
+      "ci_high": 0.07475,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "popularity",
+      "metric": "ndcg@10",
+      "mean": 0.04119446409227161,
+      "ci_low": 0.03884300763311298,
+      "ci_high": 0.04355411576335586,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "recent_pop",
+      "metric": "hit@10",
+      "mean": 0.07575,
+      "ci_low": 0.07205,
+      "ci_high": 0.0796,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "recent_pop",
+      "metric": "ndcg@10",
+      "mean": 0.042600300364479086,
+      "ci_low": 0.04020877922509925,
+      "ci_high": 0.044938278643067535,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "repeat",
+      "metric": "hit@10",
+      "mean": 0.19615,
+      "ci_low": 0.1907,
+      "ci_high": 0.20185,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "repeat",
+      "metric": "ndcg@10",
+      "mean": 0.1160479713810641,
+      "ci_low": 0.11227847017429853,
+      "ci_high": 0.11968975540418676,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "copurchase",
+      "metric": "hit@10",
+      "mean": 0.12425,
+      "ci_low": 0.1199,
+      "ci_high": 0.12900124999999998,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "copurchase",
+      "metric": "ndcg@10",
+      "mean": 0.07205891406787732,
+      "ci_low": 0.0691181944046783,
+      "ci_high": 0.07509515838593554,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "itemknn",
+      "metric": "hit@10",
+      "mean": 0.1659,
+      "ci_low": 0.16065,
+      "ci_high": 0.1713,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "itemknn",
+      "metric": "ndcg@10",
+      "mean": 0.09614061979431973,
+      "ci_low": 0.09286946443151603,
+      "ci_high": 0.09947775980911712,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "ease",
+      "metric": "hit@10",
+      "mean": 0.19045,
+      "ci_low": 0.185,
+      "ci_high": 0.19580124999999998,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "ease",
+      "metric": "ndcg@10",
+      "mean": 0.11179303172902928,
+      "ci_low": 0.10818466876914341,
+      "ci_high": 0.1153302199357797,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "als",
+      "metric": "hit@10",
+      "mean": 0.0689,
+      "ci_low": 0.06545,
+      "ci_high": 0.07245,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "als",
+      "metric": "ndcg@10",
+      "mean": 0.03943907500839716,
+      "ci_low": 0.03726307316775148,
+      "ci_high": 0.041619327809806476,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "ease_decay",
+      "metric": "hit@10",
+      "mean": 0.1847,
+      "ci_low": 0.17915,
+      "ci_high": 0.19005374999999997,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "ease_decay",
+      "metric": "ndcg@10",
+      "mean": 0.1082363631843463,
+      "ci_low": 0.1047508042252378,
+      "ci_high": 0.11166661441585893,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "cust_ease",
+      "metric": "hit@10",
+      "mean": 0.09805,
+      "ci_low": 0.094,
+      "ci_high": 0.10220125,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "cust_ease",
+      "metric": "ndcg@10",
+      "mean": 0.0560035983399619,
+      "ci_low": 0.05340591050883139,
+      "ci_high": 0.05867995553854347,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "text",
+      "metric": "hit@10",
+      "mean": 0.04435,
+      "ci_low": 0.0417,
+      "ci_high": 0.0473,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "text",
+      "metric": "ndcg@10",
+      "mean": 0.02150860972538207,
+      "ci_low": 0.019978463915547563,
+      "ci_high": 0.023038065118195023,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "trend",
+      "metric": "hit@10",
+      "mean": 0.0757,
+      "ci_low": 0.07205,
+      "ci_high": 0.07945125,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "trend",
+      "metric": "ndcg@10",
+      "mean": 0.04239823921212243,
+      "ci_low": 0.04009521294299851,
+      "ci_high": 0.044803019607534356,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "fresh_co",
+      "metric": "hit@10",
+      "mean": 0.11755,
+      "ci_low": 0.11325,
+      "ci_high": 0.1221,
+      "n": 20000,
+      "split": "test"
+    },
+    {
+      "model": "fresh_co",
+      "metric": "ndcg@10",
+      "mean": 0.06837223091754026,
+      "ci_low": 0.0655638852283482,
+      "ci_high": 0.07123691473340749,
+      "n": 20000,
+      "split": "test"
+    }
+  ],
+  "e9": {
+    "checked": 600,
+    "objective_agree": 600,
+    "max_gap": 0.0,
+    "mean_milp_ms": 4.144239068347512
+  }
+}

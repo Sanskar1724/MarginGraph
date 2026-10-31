@@ -1,0 +1,4 @@
+a,b,metric,diff,ci_low,ci_high,p_boot
+lightgbm,repeat,hit@5,0.07435,0.06974875000000001,0.07885,0.0
+lightgbm,repeat,hit@10,0.09805,0.09275,0.10335,0.0
+lightgbm,repeat,ndcg@10,0.06291141776119501,0.05963911745190231,0.0661911773577093,0.0
