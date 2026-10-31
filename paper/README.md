@@ -8,8 +8,8 @@ An arXiv-style research paper on MarginGraph (15 pages): UCI Online Retail II, f
 | `main.pdf` | Built PDF |
 | `references.bib` | Bibliography; every entry checked against the publisher, arXiv or the authors' page |
 | `PAPER.md` | Markdown copy generated from `main.tex` |
-| `figures/make_figures.py` | Rebuilds `figures/*.pdf` and `*.png` (figs 1-7) from `results/` and `figures/data/` |
-| `figures/data/` | Small extracts of the multi-dataset (PR #17) and store-simulation (PR #18) results used by figs 6 and 7 |
+| `figures/make_figures.py` | Rebuilds `figures/*.pdf` and `*.png` (figs 1-7) from `results/` and `figures/figdata/` |
+| `figures/figdata/` | Small extracts of the multi-dataset (PR #17) and store-simulation (PR #18) results used by figs 6 and 7 |
 
 ## Rebuild
 

@@ -3,7 +3,7 @@
 Run from the repo root:  python paper/figures/make_figures.py
 The LLM numbers (Kaggle runs) are not in results/; they are copied from
 docs/RESULTS.md, section "E5 LLM rerank".
-Figures 6 and 7 read paper/figures/data/*.csv, small extracts of the PR #17
+Figures 6 and 7 read paper/figures/figdata/*.csv, small extracts of the PR #17
 (results/public/) and PR #18 (results/retail_sim/) result files.
 """
 from pathlib import Path
@@ -145,7 +145,7 @@ def fig_reliability():
     save(fig, "fig5_reliability")
 
 
-DATA = OUT / "data"
+DATA = OUT / "figdata"
 
 
 # Fig 6: LightGBM minus best baseline, Hit@10 with paired 95% CI, per dataset (PR #17 runs)
