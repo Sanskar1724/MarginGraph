@@ -34,7 +34,9 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 * Pool recall (test) 36.1%: the hidden product is in the 150 candidates only about a third of the time, which caps any reranker.
 * LightGBM was trained on 193 validation events, too few to learn much. This is the "sparse basket" case the plan predicted.
 | 10-31 09:41 | Ta Feng, `ASSET` as cost | `--top-items 5000 --asset-as-cost`, no `simulate-erp` | 14,346 | 1,430 s | 5.0 GB | Stage 1 identical to the run above (same data, same seed). Stage 2 below |
-| 10-31 09:52 | Dunnhumby | `--top-items 5000`, simulated ERP | | running | | |
+| 10-31 09:52 | Dunnhumby | `--top-items 5000`, simulated ERP | 20,000 (capped) | 2,491 s (in parallel with other runs) | 6.9 GB | LightGBM 27.4% vs `repeat` 19.6% Hit@10, diff +7.8 pts, 95% CI [+7.2, +8.4]: **LightGBM wins** |
+| 10-31 10:05 | Instacart | `--top-items 5000 --max-customers 20000`, simulated ERP | 20,000 (capped) | 2,402 s (in parallel) | 7.0 GB | LightGBM 34.5% vs `repeat` 37.5% Hit@10, diff -3.0 pts, 95% CI [-3.6, -2.4]: **baseline wins** |
+| 10-31 10:45 | Instacart, repeat-first pool | same data; `retrieval.per_source` puts `repeat: 60` first (diagnosis below) | 20,000 | running | | |
 
 ### Ta Feng details (from `results/public/tafeng/`)
 
@@ -46,6 +48,31 @@ Claude Code cloud container: 4 CPUs, 15 GB RAM, Python 3.13, repo installed with
 * Stage 2, **simulated cost and stock**: ranker top-2 realized profit 2.67 per basket; MILP λ=0.5 3.12 (+0.45, 95% CI [+0.31, +0.61], about +17%) for -1.0 pt hit rate (9.2% vs 10.1%).
 * Stage 2 with **`ASSET / AMOUNT` read as unit cost (unverified meaning; stock still simulated)**: median product margin is 20.5% (simulated ERP: 39.4%), and only 75.8% of products clear the 15% margin floor (simulated: 96.6%); 2.5% have cost above price. Ranker top-2 realized profit 0.61 per basket; MILP λ=0.5 0.76 (+0.15, 95% CI [+0.07, +0.24], about +25%) but its hit rate halves (5.2% vs 10.1%, -5.0 pts) because the floor removes many of the products shoppers actually add. With thin grocery margins the MILP trade-off is much steeper than on simulated cost. File: `results/public/tafeng_asset_cost/e8_strategies_store_erp.csv`.
 * Peak RAM 5.2 GB: on an 8 GB laptop this is tight; use a Kaggle CPU notebook or `--top-items 3000`.
+
+### Dunnhumby details (from `results/public/dunnhumby/`)
+
+* Files copied from San's own Kaggle download (`dunnhumby.zip`, 130 MB); `transaction_data.csv` has 2,595,732 rows, as on Kaggle. `causal_data.csv` (696 MB) is not used and was deleted after unzipping.
+* Converted: 1,654,347 lines, 243,257 baskets (174,949 with 2+ products), 2,487 households, 5,000 products; `DAY 1` mapped to 2018-01-01, so dates run 2018-01-01 to 2019-12-12.
+* E1 audit: median basket 3 items, median 69 baskets per household, 55% of lines are repeat purchases. Co-purchase signal is weak: Hit@10 12.5% real vs 7.2% shuffled (1.7x lift).
+* Pool recall (test) 46.9%, barely above `repeat` alone at 100 (45.0%).
+* Top features: `r_repeat`, `s_repeat`, `r_ease`, `r_ease_decay`, `s_ease`, `r_itemknn_max`.
+* Stage 2, simulated cost: MILP λ=0.5 realized profit 0.101 vs ranker top-2 0.089 per basket (+0.012, 95% CI [+0.009, +0.015], about +13%) for -1.1 pts hit rate. (Prices are a few dollars, so per-basket profit is small.)
+
+### Instacart details (from `results/public/instacart/`)
+
+* Files copied from San's own Kaggle download (`instacart.zip`, 207 MB); `orders.csv` has 3,421,083 rows, as on Kaggle.
+* Converted with 20,000 sampled customers (seed 42): 2,721,735 lines, 322,215 orders, 19,981 customers, 5,000 products. Dates are rebuilt from `days_since_prior_order` with every user's last order on 2017-06-30, so the test set is everyone's latest orders. **No prices** (all 1.0), so Stage 2 numbers are meaningless here and are not reported.
+* E1 audit: median basket 7 items, median 10 orders per customer, 62% of lines are repeat purchases. Co-purchase lift only 1.3x over shuffled baskets.
+* Top features: `s_repeat`, `r_repeat`, `r_ease_decay`, `customer_known`.
+
+### Why LightGBM lost on Instacart (plan's checklist, in order)
+
+1. **Pool recall:** the pool contains the hidden item 51.7% of the time, but `repeat` alone reaches 59.5% at 100 and 55.9% at 50. The pool is filled in `per_source` order and cut at 150: `ease` (90) and `ease_decay` (60) alone fill it, so the customer's own past items (`repeat`, 9th in the order) are mostly cut. LightGBM cannot rank an item that is not in the pool, while the `repeat` baseline ranks over the whole catalog. This is the cause.
+2. Signal audit: weak basket co-purchase signal (1.3x), so the store is mostly about re-buying, which makes point 1 decisive.
+3. Validation events: 20,000, plenty.
+4. Hyperparameters: not touched.
+
+Fix tried (chosen from the diagnosis, not from test numbers): put `repeat: 60` first in `per_source`. The original run stays the official gate result; the fix is reported next to it. The same pattern shows on Dunnhumby (pool 46.9% vs repeat@100 45.0%), so the fix is run there too.
 
 ## Code changes
 

@@ -1,0 +1,13 @@
+{
+  "dataset": "dunnhumby",
+  "order_lines": 1654347,
+  "orders": 243257,
+  "orders_with_2plus_products": 174949,
+  "products": 5000,
+  "customers": 2487,
+  "first": "2018-01-01 09:46:00",
+  "last": "2019-12-12 23:43:00",
+  "has_cost": false,
+  "max_customers": null,
+  "top_items": 5000
+}

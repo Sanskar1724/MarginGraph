@@ -1,0 +1,1 @@
+{"seconds": 2402, "peak_rss_mb_upper_bound": 6955, "cpus": 4, "convert_options": ["--top-items", "5000", "--max-customers", "20000"], "simulated_erp": true, "note": "ran in parallel with the Dunnhumby run on the same 4 CPUs, so time is an upper bound"}
