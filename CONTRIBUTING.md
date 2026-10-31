@@ -19,6 +19,7 @@
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` |
 | `docs/industry-roadmap` | Plan to an industry-ready product, A/B sizing, public datasets | `docs/industry-plan/`, `scripts/ab_sample_size.py`, `scripts/public_datasets.py` |
+| `feat/multi-dataset` | Validation on Olist, Ta Feng, Dunnhumby, Instacart (phase 1) | `notebooks/multi_dataset_validation.ipynb`, `results/public/`, `docs/RESULTS_PUBLIC.md` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` |
 
 New short-lived work uses the same prefixes: `feat/…`, `fix/…`, `docs/…`, `ci/…`, `chore/…`, lowercase with hyphens.

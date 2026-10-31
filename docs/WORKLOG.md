@@ -22,6 +22,7 @@ Each work thread keeps its own detailed log in [`docs/worklog/`](worklog/). This
 | 12 | Create MarginGraph pitch deck | 2026-10-26 11:50 | [#7](https://github.com/Sanskar1724/MarginGraph/pull/7) 15-slide pitch deck | `claude/project-thread-42h21l` → `docs/pitch-deck` | Merged into `main` 2026-10-26 | [deck.md](worklog/deck.md) |
 | 13 | Prepare launch and promotion kit | 2026-10-26 11:50 | [#8](https://github.com/Sanskar1724/MarginGraph/pull/8) Launch kit for stores, press and developers | `claude/project-thread-80g63p` → `docs/launch-kit` | Merged into `main` 2026-10-26 | [launch.md](worklog/launch.md) |
 | 14 | Plan path to industry-ready product | 2026-10-26 12:38 | this PR | `docs/industry-roadmap` | Open | [industry-plan.md](worklog/industry-plan.md) |
+| 15 | Validate on more real datasets (plan phase 1) | 2026-10-31 09:11 | PR into `main` (see the thread) | `claude/project-thread-xv99mf` → `feat/multi-dataset` | In progress: Olist done, Ta Feng running, Dunnhumby and Instacart waiting on downloads | [multi-dataset.md](worklog/multi-dataset.md) |
 
 PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed directly, so GitHub shows them as closed). The cleanup itself is logged in [repo-cleanup.md](worklog/repo-cleanup.md): merge order, the two conflicts and how they were resolved, the test run (59 passed, 1 skipped), the restructure, and the new branches.
 
@@ -44,6 +45,7 @@ PRs #1 to #9 were merged into `main` by the repo cleanup on 2026-10-26 (pushed d
 | `docs/pitch-deck` | Pitch deck | `docs/deck/` | #7 `claude/project-thread-42h21l` |
 | `docs/launch-kit` | Launch and promotion kit, landing page | `docs/launch/` | #8 `claude/project-thread-80g63p` |
 | `docs/industry-roadmap` | Industry plan, A/B sizing, public dataset converters | `docs/industry-plan/` | #13 `docs/industry-roadmap` |
+| `feat/multi-dataset` | Validation on Olist, Ta Feng, Dunnhumby, Instacart | `notebooks/multi_dataset_validation.ipynb`, `results/public/`, `docs/RESULTS_PUBLIC.md` | thread 15 `claude/project-thread-xv99mf` |
 | `ci/github-actions` | CI and release checks | `.github/workflows/` | #11 `claude/project-thread-hadeju` |
 
 Old `claude/*` branches are deleted once their work is in `main` (see [repo-cleanup.md](worklog/repo-cleanup.md)).
