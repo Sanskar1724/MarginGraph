@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Data, models and local outputs (regenerate with `margingraph prepare` / `run`)
+data/
+/artifacts/
+outputs/
+*.parquet
+*.xlsx
+*.db
+*.sqlite
+*.log
+
+# Model bundles from any artifacts dir (artifacts_pg/, ...)
+artifacts*/
+
+# Secrets
+kaggle.json
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
