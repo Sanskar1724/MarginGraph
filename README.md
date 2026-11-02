@@ -16,17 +16,25 @@
 [![Gradio demo](https://img.shields.io/badge/demo-Hugging%20Face%20Space-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/spaces/EquilStable/MarginGraph)
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](paper/main.pdf)
 
-[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [Industry plan](docs/industry-plan/README.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
+[Report](docs/PROJECT_REPORT.md) · [Results](docs/RESULTS.md) · [Other datasets](docs/RESULTS_PUBLIC.md) · [Paper](paper/main.pdf) · [Roadmap](docs/ROADMAP.md) · [Industry plan](docs/industry-plan/README.md) · [How to run](docs/RUNNING.md) · [Work log](docs/WORKLOG.md)
 
 </div>
 
 MarginGraph recommends add-on products that customers are likely to buy **and** that keep the retailer profitable. Stage 1 finds relevant products. Stage 2 uses mathematical optimization to choose which ones to show, under hard business rules (a 15% margin floor, at most 2 add-ons, discount limits, overstock priority).
 
-> **Status: working research prototype, tested offline on real data.** Every number below comes from an experiment in this repo. Cost and stock are simulated, so profit numbers are estimates until a real store's data is used.
+> **Status: working research prototype, tested offline on five real retail datasets and in a 30-day store simulation.** Every number below comes from an experiment in this repo. Cost and stock are simulated (except where marked), so profit numbers are estimates until a real store's data is used.
 
 <p align="center"><img src="docs/assets/architecture.svg" alt="MarginGraph architecture: cart and history, retrieval, LightGBM rerank, MILP optimizer, up to 2 add-ons" width="100%"></p>
 
-## Results so far (test: Oct–Dec 2011, 4,480 real baskets)
+## Key findings
+
+1. **The ranker generalizes beyond one store.** The unchanged pipeline beat the best simple method on 4 of 5 datasets (UCI, Ta Feng, Dunnhumby, and Instacart once past purchases enter the shortlist first) and tied on the fifth (Olist, only 169 test baskets).
+2. **The optimizer earns more and never breaks the margin rule.** In a 30-day replay of 4,480 real checkouts: **+24%** add-on profit over the ranker alone (+19% averaged over 5 random seeds), with **0** offers under the 15% floor vs **164** for the ranker. Customers accepted slightly fewer add-ons (7.5% vs 8.9%), but each earned more.
+3. **The shortlist matters as much as the ranker.** Instacart's only loss came from past purchases being cut from the 150-item pool, not from the ranker. Filling the pool with the customer's own past items first turned −3.0 pts into +4.1 pts.
+4. **A fixed 15% item floor is too strict for low-margin grocers.** With Ta Feng's own cost field, only 76% of products clear it and the hit rate halves; a bundle-level floor gave +38% profit. The floor should be set per store.
+5. **The LLM does not rank.** Zero-shot (1.5B, 3B), stacked and LoRA fine-tuned LLMs all lost to LightGBM. The LLM's role is limited to cold-start products and plain-language explanations.
+
+## Results on Online Retail II (test: Oct–Dec 2011, 4,480 real baskets)
 
 | | Result |
 | --- | --- |
@@ -34,15 +42,60 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 | Shortlist recall | **65.3%** of hidden items reach the 150-item shortlist (was 58.0% at 100) |
 | Optimizer (λ=0.5) vs ranker top 2 | **+14%** realized profit per basket, −1.1 pts Hit@2 (simulated cost and stock) |
 | 15% margin-floor breaks | **0** with the optimizer |
-| LLM as ranker (Qwen2.5 1.5B / 3B zero-shot, and as a stacker feature) | **NO-GO**: Hit@5 16.8% vs 27.6% for LightGBM. LoRA fine-tune of 1.5B: Hit@5 7.8%, below random order. LLM track closed |
 
 <p align="center"><img src="docs/assets/results-hit10.svg" alt="Hit@10 on held-out test baskets: LightGBM 38.1%, EASE 31.1%, ItemKNN 22.7%, ALS 17.3%, repeat 13.9%, co-purchase 13.1%, popularity 3.1%" width="100%"></p>
+
+## Results on four more public datasets
+
+Same pipeline and settings, no tuning per dataset. The pass rule was fixed before running: LightGBM must beat the best simple method (picked on validation) with a 95% CI above zero on most datasets with at least 1,000 test baskets. **Result: passed.** Details: [`docs/RESULTS_PUBLIC.md`](docs/RESULTS_PUBLIC.md) · notebook: [`notebooks/multi_dataset_validation.ipynb`](notebooks/multi_dataset_validation.ipynb)
+
+| Dataset | Test baskets | Best simple method | LightGBM Hit@10 | Gain [95% CI] |
+| --- | --- | --- | --- | --- |
+| UCI Online Retail II (UK gifts, reference) | 4,480 | EASE 31.1% | 38.1% | **+7.0** [+6.0, +8.0] |
+| Ta Feng (Taiwan grocery) | 14,346 | ItemKNN 14.3% | 22.6% | **+8.3** [+7.7, +8.8] |
+| Dunnhumby (US supermarket) | 20,000 | repeat 19.6% | 27.4% | **+7.8** [+7.2, +8.4] |
+| ↳ with past purchases first in the pool | 20,000 | repeat 19.6% | 29.4% | **+9.8** [+9.3, +10.3] |
+| Instacart (US grocery delivery) | 20,000 | repeat 37.5% | 34.5% | **−3.0** [−3.6, −2.4] (official result) |
+| ↳ with past purchases first in the pool | 20,000 | repeat 37.5% | 41.6% | **+4.1** [+3.7, +4.5] |
+| Olist (Brazil marketplace) | 169 | EASE-decay 17.2% | 20.7% | +3.6 [−1.2, +8.9], tie (too few baskets) |
+
+The official gate counts the default pool, because the rule was fixed before the runs. The "past purchases first" reruns came from diagnosing the Instacart loss (pool recall 51.7% → 70.1%).
+
+**Profit on other stores (Stage 2, λ=0.5 vs ranker top 2):**
+
+| Dataset | Cost source | Profit per basket | Hit-rate change |
+| --- | --- | --- | --- |
+| Ta Feng | simulated | **+17%** | −1.0 pt |
+| Dunnhumby | simulated | **+13%** (+16% with past purchases first) | −1.1 pts |
+| Ta Feng | its own `ASSET` field read as cost (unverified) | +25% with a 15% item floor; **+38%** with a bundle floor | item floor halves the hit rate |
+
+## 30-day store simulation
+
+[`src/margingraph/sim.py`](src/margingraph/sim.py) replays the 4,480 real UCI test checkouts in time order as 30 store days, with stock that runs down, weekly restocks and up to 2 add-ons per checkout. Cost and stock are **simulated**, so this shows how the system behaves, not real-store profit. Log: [`docs/worklog/retail-sim.md`](docs/worklog/retail-sim.md) · executed notebook: [`results/retail_sim/retail_sim_executed.md`](results/retail_sim/retail_sim_executed.md)
+
+| Policy | Add-on profit (replay) | 5 random seeds (mean ± sd) | Accept rate | Offers under 15% margin |
+| --- | --- | --- | --- | --- |
+| Ranker top 2 (no optimizer) | £920 | £842 ± 55 | 8.9% | 164 |
+| MarginGraph, item floor | **£1,141 (+24%)** | £1,004 ± 60 (+19%) | 7.5% | **0** |
+| MarginGraph, bundle floor | £1,145 (+24%) | £1,005 ± 61 (+19%) | 7.5% | 21 (bundle still ≥ 15%) |
+| MarginGraph, overstock weight 2 | £1,099 (+19%) | £985 ± 57 (+17%) | 7.3% | 0 |
+
+With overstock weight 2, MarginGraph sold as much overstock as the ranker (116 vs 114 units) and kept most of the profit gain.
+
+## LLM decision
+
+| Test | Hit@5 | vs LightGBM 27.6% |
+| --- | --- | --- |
+| Qwen2.5 1.5B / 3B zero-shot rerank, and as a stacker feature | 16.8% (best) | NO-GO |
+| Qwen2.5 1.5B LoRA fine-tune | 7.8% (below random order) | NO-GO |
+
+**LightGBM ranks.** The LLM is kept only for products with no purchase history (7.1% of test targets, which no co-purchase model can rank) and for one-line "why this add-on" explanations. Neither use has been measured yet. Details: [`docs/RESULTS.md`](docs/RESULTS.md).
 
 ---
 
 ## Why
 
-Most recommenders optimize for clicks or conversion and ignore economics. A relevant item can still be a bad recommendation for the retailer if it has a thin margin, needs a deep discount, or adds to stock that is already low. MarginGraph adds explicit profit, margin and inventory logic on top of relevance, without letting a language model make financial decisions.
+Most recommenders optimize for clicks or conversion and ignore economics. A relevant item can still be a bad recommendation for the retailer if it has a thin margin, needs a deep discount, or adds to stock that is already low. MarginGraph adds explicit profit, margin and inventory logic on top of relevance, and keeps every financial decision in deterministic code.
 
 ## Architecture
 
@@ -55,7 +108,7 @@ Customer history / cart
 Stage 1a: Candidate retrieval   (EASE, ItemKNN, ALS, text, fresh sales, repeat, co-purchase, popularity)
         │  up to 150 candidates
         ▼
-Stage 1b: Reranker              (LightGBM; LLM tested, NO-GO so far)
+Stage 1b: Reranker              (LightGBM; LLM tested as ranker: NO-GO)
         │  relevance score → calibrated purchase probability p(accept)
         ▼
 Stage 2: PuLP optimizer         (maximize expected profit under business constraints)
@@ -80,16 +133,17 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 
 **Design rules**
 
-- The LLM ranks products; it never sets prices or overrides constraints.
+- LightGBM ranks products. The LLM is limited to cold-start items and explanations; it never ranks, sets prices or overrides constraints.
 - Purchase probability comes from the relevance model, so the optimizer cannot push irrelevant high-margin items.
 - Business rules are enforced by deterministic code and re-checked on every output.
+- The margin floor is a per-store setting (item or bundle level): on thin-margin grocery data a fixed 15% item floor removes too many products.
 
 ## Data
 
 | Dataset | Role |
 | --- | --- |
 | [UCI Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii) | Primary: real invoices (baskets), real prices, product descriptions |
-| H&M Personalized Fashion (Kaggle) | Scale-up option with richer product text |
+| [Ta Feng](https://github.com/RecoHut-Datasets/tafeng), Dunnhumby *The Complete Journey*, Instacart, [Olist](https://github.com/olist/work-at-olist-data) | Validation on four more stores: grocery, supermarket, delivery app, marketplace ([results](docs/RESULTS_PUBLIC.md)) |
 | Simulated ERP fields | Cost, stock level and overstock flags where real data is unavailable; always labelled as simulated |
 | Your own store | `margingraph sync csv / shopify / woocommerce` loads a store's products, orders, cost and stock; see [docs/CONNECTORS.md](docs/CONNECTORS.md) |
 
@@ -114,6 +168,8 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] LightGBM reranker beats the best baseline
 - [x] Zero-shot LLM rerank (1.5B, 3B) and LLM stacker: NO-GO
 - [x] LoRA fine-tuned LLM (E6): NO-GO, LightGBM stays the ranker
+- [x] Validation on four public datasets: gate passed (Ta Feng, Dunnhumby win; Instacart wins with past purchases first; Olist tie)
+- [ ] Make "past purchases first" the default pool order and confirm it does not hurt UCI
 
 **Stage 2**
 
@@ -121,6 +177,8 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Strategy comparison across discounts and overstock weights
 - [x] Sequential inventory simulation
 - [x] Sensitivity to simulated ERP assumptions
+- [x] 30-day store simulation: +24% add-on profit, 0 margin-floor breaks (simulated cost)
+- [ ] Per-store or bundle-level margin floor as the default for low-margin stores
 
 **Production and pilot**
 
@@ -143,7 +201,9 @@ MarginGraph/
 ├── tests/                  pytest suite on a small synthetic fixture
 ├── configs/                default.yaml: split dates, pool sizes, margin floor, simulated ERP
 ├── results/                raw experiment outputs, E1–E11
-├── notebooks/              full run and LLM notebooks for free Kaggle / Colab GPUs
+│   ├── public/             Ta Feng, Dunnhumby, Instacart, Olist runs
+│   └── retail_sim/         30-day store simulation ledger and summary
+├── notebooks/              full run, multi-dataset, store simulation and LLM notebooks
 │   └── exploration/        early V1/V2 prototypes (history only, not results)
 ├── space/                  Hugging Face Space demo (Gradio)
 ├── paper/                  arXiv-style paper: LaTeX, PDF, figures
@@ -158,7 +218,7 @@ MarginGraph/
 
 | Code | Docs and tooling |
 | --- | --- |
-| [`feat/core-pipeline`](../../tree/feat/core-pipeline) · [`feat/ranker-accuracy`](../../tree/feat/ranker-accuracy) · [`feat/llm-reranker`](../../tree/feat/llm-reranker) · [`feat/api-service`](../../tree/feat/api-service) · [`feat/store-connectors`](../../tree/feat/store-connectors) · [`feat/merchant-dashboard`](../../tree/feat/merchant-dashboard) · [`feat/hf-space-demo`](../../tree/feat/hf-space-demo) | [`docs/project-report`](../../tree/docs/project-report) · [`docs/research-paper`](../../tree/docs/research-paper) · [`docs/pitch-deck`](../../tree/docs/pitch-deck) · [`docs/launch-kit`](../../tree/docs/launch-kit) · [`docs/industry-roadmap`](../../tree/docs/industry-roadmap) · [`ci/github-actions`](../../tree/ci/github-actions) |
+| [`feat/core-pipeline`](../../tree/feat/core-pipeline) · [`feat/ranker-accuracy`](../../tree/feat/ranker-accuracy) · [`feat/llm-reranker`](../../tree/feat/llm-reranker) · [`feat/api-service`](../../tree/feat/api-service) · [`feat/store-connectors`](../../tree/feat/store-connectors) · [`feat/merchant-dashboard`](../../tree/feat/merchant-dashboard) · [`feat/hf-space-demo`](../../tree/feat/hf-space-demo) · [`feat/multi-dataset`](../../tree/feat/multi-dataset) | [`docs/project-report`](../../tree/docs/project-report) · [`docs/research-paper`](../../tree/docs/research-paper) · [`docs/pitch-deck`](../../tree/docs/pitch-deck) · [`docs/launch-kit`](../../tree/docs/launch-kit) · [`docs/industry-roadmap`](../../tree/docs/industry-roadmap) · [`ci/github-actions`](../../tree/ci/github-actions) |
 
 Workflow and what each branch contains: [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -205,7 +265,7 @@ HF_TOKEN = userdata.get("HF_TOKEN")
 
 ## Tech stack
 
-`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `SQLAlchemy (SQLite / Postgres)` · `Redis (optional)` · `Docker` · `Qwen2.5 (tested on Kaggle)` · `Colab / Kaggle`
+`Python` · `pandas` · `DuckDB` · `LightGBM` · `implicit` · `PuLP (CBC or HiGHS)` · `FastAPI` · `SQLAlchemy (SQLite / Postgres)` · `Redis (optional)` · `Docker` · `Qwen2.5 (tested on Kaggle; cold-start and explanations only)` · `Colab / Kaggle`
 
 ## License
 
