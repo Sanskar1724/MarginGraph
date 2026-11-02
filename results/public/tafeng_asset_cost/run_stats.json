@@ -1,0 +1,1 @@
+{"seconds": 1430, "peak_rss_mb_upper_bound": 4953, "cpus": 4, "convert_options": ["--top-items", "5000", "--asset-as-cost"], "simulated_erp": false, "note": "ran at the same time as the Dunnhumby run for its last ~10 minutes; cost = ASSET/AMOUNT (unverified), stock simulated"}

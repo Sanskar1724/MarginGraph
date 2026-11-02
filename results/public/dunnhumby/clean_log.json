@@ -1,0 +1,31 @@
+{
+  "source_orders": 243257,
+  "source_lines": 1654347,
+  "dropped_cancelled_orders": 0,
+  "dropped_lines_without_valid_order": 0,
+  "dropped_nonpositive_qty_or_price": 0,
+  "clean_lines": 1654347,
+  "invoices": 243257,
+  "items": 5000,
+  "customers": 2487,
+  "lines_without_customer": 0,
+  "items_with_store_cost": 0,
+  "items_with_store_stock": 0,
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "unit cost known for 0% of products; the rest use the cost-ratio assumption (erp.cost_ratio) and are flagged cost_source=assumed"
+    ],
+    "stats": {
+      "products": 5000,
+      "orders": 243257,
+      "order_lines": 1654347,
+      "cancelled_orders": 0,
+      "orders_with_2plus_products": 174949,
+      "days_covered": 710,
+      "cost_coverage": 0.0,
+      "stock_coverage": 0.0
+    }
+  }
+}

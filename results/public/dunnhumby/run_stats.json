@@ -1,0 +1,1 @@
+{"seconds": 2491, "peak_rss_mb_upper_bound": 6936, "cpus": 4, "convert_options": ["--top-items", "5000"], "simulated_erp": true, "note": "ran in parallel with other runs on the same 4 CPUs, so time is an upper bound"}
