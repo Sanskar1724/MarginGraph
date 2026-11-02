@@ -1,0 +1,13 @@
+{
+  "dataset": "instacart",
+  "order_lines": 2721735,
+  "orders": 322215,
+  "orders_with_2plus_products": 300042,
+  "products": 5000,
+  "customers": 19981,
+  "first": "2016-06-30 04:00:00",
+  "last": "2017-06-30 23:00:00",
+  "has_cost": false,
+  "max_customers": 20000,
+  "top_items": 5000
+}

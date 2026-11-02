@@ -1,0 +1,13 @@
+{
+  "dataset": "olist",
+  "order_lines": 62626,
+  "orders": 61294,
+  "orders_with_2plus_products": 1240,
+  "products": 5000,
+  "customers": 60000,
+  "first": "2016-09-04 21:15:19",
+  "last": "2018-08-29 15:00:37",
+  "has_cost": false,
+  "max_customers": null,
+  "top_items": 5000
+}

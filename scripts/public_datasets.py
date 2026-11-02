@@ -259,7 +259,7 @@ def cmd_compare(a: argparse.Namespace) -> None:
     def pct(x):
         return f"{100 * float(x):.1f}%"
 
-    rows = ["| Results | Test events | Pool Recall@100 | Best baseline | Baseline Hit@10 | LightGBM Hit@10 | Diff [95% CI] | Verdict |",
+    rows = ["| Results | Test events | Pool recall | Best baseline (picked on val) | Baseline Hit@10 | LightGBM Hit@10 | Diff [95% CI] | Verdict |",
             "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for d in map(Path, a.results):
         s = json.loads((d / "summary.json").read_text())
@@ -269,10 +269,12 @@ def cmd_compare(a: argparse.Namespace) -> None:
         lgb = _pick(e5, model="lightgbm", metric="hit@10")
         e3 = pd.read_csv(d / "e3_baselines.csv")
         b = _pick(e3, model=base, metric="hit@10", split="test")
-        rec = _pick(pd.read_csv(d / "e4_retrieval.csv"), split="test", metric="recall@100")
+        # The pool size is a config setting (100 at first, 150 since the accuracy
+        # thread), so read the pool's own test recall rather than a fixed @K.
+        rec = s.get("e4_test_pool_recall")
         lo, hi = float(pair["ci_low"]), float(pair["ci_high"])
         verdict = "LightGBM wins" if lo > 0 else ("baseline wins" if hi < 0 else "tie")
-        rows.append(f"| `{d}` | {int(lgb['n'])} | {pct(rec['mean']) if len(rec) else '?'} | {base} | "
+        rows.append(f"| `{d}` | {int(lgb['n'])} | {pct(rec) if rec is not None else '?'} | {base} | "
                     f"{pct(b['mean']) if len(b) else '?'} | {pct(lgb['mean'])} | "
                     f"{100 * float(pair['diff']):+.1f} [{100 * lo:+.1f}, {100 * hi:+.1f}] | {verdict} |")
     print("\n".join(rows))

@@ -149,6 +149,31 @@
     <div class="note"><strong>* Read this before quoting the profit numbers.</strong> The public dataset has real orders and real prices but no unit costs or stock levels, so those were simulated. The relevance numbers involve no simulation. The profit gain stayed positive in all 9 cost scenarios we tried, but only a real store's costs can confirm it. That is what the pilot is for.</div>
   </section>
 
+  <section id="more-stores">
+    <h2>Tested beyond one store</h2>
+    <p class="sub">The same code, unchanged, on four more public datasets, with a pass/fail rule fixed before the run. Hit@10 gain over the best standard method on each dataset, with 95% CIs.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Store (dataset)</th><th class="num">Test baskets</th><th class="num">Gain, Hit@10 points</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>UK gift shop (UCI Online Retail II)</td><td class="num">4,480</td><td class="num">+7.0 [+6.0, +8.0]</td><td>win</td></tr>
+          <tr><td>Taiwan grocery (Ta Feng)</td><td class="num">14,346</td><td class="num">+8.3 [+7.7, +8.8]</td><td>win</td></tr>
+          <tr><td>US supermarket (Dunnhumby)</td><td class="num">20,000</td><td class="num">+7.8 [+7.2, +8.4]</td><td>win</td></tr>
+          <tr><td>US grocery app (Instacart)</td><td class="num">20,000</td><td class="num bad">&minus;3.0 [&minus;3.6, &minus;2.4]</td><td>loss (official)</td></tr>
+          <tr class="hl"><td>&nbsp;&nbsp;Instacart, past purchases first in the shortlist</td><td class="num">20,000</td><td class="num">+4.1 [+3.7, +4.5]</td><td>win after the fix</td></tr>
+          <tr><td>Brazil marketplace (Olist)</td><td class="num">169</td><td class="num">+3.6 [&minus;1.2, +8.9]</td><td>tie, too few baskets</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid" style="margin-top:24px">
+      <div class="card"><div class="stat">&pound;1,141</div><div class="stat-label">vs &pound;920 in a 30-day simulated store*</div><p>4,480 real checkouts replayed day by day with stock and weekly restock: +24% add-on profit (+19% over 5 random seeds).</p></div>
+      <div class="card"><div class="stat">0 vs 164</div><div class="stat-label">offers below the margin floor</div><p>MarginGraph never offered an item under 15% margin; showing the top 2 likely items would have, 164 times.</p></div>
+      <div class="card"><div class="stat">+13&ndash;17%</div><div class="stat-label">profit per order on 3 stores*</div><p>UK gifts +14%, Taiwan grocery +17%, US supermarket +13%, each for about 1 point fewer hits.</p></div>
+      <div class="card"><div class="stat">+38%</div><div class="stat-label">with a bundle floor on grocery margins*</div><p>With Ta Feng's cost-like field as cost, a fixed 15% item floor halves the hit rate. Lesson: set the floor per store, or on the bundle.</p></div>
+    </div>
+    <div class="note">* Simulated cost and stock, as above. Shoppers accepted fewer add-ons in the simulation (7.5% vs 8.9%), but each earned more.</div>
+  </section>
+
   <section>
     <h2>What did not work, and why we tell you</h2>
     <p class="sub">The original plan put a large language model at the centre. We tested it with a pass/fail rule set before the run.</p>
@@ -203,12 +228,12 @@
     <div class="grid">
       <div class="card"><h3>Stack</h3><p>Python, pandas, DuckDB, implicit, LightGBM (LambdaRank) with isotonic calibration, PuLP with HiGHS, FastAPI.</p></div>
       <div class="card"><h3>Evaluation</h3><p>Strict time split, signal audit against a shuffled null, paired bootstrap 95% CIs on every comparison.</p></div>
-      <div class="card"><h3>Read more</h3><p><a href="https://github.com/Sanskar1724/MarginGraph/blob/main/docs/RESULTS.md">Full results</a> · <a href="https://github.com/Sanskar1724/MarginGraph/blob/main/docs/launch/faq.md">FAQ</a> · <a href="BLOG_URL">Technical write-up</a></p></div>
+      <div class="card"><h3>Read more</h3><p><a href="https://github.com/Sanskar1724/MarginGraph/blob/main/docs/RESULTS.md">Full results</a> · <a href="https://github.com/Sanskar1724/MarginGraph/blob/main/paper/main.pdf">Research paper (PDF)</a> · <a href="https://github.com/Sanskar1724/MarginGraph/blob/main/docs/launch/faq.md">FAQ</a> · <a href="BLOG_URL">Technical write-up</a></p></div>
     </div>
   </section>
 
   <footer>
-    MarginGraph is an open-source research project by San. Data: <a href="https://archive.ics.uci.edu/dataset/502/online+retail+ii">UCI Online Retail II</a> (CC BY 4.0). Results last updated 26 Oct 2026.
+    MarginGraph is an open-source research project by San. Data: <a href="https://archive.ics.uci.edu/dataset/502/online+retail+ii">UCI Online Retail II</a> (CC BY 4.0), plus Ta Feng, Dunnhumby, Instacart and Olist public datasets. Results last updated 31 Oct 2026.
     · <a href="https://github.com/Sanskar1724/MarginGraph">GitHub</a> · <a href="mailto:YOUR_EMAIL">Contact</a>
   </footer>
 </div>

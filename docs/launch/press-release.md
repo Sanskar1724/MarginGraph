@@ -31,6 +31,8 @@ MarginGraph is an open-source research prototype for margin-aware product recomm
 - Tested offline on real public sales data; not yet deployed in a live store.
 - Top-10 hit rate 38.1% vs 31.1% for the best standard method (+7.0 points, 95% confidence interval 6.0 to 8.0).
 - About +14% profit per order from the add-on under simulated costs; 0 margin-floor breaks.
+- On four more public datasets: wins in Taiwan grocery (+8.3 points) and a US supermarket (+7.8); a loss on a US grocery app (−3.0) that turned into +4.1 once shoppers' past purchases were put first; a tie on a small Brazilian marketplace sample.
+- In a 30-day replay of real checkouts with simulated costs: £1,141 vs £920 add-on profit, and 0 offers below the margin floor vs 164.
 - Language models tested as rankers did not beat the conventional model.
 
 ### Media contact

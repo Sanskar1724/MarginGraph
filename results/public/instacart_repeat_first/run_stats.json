@@ -1,0 +1,1 @@
+{"seconds": 2123, "peak_rss_mb_upper_bound": 7785, "cpus": 4, "convert_options": ["--top-items", "5000", "--max-customers", "20000"], "simulated_erp": true, "per_source_change": "repeat: 60 moved to the front of retrieval.per_source; everything else as in results/public/instacart"}

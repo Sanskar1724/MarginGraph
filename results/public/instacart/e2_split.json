@@ -1,0 +1,16 @@
+{
+  "train_max_ts": "2017-05-05 23:00:00",
+  "val_min_ts": "2017-05-06 00:00:00",
+  "val_max_ts": "2017-06-05 23:00:00",
+  "test_min_ts": "2017-06-06 00:00:00",
+  "test_max_ts": "2017-06-30 23:00:00",
+  "invoice_overlap": 0,
+  "train_lines": 1894954,
+  "val_lines": 405530,
+  "test_lines": 421251,
+  "val_events": 20000,
+  "test_events": 20000,
+  "val_target_seen_in_train": 0.99995,
+  "test_target_seen_in_train": 0.9999,
+  "test_target_seen_in_train_or_val": 1.0
+}
