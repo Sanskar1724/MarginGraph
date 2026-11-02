@@ -18,6 +18,7 @@
 > What I measured on 4,480 real orders from a UK online gift shop (public UCI dataset):
 > ✅ The item the shopper really bought was in the top 10 for 38.1% of orders, vs 31.1% for the best standard method (+7.0 points, 95% CI 6.0 to 8.0)
 > ✅ Choosing for profit raised profit per order from the add-on by about 14%, for ~1 point fewer hits
+> ✅ Same code on 4 more public stores: wins in Taiwan and US grocery (+8.3, +7.8 pts), one loss (−3.0) fixed by putting past purchases first (+4.1)
 > ✅ 0 margin-floor breaks
 >
 > The honest part: the dataset has no unit costs, so the profit numbers use simulated costs. The gain held across 9 different cost assumptions, but only a real store can confirm it.

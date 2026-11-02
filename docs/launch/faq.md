@@ -52,6 +52,8 @@ UCI Online Retail II (UK online gift retailer, Dec 2009 to Dec 2011): 991,910 cl
 **Headline results?**
 LightGBM Hit@10 38.1% vs EASE 31.1% (+7.0 points, 95% paired bootstrap CI [6.0, 8.0]). MILP at λ=0.5 vs ranker top-2: realized profit +14% (CI +£0.014 to +£0.044 per basket), Hit@2 −1.1 points. All in [`docs/RESULTS.md`](../RESULTS.md).
 
+On four more public datasets (same code, pass/fail rule fixed first): Ta Feng +8.3 [+7.7, +8.8], Dunnhumby +7.8 [+7.2, +8.4], Instacart −3.0 [−3.6, −2.4] (official; +4.1 [+3.7, +4.5] with past purchases first in the candidate pool), Olist a tie on 169 baskets. In a 30-day replay of real checkouts with simulated cost and stock, add-on profit was £1,141 vs £920 for the ranker alone, with 0 vs 164 offers under the floor. See [`docs/RESULTS_PUBLIC.md`](../RESULTS_PUBLIC.md) and the [paper](../../paper/main.pdf).
+
 **What is the ceiling?**
 The 150-item shortlist contains the hidden item 65.3% of the time (58.0% at 100 items before the accuracy work), and 7.1% of test items never appear before the test window. Raising shortlist recall is the most direct way to improve.
 

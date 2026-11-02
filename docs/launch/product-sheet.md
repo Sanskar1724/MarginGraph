@@ -32,6 +32,8 @@ We tested MarginGraph on two years of real sales from a UK online gift shop (a p
 | --- | --- |
 | Finds the item the shopper really bought, in its top 10 | **38.1%** of orders, against 3.1% for a "top sellers" list and 31.1% for the best standard method |
 | Extra profit per order from the add-on, at the balanced setting | **+14%** compared with just showing the 2 most likely items\* |
+| Tested on other stores | Beat the best standard method on a Taiwanese grocer and a US supermarket (+8.3 and +7.8 points); lost on a US grocery app until it put shoppers' past purchases first (−3.0 → +4.1) |
+| A month in a simulated store | **£1,141 vs £920** add-on profit, and 0 offers below the margin floor (vs 164)\* |
 | Cost in relevance for that profit | About 1 order in 100 where the shopper's item drops out of the 2 shown |
 | Times the margin floor was broken | **0** |
 
