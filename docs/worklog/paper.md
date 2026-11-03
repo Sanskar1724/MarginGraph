@@ -82,3 +82,57 @@ Page numbers were removed where they could not be confirmed from the source page
 
 - Add the E6 LoRA fine-tune result when San's Kaggle run finishes.
 - San to fill in full name and affiliation; arXiv cs.IR needs an endorsement for a first submission.
+
+---
+
+## Update 2026-11-03: affiliation, reranker comparison, industry gaps
+
+*Thread: "Add reranker comparison and limitations to paper", started 2026-11-03 22:09 UTC.*
+
+### Ask
+San: "this is my college website and this my college email 202401040137@mitaoe.ac.in, add 2 and 3 in paper and merge with main, also take care to add in proper section and if need add graph or table in existing paper." Item 2 = the reranker comparison (LightGBM vs XGBoost vs CatBoost); item 3 = a stronger limitations section on the gaps with industry systems. Later: "also remove ai section, use of ai tool".
+
+### What changed
+
+| Part | Change |
+| --- | --- |
+| Author line | MIT Academy of Engineering (MITAOE), Alandi, Pune, Maharashtra, India; 202401040137@mitaoe.ac.in. Red `\todo` placeholders and the macro removed. Date 3 November 2026 |
+| Sec. 6.2 "Choice of reranker" (new) | Table 4 and Figure 3 (`fig10_rerankers`): six rerankers on identical pools, features and training events, 1,000 UCI test baskets (seed 42). Related work and abstract each gained one sentence |
+| Sec. 8 Limitations | New paragraph "Distance from industrial recommenders" + Table 10: economics, online evidence, signals, exposure/position bias, scale, long-term effects, MLOps; each with the free-resource step planned (pilot shop, Shopify A/B, RetailRocket/Diginetica, Amazon Reviews 2023/H&M, longer sim, scheduled retraining in GitHub Actions). No target numbers |
+| Sec. 9 Future work (new) | The four steps in order of how much they change the claims |
+| "Use of AI tools" section | Removed at San's request |
+| References | +8: XGBoost, CatBoost, Linden et al. 2003 (Amazon item-to-item), Joachims et al. 2017 (unbiased LTR), Sculley et al. 2015 (ML technical debt), Hou et al. 2024 (Amazon Reviews 2023), RetailRocket, H&M |
+| Reproducibility | Names `scripts/reranker_comparison.py` and the notebook |
+| PDF | 19 pages, no overfull boxes, no undefined references |
+
+### Reranker comparison (measured, this thread)
+
+`scripts/reranker_comparison.py`, run through `notebooks/reranker_comparison.ipynb` in a 4-core cloud container (features 248 s, all six models about 2 min). Outputs: `results/reranker_comparison/summary.csv`, `ranks.csv`, and `reranker_comparison_executed.md` (the notebook with outputs; the `.ipynb` is committed cleared because the repo's pre-commit hook rejects outputs).
+
+| Model | Hit@10 | Hit@2 | NDCG@10 | Train s | Δ Hit@10 vs LightGBM [95% CI] |
+| --- | --- | --- | --- | --- | --- |
+| LightGBM LambdaRank | 38.6 | 17.4 | 0.236 | 7 | — |
+| XGBoost rank:pairwise | 38.8 | 17.4 | 0.234 | 19 | +0.2 [-1.0, +1.3] |
+| XGBoost rank:ndcg | 39.0 | 17.1 | 0.234 | 9 | +0.4 [-0.6, +1.5] |
+| CatBoost YetiRank | 38.0 | 18.2 | 0.239 | 57 | -0.6 [-2.0, +0.7] |
+| HistGradientBoosting | 37.2 | 16.0 | 0.219 | 10 | -1.4 [-2.9, +0.1] |
+| Logistic regression | 36.9 | 16.0 | 0.221 | 3 | -1.7 [-3.4, +0.1] |
+
+Pool recall on the sample 65.5% (full test 65.3%). Reading: the three boosted rankers tie; the two pointwise models trail, but their intervals just reach zero.
+
+**Differs from the earlier quick run.** The 2026-11-03 run in thread "reranker comparison" (not saved anywhere) reported LightGBM 41.0%, pool recall 68%, and significant losses for HistGB (-2.6) and LogReg (-5.6). Its script was not kept, so its sample cannot be reproduced. The paper uses this thread's run because its code, notebook and outputs are in the repo. Both runs agree that XGBoost and CatBoost tie LightGBM.
+
+### Commands
+```bash
+pip install -e . xgboost catboost nbformat nbconvert ipykernel matplotlib
+ln -s /path/to/online_retail_II.xlsx data/raw/online_retail_II.xlsx
+cd notebooks && jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 reranker_comparison.ipynb
+python paper/figures/make_figures.py
+cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
+pandoc main.tex --citeproc --bibliography=references.bib -t gfm --wrap=none -o raw.md   # then the clean-up script (numbers from main.aux)
+```
+
+### Issues
+- mitaoe.ac.in is blocked by the container's network policy; the official name "MIT Academy of Engineering, Alandi, Pune" was confirmed from search results that point at the college's own pages.
+- A literal `\n` written into the abstract broke the first LaTeX build; fixed.
+- The reranker table was 7 pt too wide; narrower column padding.
