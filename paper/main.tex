@@ -13,19 +13,16 @@
 \usepackage{microtype}
 
 \newcommand{\pts}{\,pts}
-% Placeholder marker: shows in red in the PDF until it is filled in.
-\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
 
 \title{MarginGraph: Margin-Aware, Constrained Recommendation of Checkout Add-Ons\\[4pt]
 \large Evidence from five public retail datasets and a 30-day store simulation,\\ with a negative result for small LLM rerankers}
 
-% TODO (author): replace the two red placeholders with your college and e-mail.
 \author{Sanskar Chandawar\\
-\small \todo{Department, College / University, City, Country}\\
-\small \todo{e-mail}\quad
+\small MIT Academy of Engineering (MITAOE), Alandi, Pune, Maharashtra, India\\
+\small \href{mailto:202401040137@mitaoe.ac.in}{\texttt{202401040137@mitaoe.ac.in}}\quad
 \href{https://github.com/Sanskar1724/MarginGraph}{\texttt{github.com/Sanskar1724/MarginGraph}}}
 
-\date{Preprint, 31 October 2026}
+\date{Preprint, 3 November 2026}
 
 \begin{document}
 \maketitle
@@ -41,6 +38,7 @@ Against a success criterion fixed before running, the same pipeline, unchanged, 
 We trace the Instacart loss to the order in which the candidate pool is filled: putting the customer's past purchases first raises pool recall from 51.7\% to 70.1\% and turns the loss into a gain of +4.1 [3.7, 4.5] (Dunnhumby: +9.8 [9.3, 10.3]).
 With \emph{simulated} unit cost and stock, the optimizer raises gross profit per basket by 13--17\% over the ranker's top-2 on three datasets for about one point of hit rate, and in a 30-day replay of real UCI checkouts it earns \pounds1,141 of add-on profit against \pounds920 (+24\%; +19\% under stochastic acceptance over five seeds) with zero margin-floor violations against 164.
 On Ta Feng, with the dataset's own \texttt{ASSET} field read as unit cost, a fixed 15\% item floor halves the hit rate, which argues for store-specific or bundle-level floors.
+XGBoost and CatBoost ranking objectives on the same features tie LightGBM, so the gain comes from the candidate sources and features, not the choice of boosting library.
 Finally, zero-shot and LoRA-tuned Qwen2.5 rerankers (1.5B and 3B) do not beat LightGBM.
 Every number is read from files the pipeline writes; none are targets.
 \end{abstract}
@@ -105,7 +103,7 @@ In grocery next-basket recommendation, a large share of items are repeat purchas
 Our Instacart result (Section~\ref{sec:pool}) is a direct instance of this effect.
 
 \paragraph{Learning to rank and calibration.}
-We rerank with LambdaRank-style gradient boosting~\citep{burges2010lambdamart} as implemented in LightGBM~\citep{ke2017lightgbm}.
+We rerank with LambdaRank-style gradient boosting~\citep{burges2010lambdamart} as implemented in LightGBM~\citep{ke2017lightgbm}, and compare it with the ranking objectives of XGBoost~\citep{chen2016xgboost} and CatBoost~\citep{prokhorenkova2018catboost} (Section~\ref{sec:rerankers}).
 Stage~2 needs probabilities, not scores, so we fit an isotonic map from score to purchase probability~\citep{zadrozny2002calibration}.
 
 \paragraph{Profit-aware and multi-objective recommendation.}
@@ -322,6 +320,48 @@ Added one at a time to the 100-item pool, each new source was within noise, beca
 Together, with the pool enlarged to 150 (chosen over 100 and 200 on validation), they raised pool recall by 7.3 points [6.2, 8.3]; training on three events per validation invoice added the rest.
 Against the first run on the same test baskets, Hit@10 rose by 2.5 points [1.6, 3.4] and NDCG@10 by 0.020 [0.015, 0.025].
 An item2vec source and four LightGBM parameter sets lost on validation and were dropped.
+
+\subsection{Choice of reranker}\label{sec:rerankers}
+LightGBM was chosen for speed, not after a comparison, so we checked it against five alternatives on identical inputs: the same 150-item candidate pools, the same 35 features, the same training events (validation invoices with three hidden items each, candidates from train-only models) and the same early-stopping slice.
+XGBoost~\citep{chen2016xgboost} is run with its pairwise and NDCG ranking objectives and CatBoost~\citep{prokhorenkova2018catboost} with YetiRank; the boosted rankers use 500 trees with early stopping, as LightGBM does.
+Two pointwise classifiers, scikit-learn's histogram gradient boosting and a standardised logistic regression, show what the listwise objective adds.
+Scoring the full test set six times would repeat the slow candidate step for little gain, so all six models are scored on 1,000 test invoices sampled with seed 42.
+On this sample LightGBM reaches Hit@10 38.6\% [35.5, 41.7] and the pool contains the hidden item for 65.5\% of baskets, close to the full test set (38.1\% and 65.3\%).
+All runs used the same 4-core CPU container.
+
+\begin{table}[t]
+\centering
+\caption{Rerankers on 1,000 seeded UCI test baskets (seed 42), same pools, features and training events. Train is CPU wall time; score is the time to score all 150{,}000 candidate rows. $\Delta$ is Hit@10 minus LightGBM, paired over the same baskets, with its 95\% bootstrap CI.}
+\label{tab:rerankers}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Model & Hit@10 & Hit@2 & NDCG@10 & Train (s) & Score (s) & $\Delta$ Hit@10 [95\% CI] \\
+\midrule
+\textbf{LightGBM LambdaRank} & 38.6 & 17.4 & 0.236 & 7 & 0.10 & --- \\
+XGBoost \texttt{rank:pairwise} & 38.8 & 17.4 & 0.234 & 19 & 0.13 & $+0.2$ [$-1.0$, $+1.3$] \\
+XGBoost \texttt{rank:ndcg} & 39.0 & 17.1 & 0.234 & 9 & 0.07 & $+0.4$ [$-0.6$, $+1.5$] \\
+CatBoost YetiRank & 38.0 & 18.2 & 0.239 & 57 & 0.02 & $-0.6$ [$-2.0$, $+0.7$] \\
+HistGradientBoosting (pointwise) & 37.2 & 16.0 & 0.219 & 10 & 0.20 & $-1.4$ [$-2.9$, $+0.1$] \\
+Logistic regression (pointwise) & 36.9 & 16.0 & 0.221 & 3 & 0.04 & $-1.7$ [$-3.4$, $+0.1$] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\linewidth]{figures/fig10_rerankers.pdf}
+\caption{Hit@10 of each alternative minus LightGBM on the same 1,000 test baskets (paired 95\% CI), with absolute Hit@10 and CPU training time.}
+\label{fig:rerankers}
+\end{figure}
+
+Table~\ref{tab:rerankers} and Figure~\ref{fig:rerankers} give the result.
+The three listwise or pairwise gradient-boosted rankers are statistically indistinguishable: XGBoost is 0.2--0.4 points ahead and CatBoost 0.6 points behind, and every paired interval contains zero.
+CatBoost has the best Hit@2 and NDCG@10 and the fastest scoring, but takes about eight times as long to train.
+The two pointwise models trail by 1.4 and 1.7 points; their intervals only just reach zero, so on 1,000 baskets this is suggestive rather than conclusive, and their NDCG@10 is also lower.
+The gains of Section~\ref{sec:s1} therefore come from the candidate sources and features rather than from LightGBM in particular, and any of the three boosted rankers would serve.
+We keep LightGBM because it ties for accuracy and trains fastest among them.
 
 \subsection{Stage 2 on UCI Online Retail II}\label{sec:s2}
 
@@ -575,6 +615,40 @@ It does not show what a real store would earn, which needs real cost data and an
 \item \textbf{Latency.} Solver time is 2.7\,ms. The serving latency in the repository (p50 22\,ms for the research API, p95 88\,ms end to end for the multi-store service) was measured in a container, not in a store's production setting.
 \end{itemize}
 
+\paragraph{Distance from industrial recommenders.}
+The limitations above are about this study's internal validity.
+A separate question is how far MarginGraph is from the recommenders that large retailers run in production, such as Amazon's item-to-item system~\citep{linden2003amazon} and its successors.
+Table~\ref{tab:gaps} lists the gaps we are aware of.
+None of them changes the offline comparisons in this paper, but each one limits what the paper can claim about a live store.
+
+\begin{table}[t]
+\centering
+\caption{Gaps between this study and a production recommender at a large retailer, and the free resource we plan to use to close each one. ``Planned'' items have not been run; no results are claimed for them.}
+\label{tab:gaps}
+\small
+\begin{tabular}{p{0.19\linewidth}p{0.36\linewidth}p{0.37\linewidth}}
+\toprule
+Gap & This study & Planned step, using free resources \\
+\midrule
+Economics & Unit cost, stock and overstock are simulated; the discount response is assumed. & Real cost and stock exported from one pilot shop's ERP or POS, through the existing CSV and Shopify connectors. \\
+Online evidence & Offline replay and a simulation only; no live traffic. & A small A/B test of the checkout widget in a pilot Shopify store, sized with the repository's \texttt{ab\_sample\_size.py}. \\
+Signals & Purchases only: no views, clicks, add-to-cart events or dwell time. & Session click-stream data: RetailRocket~\citep{retailrocket2016} (views, add-to-cart, purchases) and Diginetica (CIKM Cup 2016). \\
+Exposure and position bias & Logs record what was bought, not what was shown or where; replay cannot correct for presentation effects~\citep{joachims2017unbiased}. & Log impressions and slot positions in the pilot; until then, the bias is noted, not corrected. \\
+Scale & About 4.7k items on UCI and at most 5k on the other datasets; one CPU. & Amazon Reviews 2023~\citep{hou2024bridging} and H\&M~\citep{hm2022kaggle} for catalogues of $10^5$ items and more, on free cloud notebooks. \\
+Long-term effects & Each basket is scored alone; no effect on retention, return visits or margin over months. & A longer store simulation with repeat customers and demand that responds to stock, and pilot cohorts followed over several weeks. \\
+Operations (MLOps) & Batch retraining by script, CI tests and a latency check; no automated drift monitoring, scheduled retraining or feature store~\citep{sculley2015debt}. & Scheduled retraining and drift reports in free CI (GitHub Actions), with the service's existing metrics endpoint. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Future work}
+The steps in Table~\ref{tab:gaps} are ordered by how much they would change what the paper can claim.
+The first is \emph{real cost data from one shop}: every profit result here depends on simulated margins, and a single store's cost file would test whether the 13--24\% gains survive real margin structures, as the Ta Feng \texttt{ASSET} run suggests they may not under a fixed item floor.
+The second is a \emph{live A/B test} with impression logging, which would measure acceptance under exposure rather than infer it from unprompted purchases, and give the position data needed to correct for presentation bias.
+The third is a \emph{click-stream dataset}, which tests whether the reranker's gains hold when views and add-to-cart events are available as features and as weaker labels.
+The last is \emph{scale}: a catalogue one or two orders of magnitude larger would test the retrieval sources and the 150-item pool, whose recall already caps every result.
+We will report each of these with the same rule as this paper: numbers come from runs, not from targets.
+
 % ---------------------------------------------------------------------------
 \section{Conclusion}
 On five public retail datasets and a CPU, a calibrated gradient-boosted reranker beats a strong classical ladder for checkout add-ons wherever its candidate pool reaches the customer's purchases, and a tiny per-basket MILP converts its probabilities into choices that respect hard margin and stock rules while raising simulated profit at a small, tunable cost in hit rate.
@@ -588,11 +662,9 @@ Code, configuration and every result file are in the repository.
 \texttt{margingraph run} rebuilds experiments E1--E11 on UCI on a CPU (seed 42) and writes them to \texttt{results/}.
 \texttt{scripts/public\_datasets.py} downloads, converts and runs the four additional datasets, writing to \texttt{results/public/}; \texttt{notebooks/multi\_dataset\_validation.ipynb} shows each run with its outputs.
 \texttt{python -m margingraph.sim --days 30 --seeds 5} runs the store simulation and writes \texttt{results/retail\_sim/}; \texttt{notebooks/retail\_sim.ipynb} is the executed walk-through.
+\texttt{scripts/reranker\_comparison.py} runs the reranker comparison of Section~\ref{sec:rerankers} and writes \texttt{results/reranker\_comparison/}; \texttt{notebooks/reranker\_comparison.ipynb} is the executed run.
 \texttt{paper/figures/make\_figures.py} rebuilds every figure.
 The LLM experiments use \texttt{notebooks/llm\_rerank\_gpu.ipynb} and \texttt{notebooks/llm\_finetune\_gpu.ipynb} on a free Kaggle T4 GPU; their numbers are recorded in \texttt{docs/RESULTS.md}.
-
-\section*{Use of AI tools}
-The software, experiments and this manuscript were developed with the help of an AI coding assistant (Claude Code). All reported numbers come from the pipeline's output files or from logged runs, and were checked against them.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

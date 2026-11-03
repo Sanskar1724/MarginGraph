@@ -3,6 +3,7 @@
 Run from the repo root:  python paper/figures/make_figures.py
 The LLM numbers (Kaggle runs) are not in results/; they are copied from
 docs/RESULTS.md, section "E5 LLM rerank".
+Fig 10 reads results/reranker_comparison/summary.csv (scripts/reranker_comparison.py).
 Figures 6 and 7 read paper/figures/figdata/*.csv, small extracts of the PR #17
 (results/public/) and PR #18 (results/retail_sim/) result files.
 """
@@ -247,8 +248,26 @@ def fig_tafeng_floor():
     save(fig, "fig9_tafeng_floor")
 
 
+# Fig 10: reranker comparison on 1,000 seeded UCI test baskets: paired Hit@10 difference vs LightGBM
+def fig_rerankers():
+    t = pd.read_csv(RES / "reranker_comparison" / "summary.csv")
+    t = t[~t.model.str.startswith("LightGBM")].iloc[::-1].reset_index(drop=True)
+    lgb = pd.read_csv(RES / "reranker_comparison" / "summary.csv").iloc[0]
+    fig, ax = plt.subplots(figsize=(4.4, 2.2))
+    for i, r in t.iterrows():
+        d, lo, hi = r["d_hit@10"] * 100, r.d_ci_low * 100, r.d_ci_high * 100
+        ax.errorbar(d, i, xerr=[[d - lo], [hi - d]], fmt="o", color=BLUE, ecolor=BLUE, elinewidth=1.2, capsize=2.5, ms=4.5)
+        ax.text(3.0, i, f"{r['hit@10']*100:.1f}%, train {r.train_s:.0f} s", va="center", fontsize=6.8, color=INK)
+    ax.axvline(0, color=ORANGE, lw=1.0)
+    ax.text(0, len(t) - 0.35, f"LightGBM: {lgb['hit@10']*100:.1f}%, train {lgb.train_s:.0f} s", ha="center", fontsize=6.8, color=ORANGE)
+    ax.set_yticks(range(len(t))); ax.set_yticklabels(t.model.str.replace("sklearn ", ""), fontsize=7.5)
+    ax.set_xlim(-4.5, 6.8); ax.set_ylim(-0.6, len(t) - 0.1)
+    ax.set_xlabel("Hit@10 minus LightGBM (points, paired 95% CI)")
+    ax.grid(axis="y", visible=False)
+    save(fig, "fig10_rerankers")
+
 if __name__ == "__main__":
     fig_ladder(); fig_frontier(); fig_sensitivity(); fig_llm(); fig_reliability()
     fig_multidataset(); fig_retail_sim()
-    fig_architecture(); fig_pool(); fig_tafeng_floor()
+    fig_architecture(); fig_pool(); fig_tafeng_floor(); fig_rerankers()
     print("figures written to", OUT)
