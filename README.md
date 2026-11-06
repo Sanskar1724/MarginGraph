@@ -34,6 +34,14 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 4. **A fixed 15% item floor is too strict for low-margin grocers.** With Ta Feng's own cost field, only 76% of products clear it and the hit rate halves; a bundle-level floor gave +38% profit. The floor should be set per store.
 5. **The LLM does not rank.** Zero-shot (1.5B, 3B), stacked and LoRA fine-tuned LLMs all lost to LightGBM. The LLM's role is limited to cold-start products and plain-language explanations.
 
+## Technical paper
+
+**[MarginGraph: Margin-Aware, Constrained Recommendation of Checkout Add-Ons](paper/main.pdf)**
+*Evidence from five public retail datasets and a 30-day store simulation, with a negative result for small LLM rerankers.*
+Sanskar Chandawar, MIT Academy of Engineering, Pune. Preprint, 19 pages.
+
+📄 [Read the paper (PDF)](paper/main.pdf) · [Download PDF](https://github.com/Sanskar1724/MarginGraph/raw/main/paper/main.pdf) · [Markdown version](paper/PAPER.md) · [LaTeX source](paper/main.tex)
+
 ## Results on Online Retail II (test: Oct–Dec 2011, 4,480 real baskets)
 
 | | Result |
