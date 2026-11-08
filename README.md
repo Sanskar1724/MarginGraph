@@ -22,7 +22,7 @@
 
 MarginGraph recommends add-on products that customers are likely to buy **and** that keep the retailer profitable. Stage 1 finds relevant products. Stage 2 uses mathematical optimization to choose which ones to show, under hard business rules (a 15% margin floor, at most 2 add-ons, discount limits, overstock priority).
 
-> **Status: working research prototype, tested offline on five real retail datasets and in a 30-day store simulation.** Every number below comes from an experiment in this repo. Cost and stock are simulated (except where marked), so profit numbers are estimates until a real store's data is used.
+> **Status: working research prototype, tested offline on five real retail datasets and in a 30-day store simulation.** Every number below comes from an experiment in this repo. Cost and stock are simulated except where marked; one run uses a sample company's own cost and stock (AdventureWorks). Profit numbers stay estimates until a real store's data is used.
 
 <p align="center"><img src="docs/assets/architecture.svg" alt="MarginGraph architecture: cart and history, retrieval, LightGBM rerank, MILP optimizer, up to 2 add-ons" width="100%"></p>
 
@@ -32,7 +32,8 @@ MarginGraph recommends add-on products that customers are likely to buy **and** 
 2. **The optimizer earns more and never breaks the margin rule.** In a 30-day replay of 4,480 real checkouts: **+24%** add-on profit over the ranker alone (+19% averaged over 5 random seeds), with **0** offers under the 15% floor vs **164** for the ranker. Customers accepted slightly fewer add-ons (7.5% vs 8.9%), but each earned more.
 3. **The shortlist matters as much as the ranker.** Instacart's only loss came from past purchases being cut from the 150-item pool, not from the ranker. Filling the pool with the customer's own past items first turned −3.0 pts into +4.1 pts.
 4. **A fixed 15% item floor is too strict for low-margin grocers.** With Ta Feng's own cost field, only 76% of products clear it and the hit rate halves; a bundle-level floor gave +38% profit. The floor should be set per store.
-5. **The LLM does not rank.** Zero-shot (1.5B, 3B), stacked and LoRA fine-tuned LLMs all lost to LightGBM. The LLM's role is limited to cold-start products and plain-language explanations.
+5. **The profit gain holds on a store's own cost and stock.** On Microsoft's AdventureWorks sample bike shop (its own cost, price and stock for every product, 27,659 online orders), the optimizer at λ=0.5 earned **+59%** add-on profit per checkout over the ranker alone, for −2.2 pts hit rate and 0 floor breaks. No free dataset from a *real* shop has both baskets and per-item cost, so this is a sample company, not a real store.
+6. **The LLM does not rank.** Zero-shot (1.5B, 3B), stacked and LoRA fine-tuned LLMs all lost to LightGBM. The LLM's role is limited to cold-start products and plain-language explanations.
 
 ## Technical paper
 
@@ -66,6 +67,7 @@ Same pipeline and settings, no tuning per dataset. The pass rule was fixed befor
 | Instacart (US grocery delivery) | 20,000 | repeat 37.5% | 34.5% | **−3.0** [−3.6, −2.4] (official result) |
 | ↳ with past purchases first in the pool | 20,000 | repeat 37.5% | 41.6% | **+4.1** [+3.7, +4.5] |
 | Olist (Brazil marketplace) | 169 | EASE-decay 17.2% | 20.7% | +3.6 [−1.2, +8.9], tie (too few baskets) |
+| AdventureWorks (Microsoft sample bike shop, online orders) | 3,357 | EASE 75.4% | 80.8% | **+5.4** [+4.4, +6.4] (only 130 products, so hit rates are high) |
 
 The official gate counts the default pool, because the rule was fixed before the runs. The "past purchases first" reruns came from diagnosing the Instacart loss (pool recall 51.7% → 70.1%).
 
@@ -76,6 +78,11 @@ The official gate counts the default pool, because the rule was fixed before the
 | Ta Feng | simulated | **+17%** | −1.0 pt |
 | Dunnhumby | simulated | **+13%** (+16% with past purchases first) | −1.1 pts |
 | Ta Feng | its own `ASSET` field read as cost (unverified) | +25% with a 15% item floor; **+38%** with a bundle floor | item floor halves the hit rate |
+| AdventureWorks | **the store's own cost and stock** (sample company) | **+59%** ($18.55 vs $11.69 per checkout; λ=0.75: +86%, λ=1: +106%) | −2.2 pts (λ=1: hit 43.6% → 18.1%) |
+
+AdventureWorks margins are 23–63%, so the 15% floor never binds there; the gain comes from offering bikes (~40% margin on $1,000+) a bit more often instead of only $25 accessories. In its 30-day store simulation (λ=1) MarginGraph earned $80,898 of add-on profit vs $39,240 for the ranker, with 0 floor breaks. Dataset search, shortlist and full run: [`docs/worklog/real-cost-dataset.md`](docs/worklog/real-cost-dataset.md) · notebook: [`notebooks/real_cost_adventureworks.ipynb`](notebooks/real_cost_adventureworks.ipynb) · executed run: [`results/public/adventureworks_real_cost/real_cost_adventureworks_executed.md`](results/public/adventureworks_real_cost/real_cost_adventureworks_executed.md)
+
+<p align="center"><img src="results/public/adventureworks_real_cost/fig_frontier.png" alt="AdventureWorks, store's own cost: add-on profit per checkout vs hit rate for the ranker and MarginGraph at λ from 0 to 1" width="70%"></p>
 
 ## 30-day store simulation
 
@@ -152,6 +159,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 | --- | --- |
 | [UCI Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii) | Primary: real invoices (baskets), real prices, product descriptions |
 | [Ta Feng](https://github.com/RecoHut-Datasets/tafeng), Dunnhumby *The Complete Journey*, Instacart, [Olist](https://github.com/olist/work-at-olist-data) | Validation on four more stores: grocery, supermarket, delivery app, marketplace ([results](docs/RESULTS_PUBLIC.md)) |
+| [AdventureWorks](https://github.com/microsoft/sql-server-samples/releases/tag/adventureworks) (Microsoft sample) | Stage 2 on a store's own cost, price and stock: bike shop online orders ([results](docs/worklog/real-cost-dataset.md)) |
 | Simulated ERP fields | Cost, stock level and overstock flags where real data is unavailable; always labelled as simulated |
 | Your own store | `margingraph sync csv / shopify / woocommerce` loads a store's products, orders, cost and stock; see [docs/CONNECTORS.md](docs/CONNECTORS.md) |
 
@@ -186,6 +194,7 @@ subject to Σ_i x_i ≤ 2                         (max add-ons)
 - [x] Sequential inventory simulation
 - [x] Sensitivity to simulated ERP assumptions
 - [x] 30-day store simulation: +24% add-on profit, 0 margin-floor breaks (simulated cost)
+- [x] Run on a store's own cost and stock (AdventureWorks sample): +59% add-on profit at λ=0.5, −2.2 pts hit
 - [ ] Per-store or bundle-level margin floor as the default for low-margin stores
 
 **Production and pilot**
@@ -209,7 +218,7 @@ MarginGraph/
 ├── tests/                  pytest suite on a small synthetic fixture
 ├── configs/                default.yaml: split dates, pool sizes, margin floor, simulated ERP
 ├── results/                raw experiment outputs, E1–E11
-│   ├── public/             Ta Feng, Dunnhumby, Instacart, Olist runs
+│   ├── public/             Ta Feng, Dunnhumby, Instacart, Olist, AdventureWorks (own cost) runs
 │   └── retail_sim/         30-day store simulation ledger and summary
 ├── notebooks/              full run, multi-dataset, store simulation and LLM notebooks
 │   └── exploration/        early V1/V2 prototypes (history only, not results)

@@ -50,5 +50,22 @@ So the Instacart loss came from the candidate pool, not the ranker. For stores w
 | Ta Feng | simulated | +17% (+0.45 [+0.31, +0.61] per basket) | -1.0 pt |
 | Ta Feng | `ASSET` read as cost (**unverified**) | +25% (+0.15 [+0.07, +0.24]) | -5.0 pts (hit rate halves: only 76% of products clear the 15% floor) |
 | Dunnhumby | simulated | +13% (+0.012 [+0.009, +0.015]) | -1.1 pts |
+| AdventureWorks (Microsoft sample) | **store's own cost and stock** | +59% (+6.86 [+3.28, +10.39] $ per checkout) | -2.2 pts |
 
 With thin real grocery margins a fixed 15% floor is too strict; the bundle-level floor did best on Ta Feng with `ASSET` cost (+38% profit, hit 5.8%).
+
+## Store's own cost: AdventureWorks (2026-11-08)
+
+We searched for a free dataset with per-item cost **and** price. No real shop's data has both baskets and documented cost, so we used Microsoft's AdventureWorks sample bike shop: its own `StandardCost` (dated history), paid price and inventory for all 130 products, 27,659 online orders, 3,357 test events.
+
+| | Result |
+| --- | --- |
+| Stage 1 | LightGBM Hit@10 80.8% vs EASE 75.4%, +5.4 [+4.4, +6.4]: LightGBM wins (pool covers the whole 130-product catalog) |
+| Margins | 23% to 63%; none under 15%, so item floor = bundle floor |
+| Ranker top-2 | 43.6% hit, $11.69 add-on profit per checkout |
+| MILP λ=0.5 | 41.3% hit, $18.55 (+59%) |
+| MILP λ=0.75 | 39.2% hit, $21.69 (+86%) |
+| MILP λ=1.0 | 18.1% hit, $24.10 (+106%) |
+| 30-day store sim, replay (λ=1) | $80,898 vs $39,240 for the ranker, accept rate 9.1% vs 21.8%, 0 floor breaks |
+
+Caveats: a sample company, not a real store; the inventory is one snapshot taken after the sales period (95% of products count as overstock), so overstock weights do nothing here. Shortlist of 7 datasets and the full log: [`worklog/real-cost-dataset.md`](worklog/real-cost-dataset.md). Files: `results/public/adventureworks_real_cost/`.
