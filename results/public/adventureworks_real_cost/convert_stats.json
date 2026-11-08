@@ -1,0 +1,14 @@
+{
+  "dataset": "adventureworks",
+  "order_lines": 60398,
+  "orders": 27659,
+  "orders_with_2plus_products": 17991,
+  "products": 130,
+  "customers": 18484,
+  "first": "2022-05-30 00:00:00",
+  "last": "2025-06-29 00:00:00",
+  "has_cost": true,
+  "has_stock": true,
+  "max_customers": null,
+  "top_items": 0
+}

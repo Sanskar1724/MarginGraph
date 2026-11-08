@@ -1,0 +1,29 @@
+{
+  "source_orders": 27659,
+  "source_lines": 60398,
+  "dropped_cancelled_orders": 0,
+  "dropped_lines_without_valid_order": 0,
+  "dropped_nonpositive_qty_or_price": 0,
+  "clean_lines": 60398,
+  "invoices": 27659,
+  "items": 130,
+  "customers": 18484,
+  "lines_without_customer": 0,
+  "items_with_store_cost": 130,
+  "items_with_store_stock": 130,
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "stats": {
+      "products": 130,
+      "orders": 27659,
+      "order_lines": 60398,
+      "cancelled_orders": 0,
+      "orders_with_2plus_products": 17991,
+      "days_covered": 1126,
+      "cost_coverage": 1.0,
+      "stock_coverage": 1.0
+    }
+  }
+}

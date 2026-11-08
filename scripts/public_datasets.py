@@ -13,8 +13,10 @@ Then:
     margingraph --config data/store/NAME/config.yaml run --results results_NAME --artifacts artifacts_NAME
     python scripts/public_datasets.py compare results results_NAME ...
 
-Public datasets have no unit cost or stock (Ta Feng's ASSET column may be
-cost, unverified). `simulate-erp` makes `run` use the same simulated ERP as
+Most public datasets have no unit cost or stock (Ta Feng's ASSET column may
+be cost, unverified). AdventureWorks (Microsoft's sample bike company) has
+unit cost, price and inventory for every product, so it runs on its own
+cost and stock: skip `simulate-erp` for it. `simulate-erp` makes `run` use the same simulated ERP as
 Online Retail II, so Stage 2 numbers stay comparable and stay labelled
 simulated. Stage 1 (Hit@K, NDCG) is what these datasets validate.
 
@@ -206,12 +208,96 @@ def tafeng(src: Path, max_customers: int | None, seed: int, asset_as_cost: bool 
     return orders, prod
 
 
-CONVERTERS = {"instacart": instacart, "dunnhumby": dunnhumby, "olist": olist, "tafeng": tafeng}
+AW_PRODUCT = ["product_id", "name", "number", "make", "finished", "color", "safety_stock", "reorder_point",
+              "standard_cost", "list_price", "size", "size_unit", "weight_unit", "weight", "days_to_make",
+              "product_line", "class", "style", "subcategory_id", "model_id", "sell_start", "sell_end",
+              "discontinued", "rowguid", "modified"]
+
+
+def adventureworks(src: Path, max_customers: int | None, seed: int, channel: str = "online") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Microsoft's AdventureWorks OLTP sample (bike shop, MIT licence), from the
+    CSVs in `AdventureWorks-oltp-install-script.zip`. It is a sample company, not
+    a real store, but every product has a unit cost (StandardCost, with a dated
+    cost history), a price per order line and an inventory count, so Stage 2
+    can run on the store's own cost and stock instead of the simulated ERP.
+
+    channel "online" keeps internet orders (shoppers at checkout, the add-on
+    task); "reseller" keeps bike-shop orders; "all" keeps both."""
+    tsv = dict(sep="\t", header=None)
+    prod = pd.read_csv(_find(src, "Product.csv"), **tsv).iloc[:, :len(AW_PRODUCT)]
+    prod.columns = AW_PRODUCT
+    det = pd.read_csv(_find(src, "SalesOrderDetail.csv"), **tsv).iloc[:, :9]
+    det.columns = ["order", "line", "tracking", "qty", "product_id", "offer", "unit_price", "discount", "line_total"]
+    hdr = pd.read_csv(_find(src, "SalesOrderHeader.csv"), **tsv)[[0, 2, 6, 10, 12]]
+    hdr.columns = ["order", "ordered_at", "online", "customer_id", "territory"]
+    sub = pd.read_csv(_find(src, "ProductSubcategory.csv"), **tsv)[[0, 1, 2]]
+    sub.columns = ["subcategory_id", "category_id", "subcategory"]
+    cat = pd.read_csv(_find(src, "ProductCategory.csv"), **tsv)[[0, 1]]
+    cat.columns = ["category_id", "category"]
+    hist = pd.read_csv(_find(src, "ProductCostHistory.csv"), **tsv)[[0, 1, 2, 3]]
+    hist.columns = ["product_id", "start", "end", "cost"]
+    inv = pd.read_csv(_find(src, "ProductInventory.csv"), **tsv)[[0, 1, 4]]
+    inv.columns = ["product_id", "location", "qty"]
+
+    t = det.merge(hdr, on="order")
+    if channel != "all":
+        t = t[t["online"] == (1 if channel == "online" else 0)]
+    t = _sample_customers(t, "customer_id", max_customers, seed)
+    t = t[(t["qty"] > 0) & (t["unit_price"] > 0)].copy()
+    t["ordered_at"] = pd.to_datetime(t["ordered_at"])
+    # price the shopper paid, after the line discount
+    t["paid"] = t["unit_price"] * (1 - t["discount"])
+
+    # unit cost in force on the order date (ProductCostHistory), else StandardCost
+    hist["start"], hist["end"] = pd.to_datetime(hist["start"]), pd.to_datetime(hist["end"])
+    h = t[["product_id", "ordered_at"]].reset_index().merge(hist, on="product_id", how="left")
+    h = h[(h["ordered_at"] >= h["start"]) & (h["end"].isna() | (h["ordered_at"] <= h["end"]))]
+    t["cost_at_order"] = h.drop_duplicates("index").set_index("index")["cost"].reindex(t.index)
+    t["cost_at_order"] = t["cost_at_order"].fillna(t["product_id"].map(prod.set_index("product_id")["standard_cost"]))
+
+    names = prod.set_index("product_id")["name"]
+    orders = pd.DataFrame({
+        "order_id": "SO" + t["order"].astype(str),
+        "product_id": t["product_id"].astype(str),
+        "title": t["product_id"].map(names),
+        "quantity": t["qty"],
+        "unit_price": t["paid"],
+        "ordered_at": t["ordered_at"],
+        "customer_id": t["customer_id"].astype(str),
+        "country": "territory " + t["territory"].astype(str),
+        "status": "ok",
+    })
+    p = prod.merge(sub, on="subcategory_id", how="left").merge(cat, on="category_id", how="left")
+    p["category"] = p["category"].fillna("Other") + " / " + p["subcategory"].fillna("Other")
+    g = t.assign(product_id=t["product_id"].astype(str))
+    price = g.groupby("product_id")["paid"].median().rename("price")
+    # quantity-weighted cost of what was actually sold
+    cost = (g["cost_at_order"] * g["qty"]).groupby(g["product_id"]).sum() / g.groupby("product_id")["qty"].sum()
+    stock = inv.groupby("product_id")["qty"].sum()
+    stock.index = stock.index.astype(str)
+    p["product_id"] = p["product_id"].astype(str)
+    p = p.set_index("product_id")
+    products = pd.DataFrame({
+        "product_id": price.index,
+        "title": p["name"].reindex(price.index).to_numpy(),
+        "category": p["category"].reindex(price.index).to_numpy(),
+        "price": price.to_numpy(),
+        "cost": cost.reindex(price.index).round(4).to_numpy(),
+        # inventory snapshot; products with no inventory row are unknown (NaN), not zero
+        "stock": stock.reindex(price.index).to_numpy(),
+    })
+    return orders, products
+
+
+CONVERTERS = {"instacart": instacart, "dunnhumby": dunnhumby, "olist": olist, "tafeng": tafeng,
+              "adventureworks": adventureworks}
 
 
 def cmd_convert(a: argparse.Namespace) -> None:
     src, out = Path(a.src), Path(a.out)
     kw = {"asset_as_cost": a.asset_as_cost} if a.name == "tafeng" else {}
+    if a.name == "adventureworks":
+        kw = {"channel": a.channel}
     orders, products = CONVERTERS[a.name](src, a.max_customers, a.seed, **kw)
     orders, products = _keep_top_items(orders, products, a.top_items)
     orders["ordered_at"] = pd.to_datetime(orders["ordered_at"]).dt.strftime("%Y-%m-%d %H:%M:%S")
@@ -229,6 +315,7 @@ def cmd_convert(a: argparse.Namespace) -> None:
         "first": orders["ordered_at"].min(),
         "last": orders["ordered_at"].max(),
         "has_cost": "cost" in products,
+        "has_stock": "stock" in products,
         "max_customers": a.max_customers,
         "top_items": a.top_items,
     }
@@ -291,6 +378,7 @@ def main() -> None:
     c.add_argument("--top-items", type=int, default=5000, help="keep the N most-ordered products (0 = all)")
     c.add_argument("--seed", type=int, default=42)
     c.add_argument("--asset-as-cost", action="store_true", help="tafeng: write ASSET/AMOUNT as products.cost (unverified meaning)")
+    c.add_argument("--channel", choices=["online", "reseller", "all"], default="online", help="adventureworks: which orders to keep")
     e = sub.add_parser("simulate-erp", help="make a synced store config use the simulated cost and stock")
     e.add_argument("config")
     m = sub.add_parser("compare", help="markdown table of LightGBM vs best baseline across results folders")
