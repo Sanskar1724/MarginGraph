@@ -6,6 +6,7 @@
 | `llm_rerank_gpu.ipynb` | Kaggle T4 | Zero-shot Qwen2.5 reranker go/no-go (result: NO-GO) |
 | `llm_finetune_gpu.ipynb` | Kaggle T4 | E6: LoRA fine-tune of Qwen2.5-1.5B as a yes/no reranker |
 | `reranker_comparison.ipynb` | CPU (cloud container) | LightGBM vs XGBoost, CatBoost, HistGB and logistic regression on the same pools and features, 1,000 UCI test baskets (paper Sec. 6.2). Committed cleared; the executed run is `results/reranker_comparison/reranker_comparison_executed.md` |
+| `real_cost_adventureworks.ipynb` | CPU (cloud container, ~3 min) | Dataset shortlist for real cost + price, then the full pipeline and the 30-day store simulation on AdventureWorks with the store's own cost and stock. Committed cleared; the executed run is `results/public/adventureworks_real_cost/real_cost_adventureworks_executed.md` |
 | `exploration/MarginGraph_V1.ipynb`, `V2.ipynb` | | Early prototypes, kept for history. Their numbers came from mock or random data and are **not** results. |
 
 Secrets go in Colab / Kaggle *Secrets*, never in a notebook.

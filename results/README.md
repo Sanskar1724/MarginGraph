@@ -19,3 +19,5 @@ Raw outputs of `margingraph run` (UCI Online Retail II, seed 42). The tables in 
 | `item_descriptions.csv` | Product titles, used by the dashboard |
 | `summary.json` | Headline numbers |
 | `loadtest/real_w{workers}_c{concurrency}.json` | `/recommend` load test on the full model (`scripts/loadtest.py`, 1,000 requests each); see [`docs/worklog/ci.md`](../docs/worklog/ci.md) |
+
+`public/<dataset>/` holds the same files for the other datasets. `public/adventureworks_real_cost/` uses the store's own cost and stock (`erp_store.csv`, `e8_strategies_store_erp.csv`) and adds `retail_sim/` and the executed notebook.

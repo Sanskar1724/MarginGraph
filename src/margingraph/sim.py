@@ -7,7 +7,8 @@ Flow per checkout (see docs/worklog/retail-sim.md for the diagram):
 
 Inputs come from a real `margingraph run`: artifacts/test_slates.parquet
 (real test checkouts, real LightGBM probabilities) and results/erp_simulated.csv
-(SIMULATED cost, stock and overstock flags; Online Retail II has none).
+(SIMULATED cost, stock and overstock flags; Online Retail II has none), or
+results/erp_store.csv when the store has its own cost and stock.
 Checkouts are replayed in time order and cut into `days` equal days.
 Acceptance: "replay" = the shopper takes an add-on only if it is the item they
 really bought; "stochastic" = each add-on is taken with its calibrated p.
@@ -106,9 +107,15 @@ def main(argv=None) -> None:
     ap.add_argument("--out", default="results/retail_sim")
     ap.add_argument("--days", type=int, default=30)
     ap.add_argument("--seeds", type=int, default=5)
+    ap.add_argument("--erp", default=None,
+                    help="ERP csv; default: <results>/erp_store.csv when the store has its own cost/stock, else erp_simulated.csv")
     a = ap.parse_args(argv)
     slates = pd.read_parquet(Path(a.artifacts) / "test_slates.parquet")
-    erp = pd.read_csv(Path(a.results) / "erp_simulated.csv")
+    erp_path = Path(a.erp) if a.erp else Path(a.results) / "erp_store.csv"
+    if not erp_path.exists():
+        erp_path = Path(a.results) / "erp_simulated.csv"
+    print(f"ERP: {erp_path}")
+    erp = pd.read_csv(erp_path)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     runs = []
